@@ -1,0 +1,35 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+*.egg-info/
+dist/
+build/
+
+# === Cookies & Credentials (NEVER commit these) ===
+cookies/*.json
+cookies/*.pkl
+cookies/*.db
+platform_credentials.json
+*.cookie
+
+# === Media files ===
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.jpg
+*.jpeg
+*.png
+*.gif
+temp_*/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+*.log
+dispatch_history.json
+.dispatch.lock

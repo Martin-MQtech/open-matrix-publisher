@@ -1,0 +1,27 @@
+{
+  "_comment": "campaign.json 模板。复制此文件到你的视频项目目录，填写内容后运行分发。",
+  "_usage": "python3 /path/to/OpenMatrixpublister/dispatch.py --config ./campaign.json",
+
+  "campaign_name": "your_campaign_name",
+
+  "history_file": "./dispatch_history.json",
+
+  "tasks": [
+    {
+      "_comment": "任务1：中文版视频 → 国内平台",
+      "video": "./video_cn.mp4",
+      "title": "你的视频标题（中文，建议30字以内）",
+      "desc": "视频描述，支持换行和话题标签 #话题名称\n木齐科技 | www.emuqi.com",
+      "tags": ["标签1", "标签2", "标签3"],
+      "platforms": ["douyin", "kuaishou", "xiaohongshu", "bilibili", "tencent", "weibo"]
+    },
+    {
+      "_comment": "任务2：英文版视频 → 国际平台",
+      "video": "./video_en.mp4",
+      "title": "Your Video Title (English, under 100 chars)",
+      "desc": "Video description with hashtags #hashtag\nMUQI Tech | www.emuqi.com",
+      "tags": ["tag1", "tag2", "tag3"],
+      "platforms": ["youtube", "tiktok", "x", "linkedin", "facebook", "instagram"]
+    }
+  ]
+}
