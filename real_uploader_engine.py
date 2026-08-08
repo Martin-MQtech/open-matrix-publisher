@@ -165,6 +165,7 @@ class RealPlatformUploader:
             code = f"""
 import sys
 sys.path.insert(0, '{SAU_ROOT}')
+sys.path.insert(0, '{os.path.dirname(os.path.abspath(__file__))}')
 import custom_uploaders.{module_name} as uploader
 res = uploader.publish('{self.video_path}', '{self.title}', {self.tags}, '''{self.desc}''')
 print('CUSTOM_RESULT:', res)

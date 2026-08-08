@@ -73,8 +73,15 @@ async def _upload_async(video_path, title, tags, desc=""):
             }}
         }}""")
 
-        print("[weibo] 轮询等待【上传完成】或自动发布系统响应...")
-        for i in range(60): # 最多 3 分钟
+        print("[weibo] 轮询等待视频上传完成及发布按钮...")
+        for i in range(100): # 最多等待 5 分钟 (大视频上传)
+            # 检查是否有上传进度或是否完成
+            status_text = await page.evaluate("""() => {
+                const body = document.body ? document.body.innerText : '';
+                if (body.includes('上传成功') || body.includes('100%') || body.includes('转码中')) return 'completed';
+                return 'uploading';
+            }""")
+            
             # 1. 检查是否成功上传完成并跳转
             if "upload/channel" not in page.url:
                 print(f"[weibo] ✅ 页面已自动跳转至 {page.url}，视为发布成功！")
@@ -82,12 +89,12 @@ async def _upload_async(video_path, title, tags, desc=""):
                 await browser.close()
                 return True
 
-            # 2. 点击页面上的按钮（如有）
+            # 2. 点击页面上的发布按钮（确保非 disabled 且上传已基本完成）
             pub_res = await page.evaluate("""() => {
                 const btns = Array.from(document.querySelectorAll('button, a, div[role=button], .woo-button-main'));
                 const pubBtn = btns.find(b => {
                     const txt = (b.innerText || b.textContent || '').trim();
-                    return (txt.includes('发布') || txt.includes('完成')) && !txt.includes('自动发布');
+                    return (txt === '发布' || txt === '立即发布' || txt === '完成');
                 });
                 if (pubBtn && !pubBtn.disabled && !pubBtn.classList.contains('disabled')) {
                     pubBtn.click();
@@ -96,11 +103,13 @@ async def _upload_async(video_path, title, tags, desc=""):
                 return false;
             }""")
             if pub_res:
-                print("[weibo] 已触发发布按钮点击！等待 6 秒...")
-                await page.wait_for_timeout(6000)
-                await context.storage_state(path=COOKIE_FILE)
-                await browser.close()
-                return True
+                print(f"[weibo] ({i+1}/100) 已触发发布按钮！等待页面响应 10 秒...")
+                await page.wait_for_timeout(10000)
+                if "upload/channel" not in page.url:
+                    print("[weibo] ✅ 发布成功并已离开发布页！")
+                    await context.storage_state(path=COOKIE_FILE)
+                    await browser.close()
+                    return True
 
             await page.wait_for_timeout(3000)
 

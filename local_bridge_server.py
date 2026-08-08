@@ -39,6 +39,11 @@ def is_already_published(video_file, platform_id):
                 return True, f"⚠️ 该视频已于 {finish_time} 成功发布到 {platform_id}（ID: {pub_id}），本次已拦截，防止重复发送。"
     return False, ""
 
+@app.route("/", methods=["GET"])
+def index():
+    from flask import send_from_directory
+    return send_from_directory(os.path.dirname(__file__), "index.html")
+
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')

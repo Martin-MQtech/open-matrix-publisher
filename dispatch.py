@@ -122,6 +122,27 @@ def run_campaign(cfg: dict, filter_platforms: list = None, dry_run: bool = False
 
     results = {}
 
+    # ── 防重预检：发布前强制打印全局状态报告 ──────────────────────────────
+    print("  【防重预检报告】")
+    print(f"  {'平台':<16}  {'视频':<30}  状态")
+    print(f"  {'-'*70}")
+    for task in cfg["tasks"]:
+        vname = os.path.basename(task["video"])
+        task_platforms = task.get("platforms", ALL_PLATFORMS)
+        if filter_platforms:
+            task_platforms = [p for p in task_platforms if p in filter_platforms]
+        for platform in task_platforms:
+            key = make_history_key(task["video"], platform)
+            if key in history and history[key].get("status") == "success":
+                print(f"  {platform:<16}  {vname:<30}  🔒 已锁定（绝不重发）")
+            else:
+                rec_status = history.get(key, {}).get("status", "—")
+                print(f"  {platform:<16}  {vname:<30}  🚀 待发布（上次: {rec_status}）")
+    print(f"  {'-'*70}")
+    print("  预检完毕，5 秒后开始发布...\n")
+    import time as _t; _t.sleep(5)
+    # ──────────────────────────────────────────────────────────────────────
+
     for task in cfg["tasks"]:
         video_path = task["video"]
         title      = task["title"]

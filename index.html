@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Matrix Publisher — 全域矩阵一键分发控制台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-card: rgba(22, 29, 45, 0.75);
+      --bg-card-hover: rgba(30, 41, 64, 0.85);
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-purple: #8b5cf6;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    
+    body {
+      background-color: var(--bg-primary);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 40%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(11, 15, 25, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: white;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+    }
+
+    .brand-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #ffffff, #9ca3af);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-tag {
+      font-size: 11px;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--accent-green);
+      background: rgba(16, 185, 129, 0.1);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+
+    .btn-github {
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-color);
+      transition: all 0.2s;
+    }
+
+    .btn-github:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+    }
+
+    @media (max-width: 1024px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+
+    .card-title i { color: var(--accent-blue); }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      background: rgba(11, 15, 25, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text-main);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .platform-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin: 16px 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .platform-card {
+      background: rgba(11, 15, 25, 0.5);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .platform-card:hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      background: rgba(30, 41, 64, 0.5);
+    }
+
+    .platform-card.selected {
+      border-color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.12);
+    }
+
+    .platform-card.locked {
+      opacity: 0.7;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .platform-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .platform-name {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .platform-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .badge-ok { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+    .badge-locked { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+    .badge-login { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }
+
+    .btn-dispatch {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .btn-dispatch:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(59, 130, 246, 0.6);
+    }
+
+    .btn-dispatch:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .log-terminal {
+      background: #060911;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      color: #34d399;
+      height: 280px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    .log-line { margin-bottom: 4px; word-break: break-all; }
+    .log-line.err { color: #f87171; }
+    .log-line.info { color: #60a5fa; }
+    .log-line.warn { color: #fbbf24; }
+
+    .rule-box {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: #fbbf24;
+      line-height: 1.5;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 13px;
+      border-top: 1px solid var(--border-color);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo"><i class="fa-solid fa-bolt"></i></div>
+      <div>
+        <div class="brand-title">Open Matrix Publisher</div>
+        <div style="font-size:11px; color:var(--text-muted);">全域矩阵一键自动化发布引擎</div>
+      </div>
+      <span class="brand-tag">v1.0 MIT</span>
+    </div>
+    <div class="header-links">
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        <span>本地引擎运行中 (Port 5000)</span>
+      </div>
+      <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank" class="btn-github">
+        <i class="fa-brands fa-github"></i> GitHub
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <!-- 左侧：视频与文案配置 -->
+    <div class="card">
+      <div class="card-title">
+        <i class="fa-solid fa-film"></i> 1. 视频与发布文案配置
+      </div>
+
+      <div class="rule-box">
+        <i class="fa-solid fa-shield-halved"></i> <strong>内置四重防重复提交死锁：</strong> 系统会自动拦截任何已成功发布的平台，确保绝对不发生重复分发事故。
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-file-video"></i> 视频文件绝对路径</label>
+        <input type="text" id="videoPath" value="/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4">
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-heading"></i> 视频发布标题</label>
+        <input type="text" id="videoTitle" value="久坐一天，肩颈又石化了？富氢热灸贴温氢双护">
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-align-left"></i> 视频正文描述 (Description)</label>
+        <textarea id="videoDesc">久坐一天，肩颈又石化了？
+不是暖贴不够热，是只给皮肤烤了个表面。
+这次用的是富氢热灸贴——道地艾草 × 固态氢材料，热的时候氢分子同步工作，80×205mm 的大贴幅服帖整个肩颈和腰背。
+不燥不闷，一觉可以贴着睡。
+体感这个东西，说再多不如试一次。
+木齐科技 自研固态氢 | www.emuqi.com</textarea>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-hashtag"></i> 话题标签 (Comma-separated Tags)</label>
+        <input type="text" id="videoTags" value="富氢热灸贴,热灸贴,温氢双护,肩颈护理,木齐科技">
+      </div>
+    </div>
+
+    <!-- 右侧：平台选择与分发控制 -->
+    <div class="card">
+      <div class="card-title">
+        <i class="fa-solid fa-share-nodes"></i> 2. 目标平台矩阵选择
+      </div>
+
+      <div class="platform-section-title">
+        <span>🇨🇳 国内矩阵平台</span>
+        <button onclick="selectAllDomestic()" style="background:none; border:none; color:var(--accent-blue); font-size:12px; cursor:pointer;">全选国内</button>
+      </div>
+      <div class="platform-grid" id="domesticGrid">
+        <!-- Dynamic Domestic Cards -->
+      </div>
+
+      <div class="platform-section-title" style="margin-top:24px;">
+        <span>🌏 国际矩阵平台</span>
+        <button onclick="selectAllGlobal()" style="background:none; border:none; color:var(--accent-blue); font-size:12px; cursor:pointer;">全选国际</button>
+      </div>
+      <div class="platform-grid" id="globalGrid">
+        <!-- Dynamic Global Cards -->
+      </div>
+
+      <button class="btn-dispatch" id="dispatchBtn" onclick="triggerDispatch()">
+        <i class="fa-solid fa-paper-plane"></i> 启动全域静默并发分发
+      </button>
+    </div>
+
+    <!-- 底部：实时运行控制台日志 -->
+    <div class="card" style="grid-column: 1 / -1;">
+      <div class="card-title">
+        <i class="fa-solid fa-terminal"></i> 3. 引擎实时分发日志终端
+      </div>
+      <div class="log-terminal" id="logTerminal">
+        <div class="log-line info">[System] Open Matrix Publisher 控制台就绪。连接至本地引擎 http://localhost:5000</div>
+        <div class="log-line">[Status] 正在读取防重 Ledger 与 Cookie 状态...</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Open Matrix Publisher &copy; 2026 Martin-MQtech (木齐科技) | MIT Open Source License
+  </footer>
+
+  <script>
+    const DOMESTIC_PLATFORMS = [
+      { id: "tencent", name: "微信视频号", icon: "fa-weixin" },
+      { id: "douyin", name: "抖音", icon: "fa-tiktok" },
+      { id: "bilibili", name: "B站", icon: "fa-play" },
+      { id: "kuaishou", name: "快手", icon: "fa-video" },
+      { id: "weibo", name: "微博", icon: "fa-weibo" },
+      { id: "toutiao", name: "今日头条", icon: "fa-newspaper" },
+      { id: "zhihu", name: "知乎", icon: "fa-brain" },
+      { id: "xiaohongshu", name: "小红书", icon: "fa-book-bookmark" }
+    ];
+
+    const GLOBAL_PLATFORMS = [
+      { id: "youtube", name: "YouTube", icon: "fa-youtube" },
+      { id: "facebook", name: "Facebook", icon: "fa-facebook" },
+      { id: "x", name: "X (Twitter)", icon: "fa-x-twitter" },
+      { id: "linkedin", name: "LinkedIn", icon: "fa-linkedin" },
+      { id: "instagram", name: "Instagram", icon: "fa-instagram" },
+      { id: "tiktok", name: "TikTok", icon: "fa-tiktok" }
+    ];
+
+    let selectedPlatforms = new Set(["toutiao", "zhihu"]);
+    let publishedStatusMap = {};
+
+    function logMsg(msg, type = "") {
+      const term = document.getElementById("logTerminal");
+      const line = document.createElement("div");
+      line.className = `log-line ${type}`;
+      const time = new Date().toLocaleTimeString();
+      line.innerText = `[${time}] ${msg}`;
+      term.appendChild(line);
+      term.scrollTop = term.scrollHeight;
+    }
+
+    async function fetchEngineStatus() {
+      try {
+        const res = await fetch("http://localhost:5000/api/status");
+        const data = await res.json();
+        publishedStatusMap = data.published_map || {};
+        renderPlatforms(data);
+        logMsg("✅ 已成功获取最新引擎与凭证状态", "info");
+      } catch (err) {
+        logMsg("⚠️ 无法连接本地 Python 引擎 (http://localhost:5000)，请确保 local_bridge_server.py 已运行", "err");
+      }
+    }
+
+    function renderPlatforms(statusData) {
+      const currentVideo = document.getElementById("videoPath").value.split('/').pop();
+      const videoPubMap = publishedStatusMap[currentVideo] || {};
+
+      renderGrid("domesticGrid", DOMESTIC_PLATFORMS, videoPubMap, statusData);
+      renderGrid("globalGrid", GLOBAL_PLATFORMS, videoPubMap, statusData);
+    }
+
+    function renderGrid(gridId, platforms, videoPubMap, statusData) {
+      const grid = document.getElementById(gridId);
+      grid.innerHTML = "";
+
+      platforms.forEach(p => {
+        const isPublished = !!videoPubMap[p.id];
+        const card = document.createElement("div");
+        card.className = `platform-card ${selectedPlatforms.has(p.id) ? 'selected' : ''} ${isPublished ? 'locked' : ''}`;
+        
+        let badgeHtml = "";
+        if (isPublished) {
+          badgeHtml = `<span class="platform-badge badge-locked">🔒 已发布(防重锁定)</span>`;
+        } else {
+          badgeHtml = `<span class="platform-badge badge-ok">✅ Cookie就绪</span>`;
+        }
+
+        card.innerHTML = `
+          <div class="platform-header">
+            <span class="platform-name"><i class="fa-solid ${p.icon}"></i> ${p.name}</span>
+            ${badgeHtml}
+          </div>
+        `;
+
+        card.onclick = () => {
+          if (isPublished) {
+            logMsg(`⚠️ 【${p.name}】已于 ${videoPubMap[p.id].finish_time} 成功发布该视频，系统防重机制已自动屏蔽重发！`, "warn");
+            return;
+          }
+          if (selectedPlatforms.has(p.id)) {
+            selectedPlatforms.delete(p.id);
+            card.classList.remove("selected");
+          } else {
+            selectedPlatforms.add(p.id);
+            card.classList.add("selected");
+          }
+        };
+
+        grid.appendChild(card);
+      });
+    }
+
+    function selectAllDomestic() {
+      DOMESTIC_PLATFORMS.forEach(p => selectedPlatforms.add(p.id));
+      fetchEngineStatus();
+    }
+
+    function selectAllGlobal() {
+      GLOBAL_PLATFORMS.forEach(p => selectedPlatforms.add(p.id));
+      fetchEngineStatus();
+    }
+
+    async function triggerDispatch() {
+      const videoPath = document.getElementById("videoPath").value;
+      const title = document.getElementById("videoTitle").value;
+      const desc = document.getElementById("videoDesc").value;
+      const tags = document.getElementById("videoTags").value.split(',').map(t => t.trim());
+
+      if (selectedPlatforms.size === 0) {
+        alert("请至少选择一个目标平台！");
+        return;
+      }
+
+      const btn = document.getElementById("dispatchBtn");
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 正在并发分发中...`;
+
+      logMsg(`🚀 开始触发矩阵任务: ${Array.from(selectedPlatforms).join(', ')}`, "info");
+
+      for (const platformId of selectedPlatforms) {
+        logMsg(`正在提交平台发布指令: ${platformId}...`);
+        try {
+          const res = await fetch("http://localhost:5000/api/start-upload-task", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              platform_id: platformId,
+              video_file: videoPath,
+              title: title,
+              desc: desc,
+              tags: tags
+            })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            logMsg(`✅ 【${platformId}】后台任务已启动 (Task ID: ${data.task_id})`, "info");
+          } else {
+            logMsg(`❌ 【${platformId}】被拦截: ${data.msg}`, "err");
+          }
+        } catch (e) {
+          logMsg(`❌ 【${platformId}】请求网络失败: ${e.message}`, "err");
+        }
+      }
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> 启动全域静默并发分发`;
+        fetchEngineStatus();
+      }, 5000);
+    }
+
+    // Initial load
+    fetchEngineStatus();
+  </script>
+</body>
+</html>
