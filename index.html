@@ -348,7 +348,6 @@
             margin-bottom: 16px;
         }
 
-        /* 专注 豆包 与 Kimi 两大 AI 门户双栏布局 */
         .ai-portal-grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -616,23 +615,23 @@
             <div class="glass-panel" style="padding: 24px;">
                 <div class="section-header">
                     <span><i class="fa-solid fa-clapperboard" style="margin-right:8px;"></i> 待分发视频资产选择与编辑</span>
-                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 专精 豆包 / Kimi 免费网页交互与人机精选</span>
+                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 视频版本点选分发 · 自由跨平台推送</span>
                 </div>
 
-                <!-- 分发场景模式选择 -->
+                <!-- 视频分发工作模式选择 -->
                 <div class="dispatch-mode-selector">
                     <div class="mode-card active" id="mode-single" onclick="setDispatchMode('single')">
                         <input type="radio" name="dispatch_mode" checked>
                         <div>
-                            <div class="mode-title">标准单视频分发模式</div>
-                            <div class="mode-desc">只把当前选中的这 1 条视频分发至右侧手动勾选的平台</div>
+                            <div class="mode-title">🎬 选定视频点选分发模式</div>
+                            <div class="mode-desc">把当前浏览选中的这 1 条视频分发至所有勾选的目标平台（支持中文/英文发全网）</div>
                         </div>
                     </div>
                     <div class="mode-card" id="mode-bilingual" onclick="setDispatchMode('bilingual')">
                         <input type="radio" name="dispatch_mode">
                         <div>
-                            <div class="mode-title">中英双语智能分发模式</div>
-                            <div class="mode-desc">中文成片自动发布至国内平台，英文成片自动发布至海外平台</div>
+                            <div class="mode-title">🚀 矩阵成片全量组合分发</div>
+                            <div class="mode-desc">灵活勾选多个视频版本，一次性批量推送至国内与海外矩阵账号</div>
                         </div>
                     </div>
                 </div>
@@ -667,7 +666,7 @@
                         <i class="fa-solid fa-pen-to-square"></i> 模式一：手动自主撰写 / 模板套用
                     </button>
                     <button class="copy-tab-btn" id="tab-ai" onclick="setCopyMode('ai')">
-                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：豆包 / Kimi 免费网页助手 (自主对话精选)
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：豆包 / Kimi 免费网页助手
                     </button>
                 </div>
 
@@ -680,11 +679,11 @@
                     <button class="chip-btn" style="color:var(--accent-red);" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> 清空文本</button>
                 </div>
 
-                <!-- 模式二 专精 豆包 与 Kimi 两大免费 AI 交互选方案 -->
+                <!-- 模式二 专精 豆包 与 Kimi 免费 AI 网页端 -->
                 <div id="ai-generator-box" class="ai-generator-panel" style="display:none;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-comments"></i> 豆包 & Kimi 免费网页端交互助手</span>
-                        <span style="font-size:11px; color:var(--accent-teal);">提示词自动净化 · 人工精选喜欢的版本</span>
+                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-comments"></i> 豆包 & Kimi 免费 AI 网页助手</span>
+                        <span style="font-size:11px; color:var(--accent-teal);">复制网页方案 · 一键智能解析</span>
                     </div>
 
                     <!-- 双 AI 卡片 -->
@@ -693,34 +692,24 @@
                         <div class="portal-card-box">
                             <div class="portal-card-title">
                                 <span>🫘 豆包 (Doubao)</span>
-                                <span style="font-size:10px; color:var(--accent-teal);">已登录免登</span>
+                                <span style="font-size:10px; color:var(--accent-teal);">网页免费版</span>
                             </div>
-                            <div style="font-size:11px; color:var(--text-muted);">擅长爆款短视频口播与社交种草文案</div>
-                            <div style="display:flex; gap:6px; margin-top:4px;">
-                                <button class="btn-action-small" onclick="openAiWebPage('doubao')">
-                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> 打开交互网页
-                                </button>
-                                <button class="btn-action-small" style="border-color:rgba(255,255,255,0.2); color:#fff; background:none;" onclick="triggerAutoFreeAi('doubao')">
-                                    <i class="fa-solid fa-robot"></i> 极速预设填入
-                                </button>
-                            </div>
+                            <div style="font-size:11px; color:var(--text-muted);">擅长短视频口播与社交种草文案</div>
+                            <button class="btn-action-small" style="margin-top:4px;" onclick="openAiWebPage('doubao')">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 1键复制主题并打开豆包网页
+                            </button>
                         </div>
 
                         <!-- Kimi 卡片 -->
                         <div class="portal-card-box">
                             <div class="portal-card-title">
                                 <span>🌙 Kimi 智能助手</span>
-                                <span style="font-size:10px; color:var(--accent-teal);">已登录免登</span>
+                                <span style="font-size:10px; color:var(--accent-teal);">网页免费版</span>
                             </div>
-                            <div style="font-size:11px; color:var(--text-muted);">擅长长文本深度分析与高客单产品亮点</div>
-                            <div style="display:flex; gap:6px; margin-top:4px;">
-                                <button class="btn-action-small" onclick="openAiWebPage('kimi')">
-                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> 打开交互网页
-                                </button>
-                                <button class="btn-action-small" style="border-color:rgba(255,255,255,0.2); color:#fff; background:none;" onclick="triggerAutoFreeAi('kimi')">
-                                    <i class="fa-solid fa-robot"></i> 极速预设填入
-                                </button>
-                            </div>
+                            <div style="font-size:11px; color:var(--text-muted);">擅长长文本分析与高客单产品亮点</div>
+                            <button class="btn-action-small" style="margin-top:4px;" onclick="openAiWebPage('kimi')">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 1键复制主题并打开 Kimi 网页
+                            </button>
                         </div>
                     </div>
 
@@ -728,10 +717,10 @@
                     <div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
                         <span style="font-size:11px; color:var(--text-main);">
                             <i class="fa-solid fa-hand-pointer" style="color:var(--accent-gold); margin-right:4px;"></i>
-                            在豆包/Kimi 聊出最满意的文案后，直接复制，点击右侧认领 ➔
+                            复制豆包/Kimi网页中选中的文案后，点击右侧一键认领 ➔
                         </span>
                         <button onclick="parseFromClipboard()" style="background:linear-gradient(135deg, var(--accent-purple), #6366f1); border:none; color:#fff; padding:6px 14px; border-radius:8px; font-weight:700; font-size:11px; cursor:pointer;">
-                            <i class="fa-solid fa-paste"></i> 📋 填入我选中的文案
+                            <i class="fa-solid fa-paste"></i> 📋 填入我复制的文案
                         </button>
                     </div>
                 </div>
@@ -841,6 +830,7 @@
         };
 
         let currentDispatchMode = 'single';
+        let currentSelectedVideoPath = "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4";
 
         function getCleanTopic() {
             let fn = document.getElementById('selected-video-filename').innerText;
@@ -854,31 +844,11 @@
             const promptText = `请帮我为【${cleanTopic}】写一段短视频爆款发布文案：\n标题：（控制在 28 字以内，吸引眼球）\n正文：（突出核心痛点与特点）`;
             
             navigator.clipboard.writeText(promptText).then(() => {
-                alert(`📋 已自动为您净化文件名！清洗后的主题提示词【${cleanTopic}】已复制到剪贴板。\n即将在浏览器打开 ${key.toUpperCase()} 网页，按 Cmd+V / Ctrl+V 即可粘贴对话！`);
+                alert(`📋 清洗后的主题词【${cleanTopic}】及提示词已复制到剪贴板！\n即将在浏览器打开 ${key.toUpperCase()} 网页，按 Cmd+V / Ctrl+V 即可粘贴发送！`);
                 window.open(AI_PORTALS[key], '_blank');
             }).catch(() => {
                 window.open(AI_PORTALS[key], '_blank');
             });
-        }
-
-        async function triggerAutoFreeAi(provider) {
-            const cleanTopic = getCleanTopic();
-            try {
-                const res = await fetch('http://localhost:5001/api/generate-free-ai', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ provider: provider, topic: cleanTopic })
-                });
-                const data = await res.json();
-
-                if (data.status === 'success' && data.title) {
-                    document.getElementById('post-title').value = data.title;
-                    document.getElementById('post-desc').value = data.desc;
-                    alert(`🎉 已为您自动填充经过清洗后的文案！`);
-                }
-            } catch (err) {
-                alert("⚠️ 无法连接本地 Python AI 接口服务！");
-            }
         }
 
         async function parseFromClipboard() {
@@ -898,7 +868,7 @@
                         let remaining = lines.slice(1).join('\n').replace(/^正文[：:]\s*/, '');
                         document.getElementById('post-desc').value = remaining;
                     }
-                    alert("🎉 成功领用您在 AI 网页中精选的满意文案！已自动填入下方框内！");
+                    alert("🎉 成功领用您复制的满意文案！已填入下表！");
                 }
             } catch (err) {
                 alert("⚠️ 请允许浏览器读取剪贴板权限，或者直接手动粘贴！");
@@ -945,7 +915,6 @@
             } else {
                 document.getElementById('mode-bilingual').classList.add('active');
                 document.getElementById('mode-bilingual').querySelector('input').checked = true;
-                alert("💡 双语智能分发模式已开启：国内平台将自动取用中文版视频，海外平台将自动取用英文版视频。");
             }
         }
 
@@ -954,6 +923,7 @@
                 const file = input.files[0];
                 document.getElementById('selected-video-filename').innerText = file.name;
                 document.getElementById('selected-video-filepath').innerText = `已选择本地文件: ${file.name}`;
+                currentSelectedVideoPath = file.name; // Use selected file
                 const objectUrl = URL.createObjectURL(file);
                 document.getElementById('main-video').src = objectUrl;
             }
@@ -1149,8 +1119,8 @@
             const title = document.getElementById('post-title').value;
             const desc = document.getElementById('post-desc').value;
             
-            const cnVideo = "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4";
-            const enVideo = "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_英文宣传片_电影级_v2_成片.mp4";
+            // 真实分发：完全取用用户在界面中当前点选/浏览的视频文件
+            const targetVideo = currentSelectedVideoPath;
 
             activePlatforms.forEach(p => {
                 const item = document.createElement('div');
@@ -1169,11 +1139,6 @@
             });
 
             for (const p of activePlatforms) {
-                let targetVideo = cnVideo;
-                if (currentDispatchMode === 'bilingual' && p.cat === 'global') {
-                    targetVideo = enVideo;
-                }
-
                 try {
                     const startRes = await fetch('http://localhost:5001/api/start-upload-task', {
                         method: 'POST',
