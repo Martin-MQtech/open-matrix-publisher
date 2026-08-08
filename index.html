@@ -57,7 +57,6 @@
             margin-bottom: 18px;
         }
 
-        /* 生物材料 x 氢能 x AI 融合炫酷 Logo */
         .brand-box {
             display: flex;
             align-items: center;
@@ -65,8 +64,8 @@
         }
 
         .brand-logo-fusion {
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             border-radius: 14px;
             background: linear-gradient(135deg, #00e6ff, #00ffc8, #8b5cf6);
             display: flex;
@@ -77,7 +76,7 @@
         }
 
         .brand-logo-fusion i {
-            font-size: 24px;
+            font-size: 22px;
             color: #000;
         }
 
@@ -152,10 +151,9 @@
             box-shadow: 0 8px 28px rgba(0, 230, 255, 0.6);
         }
 
-        /* 黄金分流页面布局：左侧主舞台 64%，右侧平台选单 36% */
         .main-layout {
             display: grid;
-            grid-template-columns: 1fr 410px;
+            grid-template-columns: 1fr 420px;
             gap: 20px;
         }
 
@@ -181,39 +179,76 @@
             border-bottom: 1px solid rgba(0, 230, 255, 0.15);
         }
 
-        /* 版本切换选项卡 (Tab Segment) */
-        .version-tab-bar {
-            display: flex;
-            background: rgba(6, 9, 17, 0.7);
-            border: 1px solid var(--panel-border);
-            border-radius: 12px;
-            padding: 4px;
-            gap: 6px;
+        /* 模式选择 Radio Cards */
+        .dispatch-mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             margin-bottom: 16px;
         }
 
-        .tab-btn {
-            flex: 1;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 8px;
-            background: none;
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 600;
+        .mode-card {
+            background: rgba(6, 9, 17, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 14px;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .mode-card.active {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 230, 255, 0.08);
+        }
+
+        .mode-card input[type="radio"] {
+            margin-top: 3px;
+        }
+
+        .mode-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .mode-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* 本地文件选择区 */
+        .file-select-banner {
+            display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            background: rgba(0, 230, 255, 0.05);
+            border: 1px dashed var(--accent-cyan);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+        }
+
+        .btn-file-browse {
+            background: rgba(0, 230, 255, 0.15);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
             gap: 6px;
         }
 
-        .tab-btn.active {
-            background: rgba(0, 230, 255, 0.15);
-            color: #fff;
-            border: 1px solid rgba(0, 230, 255, 0.3);
-            box-shadow: 0 2px 10px rgba(0, 230, 255, 0.2);
+        .btn-file-browse:hover {
+            background: var(--accent-cyan);
+            color: #000;
         }
 
         /* 大画幅视频播放器区域 */
@@ -228,7 +263,7 @@
 
         .large-video-box video {
             width: 100%;
-            height: 380px;
+            height: 350px;
             object-fit: contain;
             display: block;
             background: #000;
@@ -280,7 +315,7 @@
             line-height: 1.6;
         }
 
-        /* 右侧平台侧栏与紧凑网格 */
+        /* 右侧平台侧栏 */
         .right-sidebar {
             display: flex;
             flex-direction: column;
@@ -293,6 +328,7 @@
             gap: 10px;
         }
 
+        /* 默认未选中样式 */
         .platform-mini-card {
             background: rgba(6, 9, 17, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -304,16 +340,20 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            opacity: 0.65;
         }
 
         .platform-mini-card:hover {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 230, 255, 0.04);
+            border-color: rgba(0, 230, 255, 0.5);
+            opacity: 0.9;
         }
 
+        /* 明确勾选时的高亮样式 */
         .platform-mini-card.selected {
             border-color: var(--accent-cyan);
-            background: rgba(0, 230, 255, 0.08);
+            background: rgba(0, 230, 255, 0.1);
+            opacity: 1;
+            box-shadow: 0 4px 15px rgba(0, 230, 255, 0.15);
         }
 
         .mini-card-top {
@@ -354,6 +394,7 @@
             align-items: center;
             justify-content: center;
             font-size: 10px;
+            color: transparent;
         }
 
         .platform-mini-card.selected .checkbox-mini {
@@ -379,6 +420,18 @@
             display: flex;
             align-items: center;
             gap: 3px;
+        }
+
+        .summary-bar {
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 12px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         /* 模态弹窗 */
@@ -419,7 +472,6 @@
 
     <header class="glass-panel">
         <div class="brand-box">
-            <!-- 融合 DNA/分子/氢能/AI 炫酷 Logo -->
             <div class="brand-logo-fusion">
                 <i class="fa-solid fa-atom"></i>
             </div>
@@ -443,37 +495,57 @@
     </header>
 
     <div class="main-layout">
-        <!-- 左侧：大画幅主舞台 (视频大窗口 + 完整文案资产 - 占比 64%) -->
+        <!-- 左侧：大画幅主舞台 (视频大窗口 + 明确的分发模式) -->
         <div class="video-stage">
             <div class="glass-panel" style="padding: 24px;">
                 <div class="section-header">
-                    <span><i class="fa-solid fa-film" style="margin-right:8px;"></i> 视频资产大屏渲染与属性预览</span>
-                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 4K 电影级画质就绪</span>
+                    <span><i class="fa-solid fa-clapperboard" style="margin-right:8px;"></i> 待分发视频资产选择与编辑</span>
+                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 单次只推选中的 1 个视频文件</span>
                 </div>
 
-                <!-- 视频版本切换 Segment -->
-                <div class="version-tab-bar">
-                    <button class="tab-btn active" onclick="switchVideoTab('v2_cn', this)">
-                        <i class="fa-solid fa-video"></i> 电影级 v2 中文成片
-                    </button>
-                    <button class="tab-btn" onclick="switchVideoTab('v2_en', this)">
-                        <i class="fa-solid fa-language"></i> 电影级 v2 英文成片
-                    </button>
-                    <button class="tab-btn" onclick="switchVideoTab('v1_cn', this)">
-                        <i class="fa-solid fa-film"></i> 营销短视频 v1
-                    </button>
+                <!-- 分发场景模式选择 -->
+                <div class="dispatch-mode-selector">
+                    <div class="mode-card active" id="mode-single" onclick="setDispatchMode('single')">
+                        <input type="radio" name="dispatch_mode" checked>
+                        <div>
+                            <div class="mode-title">标准单视频分发模式</div>
+                            <div class="mode-desc">只把当前选中的这 1 条视频分发至右侧手动勾选的平台</div>
+                        </div>
+                    </div>
+                    <div class="mode-card" id="mode-bilingual" onclick="setDispatchMode('bilingual')">
+                        <input type="radio" name="dispatch_mode">
+                        <div>
+                            <div class="mode-title">中英双语智能分发模式</div>
+                            <div class="mode-desc">中文成片自动发布至国内平台，英文成片自动发布至海外平台</div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- 大尺寸 16:9 视频播放盒 -->
+                <!-- 本地视频选择与浏览条 -->
+                <div class="file-select-banner">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <i class="fa-solid fa-file-video" style="font-size:20px; color:var(--accent-cyan);"></i>
+                        <div>
+                            <div style="font-size:13px; font-weight:700; color:#fff;" id="selected-video-filename">富氢热灸贴_中文宣传片_电影级_v2_成片.mp4</div>
+                            <div style="font-size:11px; color:var(--text-muted);" id="selected-video-filepath">路径: /Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4</div>
+                        </div>
+                    </div>
+                    <button class="btn-file-browse" onclick="document.getElementById('local-file-input').click()">
+                        <i class="fa-solid fa-folder-open"></i> 浏览更换本地视频
+                    </button>
+                    <input type="file" id="local-file-input" accept="video/*" style="display:none;" onchange="handleLocalFileSelect(this)">
+                </div>
+
+                <!-- 16:9 大画幅视频预览框 -->
                 <div class="large-video-box">
                     <video id="main-video" controls src="/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4"></video>
                     <div class="video-meta-bar">
-                        <span><i class="fa-solid fa-folder-open" style="margin-right:6px;"></i> 路径: <span id="video-path-text" style="color:#fff;">富氢热灸贴_中文宣传片_电影级_v2_成片.mp4</span></span>
+                        <span><i class="fa-solid fa-film" style="margin-right:6px;"></i> 实时视频流预览</span>
                         <span><i class="fa-solid fa-hard-drive" style="margin-right:6px;"></i> 大小: 42.9 MB</span>
                     </div>
                 </div>
 
-                <!-- 完整视频标题与正文输入区 -->
+                <!-- 视频标题与描述编辑 -->
                 <div class="form-group" style="margin-top: 20px;">
                     <label><i class="fa-solid fa-heading" style="color:var(--accent-cyan); margin-right:6px;"></i> 视频分发标题 (Title)</label>
                     <input type="text" id="post-title" class="form-control" value="久坐一天，肩颈又石化了？富氢热灸贴温氢双护">
@@ -491,12 +563,20 @@
             </div>
         </div>
 
-        <!-- 右侧：紧凑型矩阵平台选择侧栏 (占比 36%) -->
+        <!-- 右侧：紧凑型矩阵平台选择侧栏 (默认都不勾选，避免误点) -->
         <div class="right-sidebar">
+            <div class="summary-bar">
+                <div>
+                    <strong style="color:var(--accent-gold);"><i class="fa-solid fa-check-double"></i> 分发任务概览：</strong>
+                    <span id="selected-summary-text">当前勾选 0 个平台</span>
+                </div>
+                <button onclick="clearAllSelections()" style="background:none; border:none; color:var(--accent-red); font-size:11px; cursor:pointer;">重置选单</button>
+            </div>
+
             <!-- 国内平台阵列 -->
             <div class="glass-panel" style="padding: 16px;">
                 <div class="section-header" style="margin-bottom:10px;">
-                    <span style="font-size:13px; color:#fff;"><i class="fa-solid fa-flag" style="color:var(--accent-orange); margin-right:6px;"></i> 🇨🇳 国内 8 大平台矩阵</span>
+                    <span style="font-size:13px; color:#fff;"><i class="fa-solid fa-flag" style="color:var(--accent-orange); margin-right:6px;"></i> 🇨🇳 国内 8 大平台</span>
                     <span style="font-size:11px; color:var(--accent-cyan); cursor:pointer;" onclick="toggleCategory('cn')">全选/取消</span>
                 </div>
                 <div class="compact-platform-grid" id="cn-mini-grid"></div>
@@ -505,16 +585,16 @@
             <!-- 国际平台阵列 -->
             <div class="glass-panel" style="padding: 16px;">
                 <div class="section-header" style="margin-bottom:10px;">
-                    <span style="font-size:13px; color:#fff;"><i class="fa-solid fa-globe" style="color:var(--accent-cyan); margin-right:6px;"></i> 🌏 国际 6 大海外平台</span>
+                    <span style="font-size:13px; color:#fff;"><i class="fa-solid fa-globe" style="color:var(--accent-cyan); margin-right:6px;"></i> 🌏 国际 6 大平台</span>
                     <span style="font-size:11px; color:var(--accent-cyan); cursor:pointer;" onclick="toggleCategory('global')">全选/取消</span>
                 </div>
                 <div class="compact-platform-grid" id="global-mini-grid"></div>
             </div>
 
-            <!-- 本地引擎控制与防重阻断说明 -->
+            <!-- 安全防护底栏 -->
             <div class="glass-panel" style="padding: 14px; font-size:11px; color:var(--text-muted); line-height:1.5;">
                 <i class="fa-solid fa-shield-halved" style="color:var(--accent-gold); margin-right:4px;"></i>
-                <strong style="color:var(--accent-gold);">四重防重复死锁控制：</strong> 系统会自动比对历史 Ledger，任何已发布的平台均会被强制锁死（🔒），绝对阻断重复分发。
+                <strong style="color:var(--accent-gold);">安全防重阻断：</strong> 平台必须手动勾选才会触发推送。系统会自动拦截历史已成功的平台，绝不重复发送。
             </div>
         </div>
     </div>
@@ -522,14 +602,14 @@
     <!-- 确认二次弹窗 Modal -->
     <div id="confirm-modal" class="modal-overlay">
         <div class="modal-content glass-panel">
-            <h3 style="font-size: 17px; color: #fff; margin-bottom: 12px;"><i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-orange)"></i> 确认启动并发自动推送</h3>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.6;">
-                即将为您选中的 <span id="confirm-count" style="color:var(--accent-cyan); font-weight:800;">0</span> 个平台进行无感后台并发分发。<br>
-                Playwright 无头引擎将自动调度 Cookie 金库完成静默提交。
-            </p>
+            <h3 style="font-size: 17px; color: #fff; margin-bottom: 12px;"><i class="fa-solid fa-paper-plane" style="color:var(--accent-cyan)"></i> 确认分发以下视频</h3>
+            <div style="background:rgba(0,0,0,0.4); border-radius:10px; padding:12px; margin-bottom:16px; font-size:12px;">
+                <div style="color:var(--accent-gold); font-weight:700; margin-bottom:4px;" id="confirm-video-name">富氢热灸贴_中文宣传片_电影级_v2_成片.mp4</div>
+                <div style="color:var(--text-muted);">目标平台数：<span id="confirm-count" style="color:var(--accent-cyan); font-weight:800;">0</span> 个</div>
+            </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button onclick="closeConfirmDialog()" style="background: rgba(255,255,255,0.1); border:none; padding: 8px 18px; border-radius: 8px; color:#fff; cursor:pointer; font-size:13px;">取消</button>
-                <button onclick="confirmAndDispatch()" class="btn-primary" style="padding:8px 20px; font-size:13px;">立即开始分发</button>
+                <button onclick="confirmAndDispatch()" class="btn-primary" style="padding:8px 20px; font-size:13px;">确认并开始发送</button>
             </div>
         </div>
     </div>
@@ -564,35 +644,28 @@
             { id: "tiktok", name: "TikTok", cat: "global", color: "#00f2fe", icon: "fa-tiktok" }
         ];
 
-        const VIDEO_DATA = {
-            "v2_cn": {
-                title: "久坐一天，肩颈又石化了？富氢热灸贴温氢双护",
-                desc: "久坐一天，肩颈又石化了？\n不是暖贴不够热，是只给皮肤烤了个表面。\n这次用的是富氢热灸贴——道地艾草 × 固态氢材料，热的时候氢分子同步工作，80×205mm 的大贴幅服帖整个肩颈和腰背。\n不燥不闷，一觉可以贴着睡。\n体感这个东西，说再多不如试一次。\n木齐科技 自研固态氢 | www.emuqi.com",
-                src: "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4"
-            },
-            "v2_en": {
-                title: "Hydrogen Moxibustion Patch: Warmth & Hydrogen Dual Protection for Neck & Back",
-                desc: "Sitting all day leaving your shoulders stiff?\nTraditional warm patches only heat the surface.\nDiscover the Hydrogen Moxibustion Patch — combining natural mugwort & solid hydrogen material. Hydrogen molecules work in sync with deep thermal relief across a large 80×205mm surface.\nMUQI TECH | Solid Hydrogen R&D | www.emuqi.com",
-                src: "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_英文宣传片_电影级_v2_成片.mp4"
-            },
-            "v1_cn": {
-                title: "【给身体做一场微风拂过的休憩】富氢热灸贴",
-                desc: "告别传统发热贴的表面燥热，体验固态氢能与艾草热灸的深度滋养。",
-                src: "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴营销短视频_中文配音版_v1_成片.mp4"
+        let currentDispatchMode = 'single';
+
+        function setDispatchMode(mode) {
+            currentDispatchMode = mode;
+            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+            if (mode === 'single') {
+                document.getElementById('mode-single').classList.add('active');
+                document.getElementById('mode-single').querySelector('input').checked = true;
+            } else {
+                document.getElementById('mode-bilingual').classList.add('active');
+                document.getElementById('mode-bilingual').querySelector('input').checked = true;
+                alert("💡 双语智能分发模式已开启：国内平台将自动取用中文版视频，海外平台将自动取用英文版视频。");
             }
-        };
+        }
 
-        function switchVideoTab(key, btnEl) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btnEl.classList.add('active');
-
-            const item = VIDEO_DATA[key];
-            if (item) {
-                document.getElementById('post-title').value = item.title;
-                document.getElementById('post-desc').value = item.desc;
-                document.getElementById('main-video').src = item.src;
-                document.getElementById('video-path-text').innerText = item.src.split('/').pop();
-                refreshSessionStatus();
+        function handleLocalFileSelect(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                document.getElementById('selected-video-filename').innerText = file.name;
+                document.getElementById('selected-video-filepath').innerText = `已选择本地文件: ${file.name}`;
+                const objectUrl = URL.createObjectURL(file);
+                document.getElementById('main-video').src = objectUrl;
             }
         }
 
@@ -602,10 +675,14 @@
 
             PLATFORMS.forEach(p => {
                 const card = document.createElement('div');
-                card.className = 'platform-mini-card selected';
+                // 【核心修正】默认未选中 (不加 selected 类)，由用户自主勾选
+                card.className = 'platform-mini-card';
                 card.id = `card-${p.id}`;
                 card.setAttribute('data-platform-id', p.id);
-                card.onclick = () => card.classList.toggle('selected');
+                card.onclick = () => {
+                    card.classList.toggle('selected');
+                    updateSelectedSummary();
+                };
 
                 card.innerHTML = `
                     <div class="mini-card-top">
@@ -626,9 +703,20 @@
                 if (p.cat === 'cn') cnGrid.appendChild(card);
                 else globalGrid.appendChild(card);
             });
+            updateSelectedSummary();
         }
 
         renderMiniGrids();
+
+        function updateSelectedSummary() {
+            const selected = document.querySelectorAll('.platform-mini-card.selected');
+            document.getElementById('selected-summary-text').innerText = `已勾选 ${selected.length} / 14 个平台`;
+        }
+
+        function clearAllSelections() {
+            document.querySelectorAll('.platform-mini-card').forEach(c => c.classList.remove('selected'));
+            updateSelectedSummary();
+        }
 
         function toggleCategory(cat) {
             const list = PLATFORMS.filter(p => p.cat === cat);
@@ -638,6 +726,7 @@
                 if (allSelected) card.classList.remove('selected');
                 else card.classList.add('selected');
             });
+            updateSelectedSummary();
         }
 
         async function refreshSessionStatus() {
@@ -645,7 +734,7 @@
                 const res = await fetch('http://localhost:5001/api/status');
                 const data = await res.json();
 
-                const currentVideo = document.getElementById('main-video').getAttribute('src').split('/').pop();
+                const currentVideo = document.getElementById('selected-video-filename').innerText;
                 const pubMap = data.published_map || {};
                 const currentPubs = pubMap[currentVideo] || {};
                 const sessions = data.sessions || {};
@@ -656,7 +745,6 @@
                     const pubInfo = currentPubs[p.id];
                     const sess = sessions[p.id] || {};
 
-                    // 1. 登录与凭证状态真实渲染
                     if (sess.logged_in) {
                         if (pill) {
                             pill.style.color = "var(--accent-teal)";
@@ -665,11 +753,10 @@
                     } else {
                         if (pill) {
                             pill.style.color = "var(--accent-orange)";
-                            pill.innerHTML = `🔑 需扫码登录`;
+                            pill.innerHTML = `🔑 需扫码`;
                         }
                     }
 
-                    // 2. 已发布拦截防重渲染
                     if (pubInfo && card) {
                         card.style.borderColor = 'var(--accent-gold)';
                         let existingPill = card.querySelector('.pub-lock-tag');
@@ -706,9 +793,10 @@
         function openConfirmDialog() {
             const selected = document.querySelectorAll('.platform-mini-card.selected');
             if (selected.length === 0) {
-                alert("请至少选择 1 个分发平台！");
+                alert("⚠️ 请至少手动勾选 1 个要推送的平台！");
                 return;
             }
+            document.getElementById('confirm-video-name').innerText = document.getElementById('selected-video-filename').innerText;
             document.getElementById('confirm-count').innerText = selected.length;
             document.getElementById('confirm-modal').style.display = 'flex';
         }
@@ -771,7 +859,9 @@
 
             const title = document.getElementById('post-title').value;
             const desc = document.getElementById('post-desc').value;
-            const videoSrc = document.getElementById('main-video').getAttribute('src');
+            
+            const cnVideo = "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4";
+            const enVideo = "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_英文宣传片_电影级_v2_成片.mp4";
 
             activePlatforms.forEach(p => {
                 const item = document.createElement('div');
@@ -790,13 +880,19 @@
             });
 
             for (const p of activePlatforms) {
+                // 根据模式分配视频资产
+                let targetVideo = cnVideo;
+                if (currentDispatchMode === 'bilingual' && p.cat === 'global') {
+                    targetVideo = enVideo;
+                }
+
                 try {
                     const startRes = await fetch('http://localhost:5001/api/start-upload-task', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
                             platform_id: p.id,
-                            video_file: videoSrc,
+                            video_file: targetVideo,
                             title: title,
                             desc: desc,
                             tags: ["富氢热灸贴", "木齐科技", "温氢双护"]
