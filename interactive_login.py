@@ -23,8 +23,8 @@ PLATFORMS = {
     },
     "zhihu": {
         "name": "知乎",
-        "url": "https://www.zhihu.com/zvideo/upload-video",
-        "success_indicator": "upload-video",
+        "url": "https://www.zhihu.com/signin",
+        "success_indicator": "zhihu.com",
         "cookie_file": "zhihu_default.json"
     }
 }
@@ -36,7 +36,10 @@ async def login_platform(platform_key):
     print(f"  请在弹出的浏览器中用手机 App 扫码登录！")
     print(f"==================================================\n")
 
-    from patchright.async_api import async_playwright
+    try:
+        from patchright.async_api import async_playwright
+    except ImportError:
+        from playwright.async_api import async_playwright
 
     async with async_playwright() as p:
         # 打开真实的有头浏览器窗口 (headless=False)
@@ -55,23 +58,26 @@ async def login_platform(platform_key):
         while time.time() < deadline:
             await asyncio.sleep(2)
             curr_url = page.url
-            # 检测是否跳转到创作者后台
-            if info["success_indicator"] in curr_url and "login" not in curr_url.lower() and "auth" not in curr_url.lower() and "signin" not in curr_url.lower():
-                state = await context.storage_state()
+            state = await context.storage_state()
 
-                if platform_key == "zhihu":
-                    has_zc0 = any(c.get("name") == "z_c0" for c in state.get("cookies", []))
-                    if not has_zc0:
-                        print("⏳ 等待知乎 z_c0 登录 Session 写入...")
-                        await asyncio.sleep(2)
-                        continue
+            # 专属平台的精确登录成功条件判断
+            if platform_key == "zhihu":
+                has_zc0 = any(c.get("name") == "z_c0" for c in state.get("cookies", []))
+                is_logged_in = has_zc0 and "signin" not in curr_url.lower()
+            else:
+                is_logged_in = (
+                    info["success_indicator"] in curr_url 
+                    and "login" not in curr_url.lower() 
+                    and "auth" not in curr_url.lower() 
+                    and "signin" not in curr_url.lower()
+                )
 
-                print(f"🎉 检测到【{info['name']}】已成功登录！当前页面: {curr_url}")
-                # 额外等待 3 秒确保 Cookie 完整写入 Context
-                await asyncio.sleep(3)
+            if is_logged_in:
+                print(f"🎉 检测到【{info['name']}】已成功登录并捕获凭证！当前页面: {curr_url}")
+                await asyncio.sleep(2)
                 state = await context.storage_state()
                 
-                # 保存到两个 Cookie 目录
+                # 保存 Cookie 到两个目录
                 for target_dir in [SAU_COOKIES, LOCAL_COOKIES]:
                     os.makedirs(target_dir, exist_ok=True)
                     target_path = os.path.join(target_dir, info["cookie_file"])
