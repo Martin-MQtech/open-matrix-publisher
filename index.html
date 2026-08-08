@@ -348,37 +348,56 @@
             margin-bottom: 16px;
         }
 
-        .ai-portal-grid-3 {
+        /* 专注 豆包 与 Kimi 两大 AI 门户双栏布局 */
+        .ai-portal-grid-2 {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             margin-top: 12px;
             margin-bottom: 12px;
         }
 
-        .portal-btn-large {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.14);
+        .portal-card-box {
+            background: rgba(6, 9, 17, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .portal-card-box:hover {
+            border-color: var(--accent-purple);
+        }
+
+        .portal-card-title {
+            font-size: 13px;
+            font-weight: 700;
             color: #fff;
-            padding: 10px 12px;
-            border-radius: 10px;
-            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-action-small {
+            background: rgba(0, 230, 255, 0.15);
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
             font-weight: 700;
             cursor: pointer;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
             gap: 4px;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
         }
 
-        .portal-btn-large:hover {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 230, 255, 0.15);
-            color: var(--accent-cyan);
-            box-shadow: 0 4px 15px rgba(0, 230, 255, 0.2);
-            transform: translateY(-1px);
+        .btn-action-small:hover {
+            background: var(--accent-cyan);
+            color: #000;
         }
 
         .form-group {
@@ -597,7 +616,7 @@
             <div class="glass-panel" style="padding: 24px;">
                 <div class="section-header">
                     <span><i class="fa-solid fa-clapperboard" style="margin-right:8px;"></i> 待分发视频资产选择与编辑</span>
-                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 零 API 成本 · 自动化驱动免费 AI 网页生成填入</span>
+                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 专精 豆包 / Kimi 免费网页交互与人机精选</span>
                 </div>
 
                 <!-- 分发场景模式选择 -->
@@ -648,7 +667,7 @@
                         <i class="fa-solid fa-pen-to-square"></i> 模式一：手动自主撰写 / 模板套用
                     </button>
                     <button class="copy-tab-btn" id="tab-ai" onclick="setCopyMode('ai')">
-                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：国民级 3 大免费 AI 自动化撰写填入
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：豆包 / Kimi 免费网页助手 (自主对话精选)
                     </button>
                 </div>
 
@@ -661,34 +680,58 @@
                     <button class="chip-btn" style="color:var(--accent-red);" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> 清空文本</button>
                 </div>
 
-                <!-- 模式二 国民级 3 大免费 AI 平台自动化撰写控制面板 -->
+                <!-- 模式二 专精 豆包 与 Kimi 两大免费 AI 交互选方案 -->
                 <div id="ai-generator-box" class="ai-generator-panel" style="display:none;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-brain"></i> 国民级 3 大免费 AI 自动撰写引擎</span>
-                        <span style="font-size:11px; color:var(--accent-teal);">用户账号登录 · 0 成本调用</span>
+                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-comments"></i> 豆包 & Kimi 免费网页端交互助手</span>
+                        <span style="font-size:11px; color:var(--accent-teal);">提示词自动净化 · 人工精选喜欢的版本</span>
                     </div>
 
-                    <!-- 3 大常用免费 AI 自动化生成按钮 -->
-                    <div class="ai-portal-grid-3">
-                        <button class="portal-btn-large" id="btn-ai-doubao" onclick="triggerAutoFreeAi('doubao')">
-                            <span>🫘 豆包 (Doubao)</span>
-                            <span style="font-size:10px; color:var(--text-muted);">⚡ 1键自动调用生成</span>
-                        </button>
-                        <button class="portal-btn-large" id="btn-ai-kimi" onclick="triggerAutoFreeAi('kimi')">
-                            <span>🌙 Kimi 智能助手</span>
-                            <span style="font-size:10px; color:var(--text-muted);">⚡ 1键自动调用生成</span>
-                        </button>
-                        <button class="portal-btn-large" id="btn-ai-tongyi" onclick="triggerAutoFreeAi('tongyi')">
-                            <span>🌌 通义千问</span>
-                            <span style="font-size:10px; color:var(--text-muted);">⚡ 1键自动调用生成</span>
-                        </button>
+                    <!-- 双 AI 卡片 -->
+                    <div class="ai-portal-grid-2">
+                        <!-- 豆包卡片 -->
+                        <div class="portal-card-box">
+                            <div class="portal-card-title">
+                                <span>🫘 豆包 (Doubao)</span>
+                                <span style="font-size:10px; color:var(--accent-teal);">已登录免登</span>
+                            </div>
+                            <div style="font-size:11px; color:var(--text-muted);">擅长爆款短视频口播与社交种草文案</div>
+                            <div style="display:flex; gap:6px; margin-top:4px;">
+                                <button class="btn-action-small" onclick="openAiWebPage('doubao')">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> 打开交互网页
+                                </button>
+                                <button class="btn-action-small" style="border-color:rgba(255,255,255,0.2); color:#fff; background:none;" onclick="triggerAutoFreeAi('doubao')">
+                                    <i class="fa-solid fa-robot"></i> 极速预设填入
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Kimi 卡片 -->
+                        <div class="portal-card-box">
+                            <div class="portal-card-title">
+                                <span>🌙 Kimi 智能助手</span>
+                                <span style="font-size:10px; color:var(--accent-teal);">已登录免登</span>
+                            </div>
+                            <div style="font-size:11px; color:var(--text-muted);">擅长长文本深度分析与高客单产品亮点</div>
+                            <div style="display:flex; gap:6px; margin-top:4px;">
+                                <button class="btn-action-small" onclick="openAiWebPage('kimi')">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> 打开交互网页
+                                </button>
+                                <button class="btn-action-small" style="border-color:rgba(255,255,255,0.2); color:#fff; background:none;" onclick="triggerAutoFreeAi('kimi')">
+                                    <i class="fa-solid fa-robot"></i> 极速预设填入
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- 辅助手动剪贴板解析 -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                        <span style="font-size:11px; color:var(--text-muted);">也可以网页生成后复制：</span>
-                        <button onclick="parseFromClipboard()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:var(--text-main); padding:4px 10px; border-radius:6px; font-size:11px; cursor:pointer;">
-                            <i class="fa-solid fa-paste"></i> 📋 剪贴板识别填入
+                    <!-- 人工精选从剪贴板一键认领 -->
+                    <div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:11px; color:var(--text-main);">
+                            <i class="fa-solid fa-hand-pointer" style="color:var(--accent-gold); margin-right:4px;"></i>
+                            在豆包/Kimi 聊出最满意的文案后，直接复制，点击右侧认领 ➔
+                        </span>
+                        <button onclick="parseFromClipboard()" style="background:linear-gradient(135deg, var(--accent-purple), #6366f1); border:none; color:#fff; padding:6px 14px; border-radius:8px; font-weight:700; font-size:11px; cursor:pointer;">
+                            <i class="fa-solid fa-paste"></i> 📋 填入我选中的文案
                         </button>
                     </div>
                 </div>
@@ -792,36 +835,49 @@
             { id: "tiktok", name: "TikTok", cat: "global", color: "#00f2fe", icon: "fa-tiktok" }
         ];
 
+        const AI_PORTALS = {
+            "doubao": "https://www.doubao.com/chat/",
+            "kimi": "https://kimi.moonshot.cn/"
+        };
+
         let currentDispatchMode = 'single';
 
+        function getCleanTopic() {
+            let fn = document.getElementById('selected-video-filename').innerText;
+            fn = fn.replace(/\.(mp4|mov|avi|mkv)$/i, '');
+            fn = fn.replace(/_(中文|英文|宣传片|电影级|成片|v\d+)/g, '');
+            return fn.trim() || "富氢热灸贴";
+        }
+
+        function openAiWebPage(key) {
+            const cleanTopic = getCleanTopic();
+            const promptText = `请帮我为【${cleanTopic}】写一段短视频爆款发布文案：\n标题：（控制在 28 字以内，吸引眼球）\n正文：（突出核心痛点与特点）`;
+            
+            navigator.clipboard.writeText(promptText).then(() => {
+                alert(`📋 已自动为您净化文件名！清洗后的主题提示词【${cleanTopic}】已复制到剪贴板。\n即将在浏览器打开 ${key.toUpperCase()} 网页，按 Cmd+V / Ctrl+V 即可粘贴对话！`);
+                window.open(AI_PORTALS[key], '_blank');
+            }).catch(() => {
+                window.open(AI_PORTALS[key], '_blank');
+            });
+        }
+
         async function triggerAutoFreeAi(provider) {
-            const btn = document.getElementById(`btn-ai-${provider}`);
-            const origHtml = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> AI 生成中...`;
-            btn.disabled = true;
-
-            const videoName = document.getElementById('selected-video-filename').innerText;
-
+            const cleanTopic = getCleanTopic();
             try {
                 const res = await fetch('http://localhost:5001/api/generate-free-ai', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ provider: provider, topic: videoName })
+                    body: JSON.stringify({ provider: provider, topic: cleanTopic })
                 });
                 const data = await res.json();
 
                 if (data.status === 'success' && data.title) {
                     document.getElementById('post-title').value = data.title;
                     document.getElementById('post-desc').value = data.desc;
-                    alert(`🎉 成功通过免费 ${provider.toUpperCase()} 自动撰写并填入文案！`);
-                } else {
-                    alert("⚠️ 网页 AI 生成响应完成，请检查是否有提示词需调整。");
+                    alert(`🎉 已为您自动填充经过清洗后的文案！`);
                 }
             } catch (err) {
                 alert("⚠️ 无法连接本地 Python AI 接口服务！");
-            } finally {
-                btn.innerHTML = origHtml;
-                btn.disabled = false;
             }
         }
 
@@ -829,7 +885,7 @@
             try {
                 const text = await navigator.clipboard.readText();
                 if (!text || text.trim().length === 0) {
-                    alert("⚠️ 剪贴板为空，请先在 AI 对话框中复制文案！");
+                    alert("⚠️ 剪贴板为空，请先在豆包或 Kimi 对话框中复制您选中的满意的文案！");
                     return;
                 }
                 
@@ -842,7 +898,7 @@
                         let remaining = lines.slice(1).join('\n').replace(/^正文[：:]\s*/, '');
                         document.getElementById('post-desc').value = remaining;
                     }
-                    alert("🎉 已成功从剪贴板自动解析并填入标题与正文！");
+                    alert("🎉 成功领用您在 AI 网页中精选的满意文案！已自动填入下方框内！");
                 }
             } catch (err) {
                 alert("⚠️ 请允许浏览器读取剪贴板权限，或者直接手动粘贴！");
