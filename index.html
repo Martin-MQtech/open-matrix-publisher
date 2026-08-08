@@ -348,59 +348,37 @@
             margin-bottom: 16px;
         }
 
-        .ai-portal-grid {
+        /* 精简为国民级 3 大免费 AI 门户网格 (豆包 / Kimi / 通义千问) */
+        .ai-portal-grid-3 {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-top: 10px;
-            margin-bottom: 10px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+            margin-bottom: 12px;
         }
 
-        .portal-btn {
+        .portal-btn-large {
             background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             color: #fff;
-            padding: 7px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 600;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
-            transition: all 0.2s;
+            gap: 6px;
+            transition: all 0.2s ease;
         }
 
-        .portal-btn:hover {
+        .portal-btn-large:hover {
             border-color: var(--accent-cyan);
             background: rgba(0, 230, 255, 0.15);
             color: var(--accent-cyan);
-        }
-
-        .ai-style-selector {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            margin-bottom: 12px;
-        }
-
-        .ai-style-tag {
-            background: rgba(139, 92, 246, 0.15);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            color: #d8b4fe;
-            font-size: 11px;
-            padding: 4px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .ai-style-tag.active {
-            background: var(--accent-purple);
-            color: #fff;
-            border-color: var(--accent-purple);
-            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0, 230, 255, 0.2);
+            transform: translateY(-1px);
         }
 
         .form-group {
@@ -619,7 +597,7 @@
             <div class="glass-panel" style="padding: 24px;">
                 <div class="section-header">
                     <span><i class="fa-solid fa-clapperboard" style="margin-right:8px;"></i> 待分发视频资产选择与编辑</span>
-                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 支持免费 AI 网页对话一键复制识别解析</span>
+                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 国民级 3 大免费 AI (豆包/Kimi/通义) 1键唤醒</span>
                 </div>
 
                 <!-- 分发场景模式选择 -->
@@ -670,7 +648,7 @@
                         <i class="fa-solid fa-pen-to-square"></i> 模式一：手动自主撰写 / 模板套用
                     </button>
                     <button class="copy-tab-btn" id="tab-ai" onclick="setCopyMode('ai')">
-                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：免费网页 AI (豆包/Kimi/ChatGPT) 快捷助手
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：国民级 3 大免费 AI (豆包/Kimi/通义) 助手
                     </button>
                 </div>
 
@@ -683,23 +661,22 @@
                     <button class="chip-btn" style="color:var(--accent-red);" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> 清空文本</button>
                 </div>
 
-                <!-- 模式二 免费 AI 网页工具桥接面板 -->
+                <!-- 模式二 国民级 3 大免费 AI 平台快捷助手 -->
                 <div id="ai-generator-box" class="ai-generator-panel" style="display:none;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-globe"></i> 1 键唤醒免费 AI Chatbot 网页端</span>
-                        <span style="font-size:11px; color:var(--text-muted);">零 API 成本 · 生成后复制点击下面自动解析</span>
+                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-brain"></i> 国民级 3 大主流免费 AI AI Chatbot 网页端</span>
+                        <span style="font-size:11px; color:var(--text-muted);">零 API 成本 · 1键调起网页生成</span>
                     </div>
 
-                    <!-- 免费 AI 平台快捷跳转按钮 -->
-                    <div class="ai-portal-grid">
-                        <button class="portal-btn" onclick="openFreeAiPortal('doubao')">🫘 豆包 (Doubao)</button>
-                        <button class="portal-btn" onclick="openFreeAiPortal('kimi')">🌙 Kimi 智能助手</button>
-                        <button class="portal-btn" onclick="openFreeAiPortal('tongyi')">🌌 通义千问</button>
-                        <button class="portal-btn" onclick="openFreeAiPortal('chatgpt')">🤖 ChatGPT / Claude</button>
+                    <!-- 3 大常用免费 AI 按钮网格 -->
+                    <div class="ai-portal-grid-3">
+                        <button class="portal-btn-large" onclick="openFreeAiPortal('doubao')">🫘 豆包 (Doubao)</button>
+                        <button class="portal-btn-large" onclick="openFreeAiPortal('kimi')">🌙 Kimi 智能助手</button>
+                        <button class="portal-btn-large" onclick="openFreeAiPortal('tongyi')">🌌 通义千问</button>
                     </div>
 
                     <!-- 剪贴板一键智能解析按钮 -->
-                    <button onclick="parseFromClipboard()" style="width:100%; margin-top:8px; background:linear-gradient(135deg, var(--accent-purple), #6366f1); border:none; color:#fff; padding:9px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <button onclick="parseFromClipboard()" style="width:100%; margin-top:6px; background:linear-gradient(135deg, var(--accent-purple), #6366f1); border:none; color:#fff; padding:10px; border-radius:10px; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 15px rgba(139,92,246,0.3);">
                         <i class="fa-solid fa-paste"></i> 📋 1 键从剪贴板自动识别并填入标题与正文
                     </button>
                 </div>
@@ -806,8 +783,7 @@
         const AI_PORTALS = {
             "doubao": "https://www.doubao.com/chat/",
             "kimi": "https://kimi.moonshot.cn/",
-            "tongyi": "https://tongyi.aliyun.com/qianwen/",
-            "chatgpt": "https://chatgpt.com/"
+            "tongyi": "https://tongyi.aliyun.com/qianwen/"
         };
 
         let currentDispatchMode = 'single';
