@@ -20,6 +20,20 @@
 
 ---
 
+## 🖥️ Web Dashboard (GUI 可视化控制台)
+
+Open Matrix Publisher includes a **modern, local Web Dashboard** for creators who prefer a visual interface over the command line:
+
+- **1-Click Launch**: Run `./start_ui.sh` or `python3 local_bridge_server.py` and open `http://localhost:5001`
+- **Features**: Drag-and-drop video selection, copy & tag editor, real-time platform matrix status badges (`🔒 Anti-Duplicate Locked`, `✅ Cookie Ready`), and interactive terminal logs.
+
+```bash
+# Launch the Web Dashboard
+./start_ui.sh
+```
+
+---
+
 ## 🚀 AI-Native QuickStart (Zero Learning Curve)
 
 > **If you're new to command-line tools or environment setup — skip all of it.**
@@ -40,7 +54,7 @@ The agent will handle: cloning, `pip install`, cookie login, and background disp
 
 ---
 
-## 🛠️ Manual Setup (Developer)
+## 🛠️ Manual Setup & Web UI Usage
 
 ### 1. Clone
 ```bash
@@ -54,16 +68,20 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-### 3. Login & Save Cookies
+### 3. Option A: Launch Web GUI Dashboard
+```bash
+./start_ui.sh
+# Opens http://localhost:5001 automatically in your browser
+```
+
+### 4. Option B: CLI / Script Campaign
+Scan QR code for one-time cookie setup:
 ```bash
 python3 qr_login_manager.py
 ```
-Scan the QR code for each platform once. Sessions are saved to `cookies/` and reused silently on every subsequent run.
-
-### 4. Run a Campaign
-Copy `examples/my_campaign.py`, edit the `CONFIG` section with your video path and copy, then:
+Then run campaign via CLI or config file:
 ```bash
-python3 examples/my_campaign.py
+python3 dispatch.py --config /path/to/your/campaign.json
 ```
 
 ---
@@ -72,30 +90,26 @@ python3 examples/my_campaign.py
 
 ```
 open-matrix-publisher/
+├── index.html                   # Web GUI Dashboard frontend
+├── start_ui.sh                  # 1-Click launcher script for Web UI
 ├── real_uploader_engine.py      # Core dispatch engine
+├── interactive_login.py         # Headed browser QR login assistant
 ├── qr_login_manager.py          # One-time login & cookie saver
 ├── cookie_extractor.py          # Chrome cookie import utility
-├── local_bridge_server.py       # Local HTTP bridge server
-├── multi_platform_dispatcher_v2.py  # High-level dispatcher
+├── local_bridge_server.py       # Local HTTP bridge server (Port 5001)
+├── dispatch.py                  # CLI dispatcher entry point
 ├── batch_dispatch_domestic.py   # Quick-run: CN platforms
 ├── batch_dispatch_global.py     # Quick-run: Global platforms
-├── open_matrix_publisher/       # Python package
-│   ├── __init__.py
-│   └── core.py
 ├── custom_uploaders/            # Per-platform upload adapters
-│   ├── tiktok_adapter.py
-│   ├── x_uploader.py
-│   ├── linkedin_uploader.py
-│   ├── facebook_uploader.py
-│   ├── instagram_uploader.py
+│   ├── toutiao_uploader.py
 │   ├── weibo_uploader.py
 │   ├── zhihu_uploader.py
-│   └── toutiao_uploader.py
+│   ├── facebook_uploader.py
+│   └── ...
 ├── cookies/                     # Session storage (git-ignored)
 ├── examples/
-│   └── my_campaign.py          # Template for your own campaign
+│   └── campaign_template.json   # Template for your campaign
 ├── docs/                        # Architecture & strategy docs
-├── platform_credentials.template.json
 ├── requirements.txt
 └── .gitignore
 ```
@@ -128,7 +142,7 @@ See [`docs/ADVANCED_AUTOMATION_ARCHITECTURE.md`](docs/ADVANCED_AUTOMATION_ARCHIT
 
 ## 🗺️ Roadmap
 
-- [ ] Web dashboard (local) for drag-and-drop dispatch
+- [x] Web dashboard (local UI) with 1-click launcher `./start_ui.sh`
 - [ ] Scheduled / recurring dispatch (cron)
 - [ ] OAuth official API integrations (YouTube, LinkedIn)
 - [ ] Plugin system for custom uploaders
