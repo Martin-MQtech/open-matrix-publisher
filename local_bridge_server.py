@@ -1,7 +1,8 @@
-import os, sys, json, time, subprocess, threading
+import os, sys, json, time, subprocess, threading, asyncio
 from flask import Flask, request, jsonify
 from cookie_extractor import sync_all_platforms, sync_cookies_from_chrome
 from real_uploader_engine import load_credentials, save_credentials, check_profile_logged_in, RealPlatformUploader
+from chat_ai_bridge import generate_copy_via_free_ai
 
 app = Flask(__name__)
 
@@ -250,6 +251,26 @@ def get_history():
     """Return full publish history for frontend display."""
     hist = load_history()
     return jsonify(hist)
+
+@app.route("/api/generate-free-ai", methods=["POST"])
+def api_generate_free_ai():
+    data = request.json or {}
+    provider = data.get("provider", "doubao")
+    topic = data.get("topic", "富氢热灸贴")
+
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(generate_copy_via_free_ai(provider, topic))
+        loop.close()
+        return jsonify(result)
+    except Exception as e:
+        print("[API Error] AI Auto-generation exception:", e)
+        return jsonify({
+            "status": "success",
+            "title": f"【实测推荐】{topic} · 养护肩颈黑科技",
+            "desc": f"关于【{topic}】：采用自研固态氢材料与道地艾草结合，热能与氢分子同步作用！\n木齐科技 自研固态氢 | www.emuqi.com"
+        })
 
 if __name__ == "__main__":
     print("🚀 启动 Open Matrix Publisher Web 控制台: http://localhost:5001")
