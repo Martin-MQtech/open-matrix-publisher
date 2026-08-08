@@ -21,16 +21,23 @@ def save_credentials(data):
 def check_profile_logged_in(platform_id):
     sau_cookies_dir = f"{SAU_ROOT}/cookies"
     cookie_file = os.path.join(sau_cookies_dir, f"{platform_id}_default.json")
-    if os.path.exists(cookie_file) and os.path.getsize(cookie_file) > 10:
-        return True, f"✅ 已载入 Workbuddy {platform_id} 登录凭证"
     
-    # Fallback to local profile check
-    profile_dir = os.path.expanduser(f"~/.config/codex_video_dispatch/chromium_profiles/{platform_id}")
-    state_json = os.path.join(profile_dir, "state.json")
-    if os.path.exists(state_json) and os.path.getsize(state_json) > 10:
-        return True, "✅ 账号凭证已就绪"
-        
-    return False, "📱 需登录/凭证初始化"
+    if not os.path.exists(cookie_file) or os.path.getsize(cookie_file) < 100:
+        return False, "🔑 需扫码登录"
+
+    # 特殊平台深度 Cookie Token 校验
+    if platform_id == "zhihu":
+        try:
+            with open(cookie_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            cookies = data.get("cookies", [])
+            has_zc0 = any(c.get("name") == "z_c0" for c in cookies)
+            if not has_zc0:
+                return False, "🔑 需扫码登录 (缺少 z_c0 密钥)"
+        except Exception:
+            return False, "🔑 需扫码登录"
+
+    return True, "✅ 已登录"
 
 class RealPlatformUploader:
     def __init__(self, platform_id, video_path, title, desc, tags=None):

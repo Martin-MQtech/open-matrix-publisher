@@ -60,13 +60,13 @@ def get_status():
 
     creds = load_credentials()
     session_status = {}
-    rpa_platforms = ["douyin", "sph", "xhs", "kuaishou", "bilibili", "weibo", "haokan", "xigua"]
+    all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok"]
     
-    for pid in rpa_platforms:
+    for pid in all_platforms:
         is_logged, msg = check_profile_logged_in(pid)
         session_status[pid] = {
             "logged_in": is_logged,
-            "status_text": "✅ 自动提取 Mac Chrome Cookie 成功" if is_logged else "📱 需扫码/暂无Cookie"
+            "status_text": msg
         }
 
     history = load_history()

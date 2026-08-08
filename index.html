@@ -618,7 +618,7 @@
                         <div class="checkbox-mini"><i class="fa-solid fa-check"></i></div>
                     </div>
                     <div class="mini-card-bottom">
-                        <span id="status-pill-${p.id}" style="color:var(--accent-teal); font-weight:600;">✅ 就绪</span>
+                        <span id="status-pill-${p.id}" style="color:var(--text-muted); font-weight:600;">⏳ 校验中...</span>
                         <button class="btn-qr-mini" onclick="launchQrLogin('${p.id}', event)"><i class="fa-solid fa-qrcode"></i> 扫码</button>
                     </div>
                 `;
@@ -648,10 +648,28 @@
                 const currentVideo = document.getElementById('main-video').getAttribute('src').split('/').pop();
                 const pubMap = data.published_map || {};
                 const currentPubs = pubMap[currentVideo] || {};
+                const sessions = data.sessions || {};
 
                 PLATFORMS.forEach(p => {
                     const card = document.getElementById(`card-${p.id}`);
+                    const pill = document.getElementById(`status-pill-${p.id}`);
                     const pubInfo = currentPubs[p.id];
+                    const sess = sessions[p.id] || {};
+
+                    // 1. 登录与凭证状态真实渲染
+                    if (sess.logged_in) {
+                        if (pill) {
+                            pill.style.color = "var(--accent-teal)";
+                            pill.innerHTML = `✅ 已登录`;
+                        }
+                    } else {
+                        if (pill) {
+                            pill.style.color = "var(--accent-orange)";
+                            pill.innerHTML = `🔑 需扫码登录`;
+                        }
+                    }
+
+                    // 2. 已发布拦截防重渲染
                     if (pubInfo && card) {
                         card.style.borderColor = 'var(--accent-gold)';
                         let existingPill = card.querySelector('.pub-lock-tag');
