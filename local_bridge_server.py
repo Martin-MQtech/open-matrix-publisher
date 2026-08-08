@@ -246,4 +246,5 @@ def get_history():
     return jsonify(hist)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    print("🚀 启动 Open Matrix Publisher Web 控制台: http://localhost:5001")
+    app.run(host="0.0.0.0", port=5001, debug=False)

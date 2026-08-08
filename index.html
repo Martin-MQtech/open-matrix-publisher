@@ -355,7 +355,7 @@
     <div class="header-links">
       <div class="status-badge">
         <div class="status-dot"></div>
-        <span>本地引擎运行中 (Port 5000)</span>
+        <span>本地引擎运行中 (Port 5001)</span>
       </div>
       <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank" class="btn-github">
         <i class="fa-brands fa-github"></i> GitHub
@@ -479,7 +479,7 @@
 
     async function fetchEngineStatus() {
       try {
-        const res = await fetch("http://localhost:5000/api/status");
+        const res = await fetch("http://localhost:5001/api/status");
         const data = await res.json();
         publishedStatusMap = data.published_map || {};
         renderPlatforms(data);
@@ -568,7 +568,7 @@
       for (const platformId of selectedPlatforms) {
         logMsg(`正在提交平台发布指令: ${platformId}...`);
         try {
-          const res = await fetch("http://localhost:5000/api/start-upload-task", {
+          const res = await fetch("http://localhost:5001/api/start-upload-task", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
