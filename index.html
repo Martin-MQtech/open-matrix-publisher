@@ -179,7 +179,6 @@
             border-bottom: 1px solid rgba(0, 230, 255, 0.15);
         }
 
-        /* 模式选择 Radio Cards */
         .dispatch-mode-selector {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -220,7 +219,6 @@
             margin-top: 2px;
         }
 
-        /* 本地文件选择区 */
         .file-select-banner {
             display: flex;
             align-items: center;
@@ -251,7 +249,6 @@
             color: #000;
         }
 
-        /* 大画幅视频播放器区域 */
         .large-video-box {
             background: #000;
             border-radius: 14px;
@@ -280,7 +277,6 @@
             color: var(--text-muted);
         }
 
-        /* 文案创作双模式选项卡 (Manual vs AI) */
         .copy-mode-tab-bar {
             display: flex;
             align-items: center;
@@ -317,7 +313,6 @@
             box-shadow: 0 2px 10px rgba(0, 230, 255, 0.2);
         }
 
-        /* 快捷文案模板按钮组 */
         .template-chips-bar {
             display: flex;
             flex-wrap: wrap;
@@ -345,13 +340,42 @@
             background: rgba(0, 230, 255, 0.08);
         }
 
-        /* AI 智能文案助手控制盒 */
         .ai-generator-panel {
             background: rgba(139, 92, 246, 0.08);
             border: 1px solid rgba(139, 92, 246, 0.3);
             border-radius: 14px;
             padding: 16px;
             margin-bottom: 16px;
+        }
+
+        .ai-portal-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .portal-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+
+        .portal-btn:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 230, 255, 0.15);
+            color: var(--accent-cyan);
         }
 
         .ai-style-selector {
@@ -414,7 +438,6 @@
             line-height: 1.6;
         }
 
-        /* 右侧平台侧栏 */
         .right-sidebar {
             display: flex;
             flex-direction: column;
@@ -531,7 +554,6 @@
             justify-content: space-between;
         }
 
-        /* 模态弹窗 */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -592,12 +614,12 @@
     </header>
 
     <div class="main-layout">
-        <!-- 左侧：大画幅主舞台 (视频窗口 + 双模式文案生成器) -->
+        <!-- 左侧：大画幅主舞台 -->
         <div class="video-stage">
             <div class="glass-panel" style="padding: 24px;">
                 <div class="section-header">
                     <span><i class="fa-solid fa-clapperboard" style="margin-right:8px;"></i> 待分发视频资产选择与编辑</span>
-                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 支持手动自主撰写 与 AI 智能生成双模式</span>
+                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 支持免费 AI 网页对话一键复制识别解析</span>
                 </div>
 
                 <!-- 分发场景模式选择 -->
@@ -642,13 +664,13 @@
                     </div>
                 </div>
 
-                <!-- 文案创作模式切换栏 (手动模式 vs AI 生成模式) -->
+                <!-- 文案创作模式切换栏 -->
                 <div class="copy-mode-tab-bar">
                     <button class="copy-tab-btn active" id="tab-manual" onclick="setCopyMode('manual')">
                         <i class="fa-solid fa-pen-to-square"></i> 模式一：手动自主撰写 / 模板套用
                     </button>
                     <button class="copy-tab-btn" id="tab-ai" onclick="setCopyMode('ai')">
-                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：AI 一键爆款文案生成器
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：免费网页 AI (豆包/Kimi/ChatGPT) 快捷助手
                     </button>
                 </div>
 
@@ -661,23 +683,24 @@
                     <button class="chip-btn" style="color:var(--accent-red);" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> 清空文本</button>
                 </div>
 
-                <!-- 模式二 AI 智能文案生成控制盒 -->
+                <!-- 模式二 免费 AI 网页工具桥接面板 -->
                 <div id="ai-generator-box" class="ai-generator-panel" style="display:none;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-robot"></i> AI 爆款文案助手</span>
-                        <span style="font-size:11px; color:var(--text-muted);">无需配置 API，支持本地/云端模型输出</span>
+                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-globe"></i> 1 键唤醒免费 AI Chatbot 网页端</span>
+                        <span style="font-size:11px; color:var(--text-muted);">零 API 成本 · 生成后复制点击下面自动解析</span>
                     </div>
-                    <div style="margin-top:10px;">
-                        <input type="text" id="ai-keyword" class="form-control" placeholder="输入视频核心主题词（如：富氢热灸贴 肩颈舒缓 木齐科技）..." style="font-size:12px; padding:8px 12px;">
+
+                    <!-- 免费 AI 平台快捷跳转按钮 -->
+                    <div class="ai-portal-grid">
+                        <button class="portal-btn" onclick="openFreeAiPortal('doubao')">🫘 豆包 (Doubao)</button>
+                        <button class="portal-btn" onclick="openFreeAiPortal('kimi')">🌙 Kimi 智能助手</button>
+                        <button class="portal-btn" onclick="openFreeAiPortal('tongyi')">🌌 通义千问</button>
+                        <button class="portal-btn" onclick="openFreeAiPortal('chatgpt')">🤖 ChatGPT / Claude</button>
                     </div>
-                    <div class="ai-style-selector">
-                        <div class="ai-style-tag active" onclick="selectAiStyle(this, '爆款种草风')">🔥 爆款种草风</div>
-                        <div class="ai-style-tag" onclick="selectAiStyle(this, '专业科普风')">🧪 专业科普风</div>
-                        <div class="ai-style-tag" onclick="selectAiStyle(this, '情绪共鸣风')">💡 情绪共鸣风</div>
-                        <div class="ai-style-tag" onclick="selectAiStyle(this, '跨境英文Global')">🌏 跨境英文 Global</div>
-                    </div>
-                    <button onclick="generateAiCopy()" style="width:100%; background:linear-gradient(135deg, var(--accent-purple), #6366f1); border:none; color:#fff; padding:9px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> 一键生成文案并自动填入
+
+                    <!-- 剪贴板一键智能解析按钮 -->
+                    <button onclick="parseFromClipboard()" style="width:100%; margin-top:8px; background:linear-gradient(135deg, var(--accent-purple), #6366f1); border:none; color:#fff; padding:9px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <i class="fa-solid fa-paste"></i> 📋 1 键从剪贴板自动识别并填入标题与正文
                     </button>
                 </div>
 
@@ -780,8 +803,50 @@
             { id: "tiktok", name: "TikTok", cat: "global", color: "#00f2fe", icon: "fa-tiktok" }
         ];
 
+        const AI_PORTALS = {
+            "doubao": "https://www.doubao.com/chat/",
+            "kimi": "https://kimi.moonshot.cn/",
+            "tongyi": "https://tongyi.aliyun.com/qianwen/",
+            "chatgpt": "https://chatgpt.com/"
+        };
+
         let currentDispatchMode = 'single';
-        let currentAiStyle = '爆款种草风';
+
+        function openFreeAiPortal(key) {
+            const videoName = document.getElementById('selected-video-filename').innerText;
+            const promptText = `请帮我为短视频【${videoName}】写一段爆款文案：\n标题：（控制在 30 字以内，吸引眼球）\n正文：（适合社交媒体发布，含核心痛点与特点）`;
+            
+            navigator.clipboard.writeText(promptText).then(() => {
+                alert(`📋 精心调校的提示词已自动复制到剪贴板！\n即将在新标签页为你打开 AI 对话框，直接 Ctrl+V / Cmd+V 粘贴即可免费生成！`);
+                window.open(AI_PORTALS[key], '_blank');
+            }).catch(() => {
+                window.open(AI_PORTALS[key], '_blank');
+            });
+        }
+
+        async function parseFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (!text || text.trim().length === 0) {
+                    alert("⚠️ 剪贴板为空，请先在 AI 对话框中复制文案！");
+                    return;
+                }
+                
+                const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                if (lines.length > 0) {
+                    let firstLine = lines[0].replace(/^标题[：:]\s*/, '').replace(/^[#【\s]*/, '');
+                    document.getElementById('post-title').value = firstLine.slice(0, 80);
+                    
+                    if (lines.length > 1) {
+                        let remaining = lines.slice(1).join('\n').replace(/^正文[：:]\s*/, '');
+                        document.getElementById('post-desc').value = remaining;
+                    }
+                    alert("🎉 已成功从剪贴板自动解析并填入标题与正文！");
+                }
+            } catch (err) {
+                alert("⚠️ 请允许浏览器读取剪贴板权限，或者直接手动粘贴！");
+            }
+        }
 
         function setCopyMode(mode) {
             document.querySelectorAll('.copy-tab-btn').forEach(b => b.classList.remove('active'));
@@ -794,12 +859,6 @@
                 document.getElementById('manual-template-bar').style.display = 'none';
                 document.getElementById('ai-generator-box').style.display = 'block';
             }
-        }
-
-        function selectAiStyle(el, style) {
-            document.querySelectorAll('.ai-style-tag').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
-            currentAiStyle = style;
         }
 
         function applyTemplate(tplKey) {
@@ -818,24 +877,6 @@
         function clearForm() {
             document.getElementById('post-title').value = "";
             document.getElementById('post-desc').value = "";
-        }
-
-        function generateAiCopy() {
-            const kw = document.getElementById('ai-keyword').value || "富氢热灸贴 肩颈舒缓";
-            if (currentAiStyle === '爆款种草风') {
-                document.getElementById('post-title').value = `【爆款推荐】${kw} · 彻底解放你的腰背与肩颈！`;
-                document.getElementById('post-desc').value = `今天一定要把这个黑科技分享给所有久坐的朋友！\n关于【${kw}】：不仅温热敷贴，更有氢分子深层渗透滋养。\n贴一片相当于做完了一整套肩颈热理疗！\n不燥不闷，舒服到睡着！建议收藏关注！`;
-            } else if (currentAiStyle === '专业科普风') {
-                document.getElementById('post-title').value = `硬核科普：关于${kw}的材料学与生物学原理解密`;
-                document.getElementById('post-desc').value = `为什么传统热敷贴效果有限？\n因为绝大部分暖贴仅仅局限于表皮升温。\n木齐科技【${kw}】创新结合道地艾草与固态氢材料，热能与氢分子协同作用。\n研究表明，氢分子的穿透力能带来真正的深层滋养。\n了解更多请访问木齐科技官网: www.emuqi.com`;
-            } else if (currentAiStyle === '跨境英文Global') {
-                document.getElementById('post-title').value = `Innovating Wellness: ${kw} for Deep Relief`;
-                document.getElementById('post-desc').value = `Experience the next generation of wellness with MUQI TECH's ${kw}.\nCombining natural herbal thermal energy with solid hydrogen technology for deep body relaxation.\nLearn more at www.emuqi.com`;
-            } else {
-                document.getElementById('post-title').value = `写给每一个疲惫打工人的温热问候：${kw}`;
-                document.getElementById('post-desc').value = `忙碌了一整天，给自己的身体放个假吧。\n【${kw}】陪伴你每一个深夜加班与休息时刻，温氢双护，安心伴眠。`;
-            }
-            alert("✨ AI 爆款文案已成功生成并填入右侧表格！");
         }
 
         function setDispatchMode(mode) {
