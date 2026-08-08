@@ -20,15 +20,24 @@
 
 ---
 
+## 🌐 Online Web Live Demo (公网在线域名体验)
+
+👉 **在线控制台访问地址**：[https://martin-mqtech.github.io/open-matrix-publisher/](https://martin-mqtech.github.io/open-matrix-publisher/)
+
+无需提前 Clone 仓库，全球任何用户只需点击上述 GitHub Pages 域名链接，即可直接在浏览器中打开全域矩阵 15 平台中英双语控制台！
+
+---
+
 ## 🖥️ Web Dashboard (GUI 可视化控制台)
 
-Open Matrix Publisher includes a **modern, local Web Dashboard** for creators who prefer a visual interface over the command line:
+Open Matrix Publisher 支持 **GitHub Pages 线上部署** 与 **本地一键拉起** 两种模式：
 
-- **1-Click Launch**: Run `./start_ui.sh` or `python3 local_bridge_server.py` and open `http://localhost:5001`
-- **Features**: Drag-and-drop video selection, copy & tag editor, real-time platform matrix status badges (`🔒 Anti-Duplicate Locked`, `✅ Cookie Ready`), and interactive terminal logs.
+- **线上访问**：直接打开 [https://martin-mqtech.github.io/open-matrix-publisher/](https://martin-mqtech.github.io/open-matrix-publisher/)
+- **本地一键启动**：运行 `./start_ui.sh` 自动调起 `http://localhost:5001`
+- **核心功能**：中英双语模式选择、本地视频点选、15 平台网格状态实时校验、扫码登录弹窗与 🔒 防重历史 Ledger。
 
 ```bash
-# Launch the Web Dashboard
+# 本地 1 秒一键启动 GUI
 ./start_ui.sh
 ```
 
