@@ -20,6 +20,18 @@
 
 ---
 
+## 💡 Core Philosophy (产品核心设计理念)
+
+1. **免费打底 (Zero-Cost & Free-First)**：
+   - 100% 开源免费 (MIT License)，绝不强制订阅，绝不强制购买大模型 API 密钥。
+   - 原生整合免费网页端 AI Chatbot（豆包、Kimi、通义千问、ChatGPT），提供 1 键唤醒与 1 键剪贴板自动识别解析，让所有创作者零门槛享用 AI 赋能。
+2. **极致便捷的聚合集成中枢 (Convenience Hub)**：
+   - 打造一站式聚合中心：视频点选 + 模板/AI 创作 + 账号 Cookie 持久化 + 全网 14 平台并发分发。
+3. **高阶智商弹性升级 (Elastic API Upgrade)**：
+   - 为有更高自动化需求的高阶用户与 AI Agent 提供 API 密钥插槽，支持 DeepSeek、OpenAI、Claude、Ollama 等模型的全自动无感调用。
+
+---
+
 ## 🌐 Online Web Live Demo (公网在线域名体验)
 
 👉 **在线控制台访问地址**：[https://martin-mqtech.github.io/open-matrix-publisher/](https://martin-mqtech.github.io/open-matrix-publisher/)
