@@ -1,639 +1,826 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Open Matrix Publisher — 全域矩阵一键分发控制台</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    :root {
-      --bg-primary: #0b0f19;
-      --bg-card: rgba(22, 29, 45, 0.75);
-      --bg-card-hover: rgba(30, 41, 64, 0.85);
-      --accent-blue: #3b82f6;
-      --accent-cyan: #06b6d4;
-      --accent-purple: #8b5cf6;
-      --accent-green: #10b981;
-      --accent-amber: #f59e0b;
-      --accent-red: #ef4444;
-      --text-main: #f3f4f6;
-      --text-muted: #9ca3af;
-      --border-color: rgba(255, 255, 255, 0.08);
-      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Matrix Publisher (全域矩阵) · 15大主流视频平台中英双语控制台</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    body {
-      background-color: var(--bg-primary);
-      background-image: 
-        radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
-        radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 40%);
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    <style>
+        :root {
+            --bg-dark: #080c14;
+            --panel-bg: rgba(16, 24, 40, 0.85);
+            --panel-border: rgba(0, 230, 255, 0.2);
+            --accent-gold: #ffd700;
+            --accent-orange: #f58220;
+            --accent-cyan: #00e6ff;
+            --accent-green: #00ffc8;
+            --accent-red: #ff4757;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
 
-    header {
-      border-bottom: 1px solid var(--border-color);
-      background: rgba(11, 15, 25, 0.8);
-      backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      padding: 16px 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(245, 130, 32, 0.09) 0%, transparent 45%),
+                radial-gradient(circle at 90% 90%, rgba(0, 230, 255, 0.09) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.03) 0%, transparent 60%);
+            min-height: 100vh;
+            padding: 24px;
+            overflow-x: hidden;
+        }
 
-    .brand-logo {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      color: white;
-      box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-    }
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+        }
 
-    .brand-title {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      background: linear-gradient(to right, #ffffff, #9ca3af);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 32px;
+            margin-bottom: 16px;
+        }
 
-    .brand-tag {
-      font-size: 11px;
-      background: rgba(59, 130, 246, 0.15);
-      color: var(--accent-cyan);
-      border: 1px solid rgba(6, 182, 212, 0.3);
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-weight: 600;
-    }
+        .history-banner {
+            display: flex;
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.15);
+        }
 
-    .header-links {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
+        .history-banner-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+        }
 
-    .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: var(--accent-green);
-      background: rgba(16, 185, 129, 0.1);
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1px solid rgba(16, 185, 129, 0.2);
-    }
+        .history-banner-btn {
+            background: var(--accent-gold);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            transition: all 0.3s ease;
+        }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      background-color: var(--accent-green);
-      border-radius: 50%;
-      box-shadow: 0 0 8px var(--accent-green);
-    }
+        .history-banner-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
+        }
 
-    .btn-github {
-      color: var(--text-main);
-      text-decoration: none;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border-color);
-      transition: all 0.2s;
-    }
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
 
-    .btn-github:hover {
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(255,255,255,0.2);
-    }
+        .brand-logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-gold));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #000;
+            box-shadow: 0 0 20px rgba(245, 130, 32, 0.4);
+        }
 
-    main {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 32px 24px;
-      width: 100%;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 28px;
-    }
+        .title-area h1 {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #ffffff, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.5px;
+        }
 
-    @media (max-width: 1024px) {
-      main { grid-template-columns: 1fr; }
-    }
+        .title-area p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
 
-    .card {
-      background: var(--bg-card);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: var(--glass-shadow);
-    }
+        .action-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
 
-    .card-title {
-      font-size: 17px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #fff;
-    }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), #00a8ff);
+            color: #000;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0, 230, 255, 0.4);
+            transition: all 0.3s ease;
+        }
 
-    .card-title i { color: var(--accent-blue); }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 230, 255, 0.7);
+        }
 
-    .form-group {
-      margin-bottom: 18px;
-    }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 24px;
+        }
 
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
+        .sidebar-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
 
-    input[type="text"], textarea {
-      width: 100%;
-      background: rgba(11, 15, 25, 0.6);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 12px 14px;
-      color: var(--text-main);
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
+        .section-header {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 230, 255, 0.15);
+        }
 
-    input[type="text"]:focus, textarea:focus {
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
+        .form-group {
+            margin-bottom: 14px;
+        }
 
-    textarea {
-      resize: vertical;
-      min-height: 100px;
-    }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
 
-    .platform-section-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin: 16px 0 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+        .form-control {
+            width: 100%;
+            background: rgba(8, 12, 20, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #fff;
+            font-size: 13px;
+            outline: none;
+            transition: border 0.3s;
+        }
 
-    .platform-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 12px;
-    }
+        .form-control:focus {
+            border-color: var(--accent-cyan);
+        }
 
-    .platform-card {
-      background: rgba(11, 15, 25, 0.5);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 12px 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: relative;
-    }
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
 
-    .platform-card:hover {
-      border-color: rgba(59, 130, 246, 0.4);
-      background: rgba(30, 41, 64, 0.5);
-    }
+        .video-preview-card {
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #000;
+            position: relative;
+        }
 
-    .platform-card.selected {
-      border-color: var(--accent-blue);
-      background: rgba(59, 130, 246, 0.12);
-    }
+        .video-preview-card video {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            display: block;
+        }
 
-    .platform-card.locked {
-      opacity: 0.7;
-      border-color: rgba(239, 68, 68, 0.3);
-    }
+        .platforms-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
 
-    .platform-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+        .platform-category-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
-    .platform-name {
-      font-size: 14px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+        .platform-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
 
-    .platform-badge {
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 600;
-    }
+        .platform-card {
+            background: rgba(16, 24, 40, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            cursor: pointer;
+        }
 
-    .badge-ok { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
-    .badge-locked { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
-    .badge-login { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }
+        .platform-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 230, 255, 0.15);
+        }
 
-    .btn-dispatch {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-      color: white;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 24px;
-    }
+        .platform-card.selected {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 230, 255, 0.05);
+        }
 
-    .btn-dispatch:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(59, 130, 246, 0.6);
-    }
+        .platform-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
 
-    .btn-dispatch:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
+        .platform-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-    .log-terminal {
-      background: #060911;
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 16px;
-      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-      font-size: 12px;
-      color: #34d399;
-      height: 280px;
-      overflow-y: auto;
-      line-height: 1.6;
-    }
+        .platform-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
 
-    .log-line { margin-bottom: 4px; word-break: break-all; }
-    .log-line.err { color: #f87171; }
-    .log-line.info { color: #60a5fa; }
-    .log-line.warn { color: #fbbf24; }
+        .platform-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+        }
 
-    .rule-box {
-      background: rgba(245, 158, 11, 0.08);
-      border: 1px solid rgba(245, 158, 11, 0.2);
-      border-radius: 10px;
-      padding: 12px 16px;
-      margin-bottom: 20px;
-      font-size: 12px;
-      color: #fbbf24;
-      line-height: 1.5;
-    }
+        .platform-type {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
 
-    footer {
-      text-align: center;
-      padding: 24px;
-      color: var(--text-muted);
-      font-size: 13px;
-      border-top: 1px solid var(--border-color);
-      margin-top: auto;
-    }
-  </style>
+        .checkbox-custom {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .platform-card.selected .checkbox-custom {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            color: #000;
+        }
+
+        .session-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .session-active {
+            background: rgba(0, 255, 200, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(0, 255, 200, 0.3);
+        }
+
+        .session-inactive {
+            background: rgba(255, 71, 87, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+        }
+
+        .direct-link-btn {
+            font-size: 11px;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 8px;
+            transition: opacity 0.2s;
+        }
+
+        .direct-link-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            width: 640px;
+            max-width: 90vw;
+            padding: 32px;
+            border-radius: 24px;
+            position: relative;
+        }
+
+        .progress-row {
+            margin-bottom: 16px;
+        }
+
+        .progress-fill-bg {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+            transition: width 0.3s ease;
+        }
+
+        .notification-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--panel-bg);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 2000;
+        }
+
+        .notification-toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
 
-  <header>
-    <div class="brand">
-      <div class="brand-logo"><i class="fa-solid fa-bolt"></i></div>
-      <div>
-        <div class="brand-title">Open Matrix Publisher</div>
-        <div style="font-size:11px; color:var(--text-muted);">全域矩阵一键自动化发布引擎</div>
-      </div>
-      <span class="brand-tag">v1.0 MIT</span>
-    </div>
-    <div class="header-links">
-      <div class="status-badge">
-        <div class="status-dot"></div>
-        <span>本地引擎运行中 (Port 5001)</span>
-      </div>
-      <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank" class="btn-github">
-        <i class="fa-brands fa-github"></i> GitHub
-      </a>
-    </div>
-  </header>
-
-  <main>
-    <!-- 左侧：视频与文案配置 -->
-    <div class="card">
-      <div class="card-title">
-        <i class="fa-solid fa-film"></i> 1. 视频与发布文案配置
-      </div>
-
-      <div class="rule-box">
-        <i class="fa-solid fa-shield-halved"></i> <strong>内置四重防重复提交死锁：</strong> 系统会自动拦截任何已成功发布的平台，确保绝对不发生重复分发事故。
-      </div>
-
-      <div class="form-group">
-        <label><i class="fa-solid fa-file-video"></i> 视频文件路径 (选择本地文件或输入路径)</label>
-        <div style="display:flex; gap:10px;">
-          <input type="text" id="videoPath" value="/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4">
-          <label class="btn-file-select" style="white-space:nowrap; background:rgba(59,130,246,0.2); border:1px solid var(--accent-blue); padding:10px 16px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px;">
-            <i class="fa-solid fa-folder-open"></i> 浏览文件
-            <input type="file" id="localFilePicker" accept="video/*" style="display:none;" onchange="handleFileSelected(this)">
-          </label>
+    <header class="glass-panel">
+        <div class="brand-box">
+            <div class="brand-logo"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <div class="title-area">
+                <h1>Open Matrix Publisher (全域矩阵)</h1>
+                <p>15大主流视频平台中英双语自动化推送控制台 · Martin-MQtech 开源作品</p>
+            </div>
         </div>
-      </div>
+        <div class="action-area">
+            <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank" style="color:var(--text-muted); text-decoration:none; font-size:13px; display:flex; align-items:center; gap:6px;">
+                <i class="fa-brands fa-github"></i> GitHub 源码
+            </a>
+            <button class="btn-primary" onclick="openConfirmDialog()">
+                <i class="fa-solid fa-paper-plane"></i> 一键推送选中平台
+            </button>
+        </div>
+    </header>
 
-      <div class="form-group">
-        <label><i class="fa-solid fa-heading"></i> 视频发布标题</label>
-        <input type="text" id="videoTitle" value="久坐一天，肩颈又石化了？富氢热灸贴温氢双护">
-      </div>
+    <!-- 历史已发布动态通知 Banner -->
+    <div id="history-banner" class="history-banner" style="display: none;">
+        <div class="history-banner-info">
+            <i class="fa-solid fa-circle-check" style="color: var(--accent-gold); font-size: 20px;"></i>
+            <div>
+                <strong style="color: #fff; font-size: 14px;">已自动为您载入上次成功发布的平台记录！</strong>
+                <p id="history-banner-desc" style="color: var(--text-muted); margin-top: 2px;">已成功防止重复分发，您可以随时在下面重新勾选。</p>
+            </div>
+        </div>
+        <button class="history-banner-btn" onclick="openHistoryRecordsModal()">
+            <i class="fa-solid fa-clock-rotate-left"></i> 查看详细分发 Ledger 追溯表
+        </button>
+    </div>
 
-      <div class="form-group">
-        <label><i class="fa-solid fa-align-left"></i> 视频正文描述 (Description)</label>
-        <textarea id="videoDesc">久坐一天，肩颈又石化了？
+    <div class="grid-container">
+        <!-- 左侧：视频配置与文案预览 -->
+        <div class="sidebar-section">
+            <div class="glass-panel" style="padding: 20px;">
+                <div class="section-header">
+                    <i class="fa-solid fa-clapperboard"></i> 待推送视频资产配置
+                </div>
+
+                <div class="form-group">
+                    <label>切换视频版本</label>
+                    <select id="video-select" class="form-control" onchange="changeVideoVersion(this.value)">
+                        <option value="v2_cn">电影级 v2 中文成片 (42MB)</option>
+                        <option value="v2_en">电影级 v2 英文成片 (42MB)</option>
+                        <option value="v1_cn">营销短视频 v1 中文成片 (20MB)</option>
+                        <option value="v1_en">营销短视频 v1 英文成片 (19MB)</option>
+                    </select>
+                </div>
+
+                <div class="video-preview-card" style="margin-bottom: 14px;">
+                    <video id="video-src" controls src="/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4"></video>
+                </div>
+
+                <div class="form-group">
+                    <label>视频发布标题</label>
+                    <input type="text" id="post-title" class="form-control" value="久坐一天，肩颈又石化了？富氢热灸贴温氢双护">
+                </div>
+
+                <div class="form-group">
+                    <label>视频发布文案 (Description)</label>
+                    <textarea id="post-desc" class="form-control">久坐一天，肩颈又石化了？
 不是暖贴不够热，是只给皮肤烤了个表面。
 这次用的是富氢热灸贴——道地艾草 × 固态氢材料，热的时候氢分子同步工作，80×205mm 的大贴幅服帖整个肩颈和腰背。
 不燥不闷，一觉可以贴着睡。
 体感这个东西，说再多不如试一次。
 木齐科技 自研固态氢 | www.emuqi.com</textarea>
-      </div>
+                </div>
+            </div>
+        </div>
 
-      <div class="form-group">
-        <label><i class="fa-solid fa-hashtag"></i> 话题标签 (Comma-separated Tags)</label>
-        <input type="text" id="videoTags" value="富氢热灸贴,热灸贴,温氢双护,肩颈护理,木齐科技">
-      </div>
+        <!-- 右侧：平台选择网格 -->
+        <div class="platforms-area">
+            <!-- 国内平台网格 -->
+            <div class="glass-panel" style="padding: 20px;">
+                <div class="platform-category-title">
+                    <span>🇨🇳 国内主流视频平台</span>
+                    <span style="font-size:12px; color:var(--text-muted); cursor:pointer;" onclick="toggleSelectCategory('cn')">全选 / 全取消</span>
+                </div>
+                <div class="platform-cards-grid" id="cn-grid"></div>
+            </div>
+
+            <!-- 国际平台网格 -->
+            <div class="glass-panel" style="padding: 20px;">
+                <div class="platform-category-title">
+                    <span>🌏 国际海外视频平台</span>
+                    <span style="font-size:12px; color:var(--text-muted); cursor:pointer;" onclick="toggleSelectCategory('global')">全选 / 全取消</span>
+                </div>
+                <div class="platform-cards-grid" id="global-grid"></div>
+            </div>
+        </div>
     </div>
 
-    <!-- 右侧：平台选择与分发控制 -->
-    <div class="card">
-      <div class="card-title">
-        <i class="fa-solid fa-share-nodes"></i> 2. 目标平台矩阵选择
-      </div>
-
-      <div class="platform-section-title">
-        <span>🇨🇳 国内矩阵平台</span>
-        <button onclick="selectAllDomestic()" style="background:none; border:none; color:var(--accent-blue); font-size:12px; cursor:pointer;">全选国内</button>
-      </div>
-      <div class="platform-grid" id="domesticGrid">
-        <!-- Dynamic Domestic Cards -->
-      </div>
-
-      <div class="platform-section-title" style="margin-top:24px;">
-        <span>🌏 国际矩阵平台</span>
-        <button onclick="selectAllGlobal()" style="background:none; border:none; color:var(--accent-blue); font-size:12px; cursor:pointer;">全选国际</button>
-      </div>
-      <div class="platform-grid" id="globalGrid">
-        <!-- Dynamic Global Cards -->
-      </div>
-
-      <button class="btn-dispatch" id="dispatchBtn" onclick="triggerDispatch()">
-        <i class="fa-solid fa-paper-plane"></i> 启动全域静默并发分发
-      </button>
+    <!-- 确认二次弹窗 Modal -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-content glass-panel">
+            <h3 style="font-size: 18px; color: #fff; margin-bottom: 12px;"><i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-orange)"></i> 确认启动并发自动推送</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.6;">
+                即将为您选中的 <span id="confirm-count" style="color:var(--accent-cyan); font-weight:800;">0</span> 个平台同时进行静默分发。<br>
+                系统将自动调起 Playwright 无头浏览器与 Cookie 金库，整个过程前台完全无感。
+            </p>
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button onclick="closeConfirmDialog()" style="background: rgba(255,255,255,0.1); border:none; padding: 10px 20px; border-radius: 10px; color:#fff; cursor:pointer;">取消</button>
+                <button onclick="confirmAndDispatch()" class="btn-primary">立即开始并发推送</button>
+            </div>
+        </div>
     </div>
 
-    <!-- 底部：实时运行控制台日志 -->
-    <div class="card" style="grid-column: 1 / -1;">
-      <div class="card-title">
-        <i class="fa-solid fa-terminal"></i> 3. 引擎实时分发日志终端
-      </div>
-      <div class="log-terminal" id="logTerminal">
-        <div class="log-line info">[System] Open Matrix Publisher 控制台就绪。连接至本地引擎 http://localhost:5000</div>
-        <div class="log-line">[Status] 正在读取防重 Ledger 与 Cookie 状态...</div>
-      </div>
+    <!-- 推送进度监控 Modal -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content glass-panel">
+            <h3 style="font-size: 18px; color: #fff; margin-bottom: 16px;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent-cyan)"></i> 正在并发推送视频资产...</h3>
+            <div id="progress-list"></div>
+            <div style="margin-top: 24px; text-align: right;">
+                <button id="close-modal-btn" onclick="closeModal()" class="btn-primary" style="display:none; margin-left:auto;">完成并关闭窗口</button>
+            </div>
+        </div>
     </div>
-  </main>
 
-  <footer>
-    Open Matrix Publisher &copy; 2026 Martin-MQtech (木齐科技) | MIT Open Source License
-  </footer>
+    <!-- Toast 通知 -->
+    <div id="toast" class="notification-toast">
+        <i class="fa-solid fa-circle-info" style="color: var(--accent-cyan); font-size: 18px;"></i>
+        <span id="toast-msg" style="font-size: 13px; color: #fff;">消息通知</span>
+    </div>
 
-  <script>
-    const DOMESTIC_PLATFORMS = [
-      { id: "tencent", name: "微信视频号", icon: "fa-weixin" },
-      { id: "douyin", name: "抖音", icon: "fa-tiktok" },
-      { id: "bilibili", name: "B站", icon: "fa-play" },
-      { id: "kuaishou", name: "快手", icon: "fa-video" },
-      { id: "weibo", name: "微博", icon: "fa-weibo" },
-      { id: "toutiao", name: "今日头条", icon: "fa-newspaper" },
-      { id: "zhihu", name: "知乎", icon: "fa-brain" },
-      { id: "xiaohongshu", name: "小红书", icon: "fa-book-bookmark" }
-    ];
+    <script>
+        const PLATFORMS = [
+            { id: "tencent", name: "微信视频号", cat: "cn", color: "#07c160", icon: "fa-weixin", link: "https://channels.weixin.qq.com/platform/post/create" },
+            { id: "douyin", name: "抖音", cat: "cn", color: "#000000", icon: "fa-tiktok", link: "https://creator.douyin.com/content/upload" },
+            { id: "bilibili", name: "B站 (Bilibili)", cat: "cn", color: "#00a1d6", icon: "fa-play", link: "https://member.bilibili.com/platform/upload/video/frame" },
+            { id: "kuaishou", name: "快手", cat: "cn", color: "#ff5000", icon: "fa-video", link: "https://cp.kuaishou.com/article/publish/video" },
+            { id: "weibo", name: "微博", cat: "cn", color: "#e6162d", icon: "fa-weibo", link: "https://weibo.com/upload/channel" },
+            { id: "toutiao", name: "今日头条", cat: "cn", color: "#f04142", icon: "fa-newspaper", link: "https://mp.toutiao.com/profile_v4/xigua/upload-video" },
+            { id: "zhihu", name: "知乎", cat: "cn", color: "#0066ff", icon: "fa-brain", link: "https://www.zhihu.com/zvideo/upload-video" },
+            { id: "xiaohongshu", name: "小红书", cat: "cn", color: "#ff2442", icon: "fa-book-bookmark", link: "https://creator.xiaohongshu.com/publish/publish" },
 
-    const GLOBAL_PLATFORMS = [
-      { id: "youtube", name: "YouTube", icon: "fa-youtube" },
-      { id: "facebook", name: "Facebook", icon: "fa-facebook" },
-      { id: "x", name: "X (Twitter)", icon: "fa-x-twitter" },
-      { id: "linkedin", name: "LinkedIn", icon: "fa-linkedin" },
-      { id: "instagram", name: "Instagram", icon: "fa-instagram" },
-      { id: "tiktok", name: "TikTok", icon: "fa-tiktok" }
-    ];
+            { id: "youtube", name: "YouTube", cat: "global", color: "#ff0000", icon: "fa-youtube", link: "https://studio.youtube.com/" },
+            { id: "facebook", name: "Facebook", cat: "global", color: "#1877f2", icon: "fa-facebook", link: "https://www.facebook.com/" },
+            { id: "x", name: "X (Twitter)", cat: "global", color: "#000000", icon: "fa-x-twitter", link: "https://twitter.com/" },
+            { id: "linkedin", name: "LinkedIn", cat: "global", color: "#0a66c2", icon: "fa-linkedin", link: "https://www.linkedin.com/" },
+            { id: "instagram", name: "Instagram", cat: "global", color: "#e4405f", icon: "fa-instagram", link: "https://www.instagram.com/" },
+            { id: "tiktok", name: "TikTok 国际版", cat: "global", color: "#00f2fe", icon: "fa-tiktok", link: "https://www.tiktok.com/" }
+        ];
 
-    let selectedPlatforms = new Set(["toutiao", "zhihu"]);
-    let publishedStatusMap = {};
-
-    function logMsg(msg, type = "") {
-      const term = document.getElementById("logTerminal");
-      const line = document.createElement("div");
-      line.className = `log-line ${type}`;
-      const time = new Date().toLocaleTimeString();
-      line.innerText = `[${time}] ${msg}`;
-      term.appendChild(line);
-      term.scrollTop = term.scrollHeight;
-    }
-
-    async function fetchEngineStatus() {
-      try {
-        const res = await fetch("http://localhost:5001/api/status");
-        const data = await res.json();
-        publishedStatusMap = data.published_map || {};
-        renderPlatforms(data);
-        logMsg("✅ 已成功获取最新引擎与凭证状态", "info");
-      } catch (err) {
-        logMsg("⚠️ 无法连接本地 Python 引擎 (http://localhost:5000)，请确保 local_bridge_server.py 已运行", "err");
-      }
-    }
-
-    function renderPlatforms(statusData) {
-      const currentVideo = document.getElementById("videoPath").value.split('/').pop();
-      const videoPubMap = publishedStatusMap[currentVideo] || {};
-
-      renderGrid("domesticGrid", DOMESTIC_PLATFORMS, videoPubMap, statusData);
-      renderGrid("globalGrid", GLOBAL_PLATFORMS, videoPubMap, statusData);
-    }
-
-    function handleFileSelected(input) {
-      if (input.files && input.files[0]) {
-        const file = input.files[0];
-        document.getElementById("videoPath").value = file.name;
-        logMsg(`📁 已选中本地视频文件: ${file.name}`, "info");
-      }
-    }
-
-    async function launchQRLogin(platformId, platformName, event) {
-      event.stopPropagation();
-      logMsg(`🔑 正在准备调起【${platformName}】扫码登录浏览器...`, "warn");
-      try {
-        const res = await fetch("http://localhost:5001/api/launch-login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ platform_id: platformId })
-        });
-        const data = await res.json();
-        logMsg(data.msg, "info");
-      } catch (err) {
-        logMsg(`❌ 调起【${platformName}】扫码登录失败: ${err.message}`, "err");
-      }
-    }
-
-    function renderGrid(gridId, platforms, videoPubMap, statusData) {
-      const grid = document.getElementById(gridId);
-      grid.innerHTML = "";
-
-      platforms.forEach(p => {
-        const isPublished = !!videoPubMap[p.id];
-        const card = document.createElement("div");
-        card.className = `platform-card ${selectedPlatforms.has(p.id) ? 'selected' : ''} ${isPublished ? 'locked' : ''}`;
-        
-        let badgeHtml = "";
-        if (isPublished) {
-          badgeHtml = `<span class="platform-badge badge-locked">🔒 已发布(防重锁定)</span>`;
-        } else {
-          badgeHtml = `<span class="platform-badge badge-ok">✅ Cookie就绪</span>`;
-        }
-
-        card.innerHTML = `
-          <div class="platform-header">
-            <span class="platform-name"><i class="fa-solid ${p.icon}"></i> ${p.name}</span>
-            ${badgeHtml}
-          </div>
-          <div style="display:flex; justify-content:flex-end; margin-top:4px;">
-            <button onclick="launchQRLogin('${p.id}', '${p.name}', event)" style="background:rgba(255,255,255,0.08); border:1px solid var(--border-color); color:var(--text-muted); padding:3px 8px; border-radius:6px; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:4px;">
-              <i class="fa-solid fa-qrcode"></i> 扫码登录/刷新
-            </button>
-          </div>
-        `;
-
-        card.onclick = () => {
-          if (isPublished) {
-            logMsg(`⚠️ 【${p.name}】已于 ${videoPubMap[p.id].finish_time} 成功发布该视频，系统防重机制已自动屏蔽重发！`, "warn");
-            return;
-          }
-          if (selectedPlatforms.has(p.id)) {
-            selectedPlatforms.delete(p.id);
-            card.classList.remove("selected");
-          } else {
-            selectedPlatforms.add(p.id);
-            card.classList.add("selected");
-          }
+        const VIDEO_MAP = {
+            "v2_cn": {
+                title: "久坐一天，肩颈又石化了？富氢热灸贴温氢双护",
+                desc: "久坐一天，肩颈又石化了？\n不是暖贴不够热，是只给皮肤烤了个表面。\n这次用的是富氢热灸贴——道地艾草 × 固态氢材料，热的时候氢分子同步工作，80×205mm 的大贴幅服帖整个肩颈和腰背。\n不燥不闷，一觉可以贴着睡。\n体感这个东西，说再多不如试一次。\n木齐科技 自研固态氢 | www.emuqi.com",
+                src: "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4"
+            },
+            "v2_en": {
+                title: "Hydrogen Moxibustion Patch: Warmth & Hydrogen Dual Protection for Neck & Back",
+                desc: "Sitting all day leaving your shoulders stiff?\nTraditional warm patches only heat the surface.\nDiscover the Hydrogen Moxibustion Patch — combining natural mugwort & solid hydrogen material. Hydrogen molecules work in sync with deep thermal relief across a large 80×205mm surface.\nMUQI TECH | Solid Hydrogen R&D | www.emuqi.com",
+                src: "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_英文宣传片_电影级_v2_成片.mp4"
+            }
         };
 
-        grid.appendChild(card);
-      });
-    }
-
-    function selectAllDomestic() {
-      DOMESTIC_PLATFORMS.forEach(p => selectedPlatforms.add(p.id));
-      fetchEngineStatus();
-    }
-
-    function selectAllGlobal() {
-      GLOBAL_PLATFORMS.forEach(p => selectedPlatforms.add(p.id));
-      fetchEngineStatus();
-    }
-
-    async function triggerDispatch() {
-      const videoPath = document.getElementById("videoPath").value;
-      const title = document.getElementById("videoTitle").value;
-      const desc = document.getElementById("videoDesc").value;
-      const tags = document.getElementById("videoTags").value.split(',').map(t => t.trim());
-
-      if (selectedPlatforms.size === 0) {
-        alert("请至少选择一个目标平台！");
-        return;
-      }
-
-      const btn = document.getElementById("dispatchBtn");
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 正在并发分发中...`;
-
-      logMsg(`🚀 开始触发矩阵任务: ${Array.from(selectedPlatforms).join(', ')}`, "info");
-
-      for (const platformId of selectedPlatforms) {
-        logMsg(`正在提交平台发布指令: ${platformId}...`);
-        try {
-          const res = await fetch("http://localhost:5001/api/start-upload-task", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              platform_id: platformId,
-              video_file: videoPath,
-              title: title,
-              desc: desc,
-              tags: tags
-            })
-          });
-          const data = await res.json();
-          if (res.ok) {
-            logMsg(`✅ 【${platformId}】后台任务已启动 (Task ID: ${data.task_id})`, "info");
-          } else {
-            logMsg(`❌ 【${platformId}】被拦截: ${data.msg}`, "err");
-          }
-        } catch (e) {
-          logMsg(`❌ 【${platformId}】请求网络失败: ${e.message}`, "err");
+        function showNotification(msg, type = "info") {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
         }
-      }
 
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> 启动全域静默并发分发`;
-        fetchEngineStatus();
-      }, 5000);
-    }
+        function changeVideoVersion(ver) {
+            const info = VIDEO_MAP[ver];
+            if (info) {
+                document.getElementById('post-title').value = info.title;
+                document.getElementById('post-desc').value = info.desc;
+                document.getElementById('video-src').setAttribute('src', info.src);
+                showNotification(`已切至视频版本: ${ver}`, 'info');
+                refreshSessionStatus();
+            }
+        }
 
-    // Initial load
-    fetchEngineStatus();
-  </script>
+        function renderGrids() {
+            const cnGrid = document.getElementById('cn-grid');
+            const globalGrid = document.getElementById('global-grid');
+
+            PLATFORMS.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'platform-card selected';
+                card.id = `card-${p.id}`;
+                card.setAttribute('data-platform-id', p.id);
+                card.onclick = () => card.classList.toggle('selected');
+
+                card.innerHTML = `
+                    <div class="platform-card-header">
+                        <div class="platform-info">
+                            <div class="platform-icon" style="background: ${p.color}22; color: ${p.color};">
+                                <i class="fa-brands ${p.icon}"></i>
+                            </div>
+                            <div>
+                                <div class="platform-name">${p.name}</div>
+                                <div class="platform-type">${p.cat === 'cn' ? '国内平台' : '海外平台'}</div>
+                            </div>
+                        </div>
+                        <div class="checkbox-custom"><i class="fa-solid fa-check" style="font-size:12px;"></i></div>
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+                        <span id="session-${p.id}" class="session-status-pill session-active">✅ Cookie就绪</span>
+                        <button onclick="launchQrLogin('${p.id}', event)" style="background:none; border:none; color:var(--accent-cyan); font-size:11px; cursor:pointer;"><i class="fa-solid fa-qrcode"></i> 扫码/刷新</button>
+                    </div>
+                `;
+
+                if (p.cat === 'cn') cnGrid.appendChild(card);
+                else globalGrid.appendChild(card);
+            });
+        }
+
+        renderGrids();
+
+        async function refreshSessionStatus() {
+            try {
+                const res = await fetch('http://localhost:5001/api/status');
+                const data = await res.json();
+                
+                const currentVideo = document.getElementById('video-src').getAttribute('src');
+                const currentVideoName = currentVideo.split('/').pop();
+                const pubMap = data.published_map || {};
+                const currentPubs = pubMap[currentVideoName] || {};
+
+                // Update cards with published state & locked badges
+                PLATFORMS.forEach(p => {
+                    const card = document.querySelector(`[data-platform-id="${p.id}"]`);
+                    const pubInfo = currentPubs[p.id];
+                    if (pubInfo && card) {
+                        card.style.borderColor = 'var(--accent-gold)';
+                        let existingNotice = card.querySelector('.pub-notice');
+                        if (!existingNotice) {
+                            const notice = document.createElement('div');
+                            notice.className = 'pub-notice';
+                            notice.style.cssText = 'margin-top:6px;padding:4px 8px;border-radius:6px;background:rgba(255,215,0,0.15);color:var(--accent-gold);font-size:11px;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:space-between;';
+                            notice.innerHTML = `<span>🔒 已于 ${pubInfo.finish_time.split(' ')[1]} 成功发布</span><a href="${pubInfo.link}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent-gold);"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>`;
+                            card.appendChild(notice);
+                        }
+                    }
+                });
+            } catch (err) {
+                console.log("Status sync warning:", err);
+            }
+        }
+
+        async function launchQrLogin(platformId, event) {
+            if (event) event.stopPropagation();
+            try {
+                const res = await fetch('http://localhost:5001/api/launch-login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ platform_id: platformId })
+                });
+                const data = await res.json();
+                alert(`🚀 ${data.msg}`);
+                refreshSessionStatus();
+            } catch (err) {
+                alert("⚠️ 无法连接本地 Python API 服务 (http://localhost:5001)！");
+            }
+        }
+
+        function openConfirmDialog() {
+            const selectedCards = document.querySelectorAll('.platform-card.selected');
+            if (selectedCards.length === 0) {
+                alert("请至少选择 1 个推送平台！");
+                return;
+            }
+            document.getElementById('confirm-count').innerText = selectedCards.length;
+            document.getElementById('confirm-modal').style.display = 'flex';
+        }
+
+        function closeConfirmDialog() {
+            document.getElementById('confirm-modal').style.display = 'none';
+        }
+
+        function confirmAndDispatch() {
+            closeConfirmDialog();
+            startRealDispatch();
+        }
+
+        function trackRealPythonTask(p, taskId, onComplete) {
+            const statusEl = document.getElementById(`status-${p.id}`);
+            const fillEl = document.getElementById(`fill-${p.id}`);
+
+            const pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`http://localhost:5001/api/task-progress?task_id=${taskId}`);
+                    const info = await res.json();
+
+                    if (info.pct !== undefined) fillEl.style.width = `${info.pct}%`;
+
+                    if (info.stage) statusEl.innerText = info.stage;
+
+                    if (info.status === 'completed') {
+                        clearInterval(pollInterval);
+                        statusEl.innerHTML = `
+                            <span style="color: var(--accent-green); font-weight: 700;">
+                                <i class="fa-solid fa-circle-check"></i> ${info.stage}
+                            </span>
+                            <a href="${info.link}" target="_blank" style="color:var(--accent-cyan); margin-left:8px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> 打开后台校验</a>
+                        `;
+                        fillEl.style.width = '100%';
+                        fillEl.style.background = 'var(--accent-green)';
+                        onComplete(true);
+                    } else if (info.status === 'failed') {
+                        clearInterval(pollInterval);
+                        statusEl.innerHTML = `<span style="color: var(--accent-red); font-weight: 700;"><i class="fa-solid fa-circle-xmark"></i> ${info.error || '上传未成功'}</span>`;
+                        fillEl.style.width = '100%';
+                        fillEl.style.background = 'var(--accent-red)';
+                        onComplete(false);
+                    }
+                } catch (err) {
+                    clearInterval(pollInterval);
+                    onComplete(false);
+                }
+            }, 500);
+        }
+
+        async function startRealDispatch() {
+            const modal = document.getElementById('modal');
+            const list = document.getElementById('progress-list');
+            const closeBtn = document.getElementById('close-modal-btn');
+            
+            modal.style.display = 'flex';
+            closeBtn.style.display = 'none';
+            list.innerHTML = '';
+
+            const selectedCards = document.querySelectorAll('.platform-card.selected');
+            const activePlatforms = Array.from(selectedCards).map(c => {
+                const id = c.id.replace('card-', '');
+                return PLATFORMS.find(p => p.id === id);
+            });
+
+            const title = document.getElementById('post-title').value;
+            const desc = document.getElementById('post-desc').value;
+            const videoSrc = document.getElementById('video-src').getAttribute('src');
+
+            let successCount = 0;
+            let failCount = 0;
+
+            activePlatforms.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'progress-row';
+                item.id = `row-${p.id}`;
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600;">
+                        <span><i class="fa-brands ${p.icon}" style="color: ${p.color}; font-size: 16px;"></i> ${p.name}</span>
+                        <span id="status-${p.id}" style="color: var(--text-muted);">等待 Python 后端分配任务...</span>
+                    </div>
+                    <div class="progress-fill-bg">
+                        <div class="progress-fill" id="fill-${p.id}" style="width: 0%;"></div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            for (const p of activePlatforms) {
+                try {
+                    const startRes = await fetch('http://localhost:5001/api/start-upload-task', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            platform_id: p.id,
+                            video_file: videoSrc,
+                            title: title,
+                            desc: desc,
+                            tags: ["富氢热灸贴", "木齐科技", "温氢双护"]
+                        })
+                    });
+                    const startData = await startRes.json();
+
+                    if (startRes.status === 409 || startData.status === 'blocked_duplicate') {
+                        showNotification(`⚠️ ${p.name}：系统已自动拦截重复发布`, 'warning');
+                        const statusEl = document.getElementById(`status-${p.id}`);
+                        const fillEl = document.getElementById(`fill-${p.id}`);
+                        statusEl.innerHTML = `<span style="color:var(--accent-gold); font-weight:700;">🔒 已发布 · 防重机制自动拦截</span>`;
+                        fillEl.style.width = '100%';
+                        fillEl.style.background = 'var(--accent-gold)';
+                        continue;
+                    }
+
+                    if (startData.task_id) {
+                        await new Promise(resolve => {
+                            trackRealPythonTask(p, startData.task_id, resolve);
+                        });
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            closeBtn.style.display = 'block';
+            refreshSessionStatus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        refreshSessionStatus();
+    </script>
 </body>
 </html>
