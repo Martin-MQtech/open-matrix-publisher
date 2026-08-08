@@ -375,8 +375,14 @@
       </div>
 
       <div class="form-group">
-        <label><i class="fa-solid fa-file-video"></i> 视频文件绝对路径</label>
-        <input type="text" id="videoPath" value="/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4">
+        <label><i class="fa-solid fa-file-video"></i> 视频文件路径 (选择本地文件或输入路径)</label>
+        <div style="display:flex; gap:10px;">
+          <input type="text" id="videoPath" value="/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4">
+          <label class="btn-file-select" style="white-space:nowrap; background:rgba(59,130,246,0.2); border:1px solid var(--accent-blue); padding:10px 16px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-folder-open"></i> 浏览文件
+            <input type="file" id="localFilePicker" accept="video/*" style="display:none;" onchange="handleFileSelected(this)">
+          </label>
+        </div>
       </div>
 
       <div class="form-group">
@@ -497,6 +503,30 @@
       renderGrid("globalGrid", GLOBAL_PLATFORMS, videoPubMap, statusData);
     }
 
+    function handleFileSelected(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        document.getElementById("videoPath").value = file.name;
+        logMsg(`📁 已选中本地视频文件: ${file.name}`, "info");
+      }
+    }
+
+    async function launchQRLogin(platformId, platformName, event) {
+      event.stopPropagation();
+      logMsg(`🔑 正在准备调起【${platformName}】扫码登录浏览器...`, "warn");
+      try {
+        const res = await fetch("http://localhost:5001/api/launch-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ platform_id: platformId })
+        });
+        const data = await res.json();
+        logMsg(data.msg, "info");
+      } catch (err) {
+        logMsg(`❌ 调起【${platformName}】扫码登录失败: ${err.message}`, "err");
+      }
+    }
+
     function renderGrid(gridId, platforms, videoPubMap, statusData) {
       const grid = document.getElementById(gridId);
       grid.innerHTML = "";
@@ -517,6 +547,11 @@
           <div class="platform-header">
             <span class="platform-name"><i class="fa-solid ${p.icon}"></i> ${p.name}</span>
             ${badgeHtml}
+          </div>
+          <div style="display:flex; justify-content:flex-end; margin-top:4px;">
+            <button onclick="launchQRLogin('${p.id}', '${p.name}', event)" style="background:rgba(255,255,255,0.08); border:1px solid var(--border-color); color:var(--text-muted); padding:3px 8px; border-radius:6px; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:4px;">
+              <i class="fa-solid fa-qrcode"></i> 扫码登录/刷新
+            </button>
           </div>
         `;
 
