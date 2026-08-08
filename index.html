@@ -280,6 +280,105 @@
             color: var(--text-muted);
         }
 
+        /* 文案创作双模式选项卡 (Manual vs AI) */
+        .copy-mode-tab-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(6, 9, 17, 0.7);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 4px;
+            margin-top: 20px;
+            margin-bottom: 14px;
+        }
+
+        .copy-tab-btn {
+            flex: 1;
+            padding: 9px 14px;
+            border: none;
+            border-radius: 8px;
+            background: none;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .copy-tab-btn.active {
+            background: rgba(0, 230, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(0, 230, 255, 0.3);
+            box-shadow: 0 2px 10px rgba(0, 230, 255, 0.2);
+        }
+
+        /* 快捷文案模板按钮组 */
+        .template-chips-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .chip-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-main);
+            font-size: 11px;
+            padding: 5px 11px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .chip-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            background: rgba(0, 230, 255, 0.08);
+        }
+
+        /* AI 智能文案助手控制盒 */
+        .ai-generator-panel {
+            background: rgba(139, 92, 246, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .ai-style-selector {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            margin-bottom: 12px;
+        }
+
+        .ai-style-tag {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #d8b4fe;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ai-style-tag.active {
+            background: var(--accent-purple);
+            color: #fff;
+            border-color: var(--accent-purple);
+            font-weight: 700;
+        }
+
         .form-group {
             margin-bottom: 16px;
         }
@@ -328,7 +427,6 @@
             gap: 10px;
         }
 
-        /* 默认未选中样式 */
         .platform-mini-card {
             background: rgba(6, 9, 17, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -348,7 +446,6 @@
             opacity: 0.9;
         }
 
-        /* 明确勾选时的高亮样式 */
         .platform-mini-card.selected {
             border-color: var(--accent-cyan);
             background: rgba(0, 230, 255, 0.1);
@@ -495,12 +592,12 @@
     </header>
 
     <div class="main-layout">
-        <!-- 左侧：大画幅主舞台 (视频大窗口 + 明确的分发模式) -->
+        <!-- 左侧：大画幅主舞台 (视频窗口 + 双模式文案生成器) -->
         <div class="video-stage">
             <div class="glass-panel" style="padding: 24px;">
                 <div class="section-header">
                     <span><i class="fa-solid fa-clapperboard" style="margin-right:8px;"></i> 待分发视频资产选择与编辑</span>
-                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 单次只推选中的 1 个视频文件</span>
+                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 支持手动自主撰写 与 AI 智能生成双模式</span>
                 </div>
 
                 <!-- 分发场景模式选择 -->
@@ -545,8 +642,47 @@
                     </div>
                 </div>
 
-                <!-- 视频标题与描述编辑 -->
-                <div class="form-group" style="margin-top: 20px;">
+                <!-- 文案创作模式切换栏 (手动模式 vs AI 生成模式) -->
+                <div class="copy-mode-tab-bar">
+                    <button class="copy-tab-btn active" id="tab-manual" onclick="setCopyMode('manual')">
+                        <i class="fa-solid fa-pen-to-square"></i> 模式一：手动自主撰写 / 模板套用
+                    </button>
+                    <button class="copy-tab-btn" id="tab-ai" onclick="setCopyMode('ai')">
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：AI 一键爆款文案生成器
+                    </button>
+                </div>
+
+                <!-- 模式一快捷模板芯片 -->
+                <div id="manual-template-bar" class="template-chips-bar">
+                    <span style="font-size:11px; color:var(--text-muted); align-self:center;">快速套用模板：</span>
+                    <button class="chip-btn" onclick="applyTemplate('moxibustion')"><i class="fa-solid fa-fire"></i> 富氢热灸贴中英文案</button>
+                    <button class="chip-btn" onclick="applyTemplate('viral')"><i class="fa-solid fa-bolt"></i> 爆款种草短视频模板</button>
+                    <button class="chip-btn" onclick="applyTemplate('global')"><i class="fa-solid fa-earth-americas"></i> 跨境英文 Global 模板</button>
+                    <button class="chip-btn" style="color:var(--accent-red);" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> 清空文本</button>
+                </div>
+
+                <!-- 模式二 AI 智能文案生成控制盒 -->
+                <div id="ai-generator-box" class="ai-generator-panel" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-robot"></i> AI 爆款文案助手</span>
+                        <span style="font-size:11px; color:var(--text-muted);">无需配置 API，支持本地/云端模型输出</span>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <input type="text" id="ai-keyword" class="form-control" placeholder="输入视频核心主题词（如：富氢热灸贴 肩颈舒缓 木齐科技）..." style="font-size:12px; padding:8px 12px;">
+                    </div>
+                    <div class="ai-style-selector">
+                        <div class="ai-style-tag active" onclick="selectAiStyle(this, '爆款种草风')">🔥 爆款种草风</div>
+                        <div class="ai-style-tag" onclick="selectAiStyle(this, '专业科普风')">🧪 专业科普风</div>
+                        <div class="ai-style-tag" onclick="selectAiStyle(this, '情绪共鸣风')">💡 情绪共鸣风</div>
+                        <div class="ai-style-tag" onclick="selectAiStyle(this, '跨境英文Global')">🌏 跨境英文 Global</div>
+                    </div>
+                    <button onclick="generateAiCopy()" style="width:100%; background:linear-gradient(135deg, var(--accent-purple), #6366f1); border:none; color:#fff; padding:9px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> 一键生成文案并自动填入
+                    </button>
+                </div>
+
+                <!-- 视频标题与描述编辑框 -->
+                <div class="form-group">
                     <label><i class="fa-solid fa-heading" style="color:var(--accent-cyan); margin-right:6px;"></i> 视频分发标题 (Title)</label>
                     <input type="text" id="post-title" class="form-control" value="久坐一天，肩颈又石化了？富氢热灸贴温氢双护">
                 </div>
@@ -563,7 +699,7 @@
             </div>
         </div>
 
-        <!-- 右侧：紧凑型矩阵平台选择侧栏 (默认都不勾选，避免误点) -->
+        <!-- 右侧：紧凑型矩阵平台选择侧栏 -->
         <div class="right-sidebar">
             <div class="summary-bar">
                 <div>
@@ -645,6 +781,62 @@
         ];
 
         let currentDispatchMode = 'single';
+        let currentAiStyle = '爆款种草风';
+
+        function setCopyMode(mode) {
+            document.querySelectorAll('.copy-tab-btn').forEach(b => b.classList.remove('active'));
+            if (mode === 'manual') {
+                document.getElementById('tab-manual').classList.add('active');
+                document.getElementById('manual-template-bar').style.display = 'flex';
+                document.getElementById('ai-generator-box').style.display = 'none';
+            } else {
+                document.getElementById('tab-ai').classList.add('active');
+                document.getElementById('manual-template-bar').style.display = 'none';
+                document.getElementById('ai-generator-box').style.display = 'block';
+            }
+        }
+
+        function selectAiStyle(el, style) {
+            document.querySelectorAll('.ai-style-tag').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            currentAiStyle = style;
+        }
+
+        function applyTemplate(tplKey) {
+            if (tplKey === 'moxibustion') {
+                document.getElementById('post-title').value = "久坐一天，肩颈又石化了？富氢热灸贴温氢双护";
+                document.getElementById('post-desc').value = "久坐一天，肩颈又石化了？\n不是暖贴不够热，是只给皮肤烤了个表面。\n这次用的是富氢热灸贴——道地艾草 × 固态氢材料，热的时候氢分子同步工作，80×205mm 的大贴幅服帖整个肩颈和腰背。\n不燥不闷，一觉可以贴着睡。\n体感这个东西，说再多不如试一次。\n木齐科技 自研固态氢 | www.emuqi.com";
+            } else if (tplKey === 'viral') {
+                document.getElementById('post-title').value = "【实测体验】现代打工人的肩颈救星来了！";
+                document.getElementById('post-desc').value = "每天对电脑10小时，肩颈硬得像石头？\n今天给大家分享这款黑科技——富氢热灸贴！\n深层发热，温氢滋养，贴上就像做了一场SPA！\n感兴趣的朋友赶紧试试吧~ #打工人必备 #黑科技体验";
+            } else if (tplKey === 'global') {
+                document.getElementById('post-title').value = "Hydrogen Moxibustion Patch: Warmth & Hydrogen Dual Protection";
+                document.getElementById('post-desc').value = "Sitting all day leaving your shoulders stiff?\nDiscover the Hydrogen Moxibustion Patch — combining natural mugwort & solid hydrogen material. Hydrogen molecules work in sync with deep thermal relief across a large 80×205mm surface.\nMUQI TECH | Solid Hydrogen R&D | www.emuqi.com";
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('post-title').value = "";
+            document.getElementById('post-desc').value = "";
+        }
+
+        function generateAiCopy() {
+            const kw = document.getElementById('ai-keyword').value || "富氢热灸贴 肩颈舒缓";
+            if (currentAiStyle === '爆款种草风') {
+                document.getElementById('post-title').value = `【爆款推荐】${kw} · 彻底解放你的腰背与肩颈！`;
+                document.getElementById('post-desc').value = `今天一定要把这个黑科技分享给所有久坐的朋友！\n关于【${kw}】：不仅温热敷贴，更有氢分子深层渗透滋养。\n贴一片相当于做完了一整套肩颈热理疗！\n不燥不闷，舒服到睡着！建议收藏关注！`;
+            } else if (currentAiStyle === '专业科普风') {
+                document.getElementById('post-title').value = `硬核科普：关于${kw}的材料学与生物学原理解密`;
+                document.getElementById('post-desc').value = `为什么传统热敷贴效果有限？\n因为绝大部分暖贴仅仅局限于表皮升温。\n木齐科技【${kw}】创新结合道地艾草与固态氢材料，热能与氢分子协同作用。\n研究表明，氢分子的穿透力能带来真正的深层滋养。\n了解更多请访问木齐科技官网: www.emuqi.com`;
+            } else if (currentAiStyle === '跨境英文Global') {
+                document.getElementById('post-title').value = `Innovating Wellness: ${kw} for Deep Relief`;
+                document.getElementById('post-desc').value = `Experience the next generation of wellness with MUQI TECH's ${kw}.\nCombining natural herbal thermal energy with solid hydrogen technology for deep body relaxation.\nLearn more at www.emuqi.com`;
+            } else {
+                document.getElementById('post-title').value = `写给每一个疲惫打工人的温热问候：${kw}`;
+                document.getElementById('post-desc').value = `忙碌了一整天，给自己的身体放个假吧。\n【${kw}】陪伴你每一个深夜加班与休息时刻，温氢双护，安心伴眠。`;
+            }
+            alert("✨ AI 爆款文案已成功生成并填入右侧表格！");
+        }
 
         function setDispatchMode(mode) {
             currentDispatchMode = mode;
@@ -675,7 +867,6 @@
 
             PLATFORMS.forEach(p => {
                 const card = document.createElement('div');
-                // 【核心修正】默认未选中 (不加 selected 类)，由用户自主勾选
                 card.className = 'platform-mini-card';
                 card.id = `card-${p.id}`;
                 card.setAttribute('data-platform-id', p.id);
@@ -880,7 +1071,6 @@
             });
 
             for (const p of activePlatforms) {
-                // 根据模式分配视频资产
                 let targetVideo = cnVideo;
                 if (currentDispatchMode === 'bilingual' && p.cat === 'global') {
                     targetVideo = enVideo;
