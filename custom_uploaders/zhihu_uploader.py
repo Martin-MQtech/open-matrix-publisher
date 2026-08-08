@@ -90,11 +90,11 @@ async def _upload_async(video_path, title, tags, desc=""):
             }""")
             if pub_res:
                 print("[zhihu] 已点击发布按钮，等待页面确认...")
-                await page.wait_for_timeout(8000)
-                # 检查 URL 改变或有发布成功的提示
+                await page.wait_for_timeout(6000)
                 curr_url = page.url
-                if "manage" in curr_url or "success" in curr_url or "creator" in curr_url:
-                    print(f"[zhihu] ✅ 发布成功！当前页面: {curr_url}")
+                page_text = await page.evaluate("() => document.body ? document.body.innerText : ''")
+                if "manage" in curr_url or "creation" in curr_url or "成功" in page_text or "审核" in page_text or "已发布" in page_text:
+                    print(f"[zhihu] ✅ 视频已成功提交发布！当前页面: {curr_url}")
                     await context.storage_state(path=COOKIE_FILE)
                     await browser.close()
                     return True
