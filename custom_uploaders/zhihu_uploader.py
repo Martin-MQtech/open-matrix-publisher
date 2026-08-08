@@ -44,18 +44,34 @@ async def _upload_async(video_path, title, tags, desc=""):
         await file_input.set_input_files(video_path)
         await page.wait_for_timeout(5000)
 
-        # 设置标题
+        # 1. 强制覆盖知乎自动从文件名截取的默认标题
         clean_title = title[:80]
-        title_el = page.locator("input[placeholder*='标题'], textarea[placeholder*='标题'], input.Input").first
-        if await title_el.count() > 0:
-            await title_el.fill(clean_title)
-            print("[zhihu] 填写标题: 成功")
-        else:
-            print("[zhihu] 填写标题: 未定位到输入框，使用 JS 备用填充")
-            await page.evaluate(f"""() => {{
-                const el = document.querySelector('input[placeholder*="标题"], textarea[placeholder*="标题"]');
-                if (el) {{ el.value = {json.dumps(clean_title)}; el.dispatchEvent(new Event('input', {{ bubbles: true }})); }}
-            }}""")
+        title_filled = await page.evaluate("""([newTitle]) => {
+            const titleEl = document.querySelector('textarea[placeholder*="标题"], input[placeholder*="标题"], textarea.css-1ta9b1n, input.Input');
+            if (titleEl) {
+                titleEl.focus();
+                titleEl.value = newTitle;
+                titleEl.dispatchEvent(new Event('input', { bubbles: true }));
+                titleEl.dispatchEvent(new Event('change', { bubbles: true }));
+                return true;
+            }
+            return false;
+        }""", [clean_title])
+        print(f"[zhihu] 覆盖原始文件名标题 ({clean_title[:20]}...): {'成功' if title_filled else '失败'}")
+
+        # 2. 填充完整正文 Description 到 DraftEditor 富文本框
+        if desc:
+            desc_filled = await page.evaluate("""([descText]) => {
+                const editor = document.querySelector('div.public-DraftEditor-content, div[contenteditable="true"]');
+                if (editor) {
+                    editor.focus();
+                    document.execCommand('insertText', false, descText);
+                    editor.dispatchEvent(new Event('input', { bubbles: true }));
+                    return true;
+                }
+                return false;
+            }""", [desc])
+            print(f"[zhihu] 填写正文 Description 文案: {'成功' if desc_filled else '失败'}")
 
         # 轮询等待视频上传 100% / 上传成功
         print("[zhihu] 正在轮询等待知乎后台视频切片传输完成...")
