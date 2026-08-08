@@ -33,6 +33,14 @@ SESSION_COOKIES: dict[str, list[str]] = {
     "instagram": ["sessionid"],
     "facebook": ["c_user", "xs"],
     "tk": ["sid_tt", "sessionid_ss", "tt_csrf_token"],
+    "tiktok": ["sid_tt", "sessionid_ss", "tt_csrf_token"],
+    "zhihu": ["z_c0"],
+    "weibo": ["SUB", "SUBP"],
+    "douyin": ["sessionid", "sessionid_ss"],
+    "toutiao": ["LOGIN_A"],
+    "bilibili": ["SESSDATA", "bili_jct"],
+    "kuaishou": ["kuaishou.server.web_st"],
+    "tencent": ["sessionid", "wxuin"]
 }
 
 
