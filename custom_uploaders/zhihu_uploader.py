@@ -8,7 +8,10 @@ sys.path.insert(0, "/Users/martin/social-auto-upload")
 COOKIE_FILE = "/Users/martin/social-auto-upload/cookies/zhihu_default.json"
 
 async def _upload_async(video_path, title, tags, desc=""):
-    from patchright.async_api import async_playwright
+    try:
+        from patchright.async_api import async_playwright
+    except ImportError:
+        from playwright.async_api import async_playwright
 
     if not os.path.exists(COOKIE_FILE):
         print(f"[zhihu] Cookie 未找到: {COOKIE_FILE}")
@@ -43,20 +46,16 @@ async def _upload_async(video_path, title, tags, desc=""):
 
         # 设置标题
         clean_title = title[:80]
-        title_res = await page.evaluate(f"""() => {{
-            const inputs = Array.from(document.querySelectorAll('input, textarea'));
-            const el = inputs.find(i => i.placeholder && (i.placeholder.includes('标题') || i.placeholder.includes('写个标题')));
-            if (el) {{
-                const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                if (nativeSetter) nativeSetter.call(el, {json.dumps(clean_title)});
-                else el.value = {json.dumps(clean_title)};
-                el.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                el.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                return true;
-            }}
-            return false;
-        }}""")
-        print(f"[zhihu] 填写标题: {'成功' if title_res else '失败'}")
+        title_el = page.locator("input[placeholder*='标题'], textarea[placeholder*='标题'], input.Input").first
+        if await title_el.count() > 0:
+            await title_el.fill(clean_title)
+            print("[zhihu] 填写标题: 成功")
+        else:
+            print("[zhihu] 填写标题: 未定位到输入框，使用 JS 备用填充")
+            await page.evaluate(f"""() => {{
+                const el = document.querySelector('input[placeholder*="标题"], textarea[placeholder*="标题"]');
+                if (el) {{ el.value = {json.dumps(clean_title)}; el.dispatchEvent(new Event('input', {{ bubbles: true }})); }}
+            }}""")
 
         # 轮询等待视频上传 100% / 上传成功
         print("[zhihu] 正在轮询等待知乎后台视频切片传输完成...")
