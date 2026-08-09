@@ -34,3 +34,4 @@ Thumbs.db
 *.log
 dispatch_history.json
 .dispatch.lock
+.task_progress/

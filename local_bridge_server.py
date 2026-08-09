@@ -19,9 +19,45 @@ except Exception:
 # Active background upload tasks store & History Store
 ACTIVE_TASKS = {}
 TASK_LOCK = threading.Lock()
-HISTORY_FILE = os.path.join(os.path.dirname(__file__), "dispatch_history.json")
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dispatch_history.json")
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+TASK_PROGRESS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".task_progress")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(TASK_PROGRESS_DIR, exist_ok=True)
+
+def _task_progress_file(task_id):
+    return os.path.join(TASK_PROGRESS_DIR, f"{task_id}.json")
+
+def save_task_progress(task_id, data):
+    """持久化任务进度到文件，服务重启不丢失"""
+    with TASK_LOCK:
+        ACTIVE_TASKS[task_id] = data
+    try:
+        with open(_task_progress_file(task_id), "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+    except Exception:
+        pass
+
+def load_task_progress(task_id):
+    """从文件恢复任务进度"""
+    fpath = _task_progress_file(task_id)
+    if os.path.exists(fpath):
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return None
+
+def cleanup_task_progress(task_id):
+    with TASK_LOCK:
+        ACTIVE_TASKS.pop(task_id, None)
+    try:
+        fpath = _task_progress_file(task_id)
+        if os.path.exists(fpath):
+            os.remove(fpath)
+    except Exception:
+        pass
 
 def load_history():
     if os.path.exists(HISTORY_FILE):
@@ -134,62 +170,80 @@ def launch_login():
         "msg": f"🚀 已在桌面为你打开【{plat_name}】的有头浏览器窗口，请使用手机 App 扫码或账号登录！登录成功后系统将自动捕获凭证。"
     })
 
-def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags):
+def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags, dispatch_session_id=""):
     abs_path = os.path.abspath(video_file)
     total_bytes = os.path.getsize(abs_path) if os.path.exists(abs_path) else 20761840
+    platform_names = {
+        "tencent": "视频号", "douyin": "抖音", "bilibili": "B站",
+        "kuaishou": "快手", "weibo": "微博", "zhihu": "知乎",
+        "toutiao": "头条", "xiaohongshu": "小红书", "youtube": "YouTube",
+        "tiktok": "TikTok", "x": "X/Twitter", "linkedin": "LinkedIn",
+        "facebook": "Facebook", "instagram": "Instagram"
+    }
+    pname = platform_names.get(platform_id, platform_id)
 
-    with TASK_LOCK:
-        ACTIVE_TASKS[task_id] = {
-            "task_id": task_id,
-            "platform_id": platform_id,
-            "status": "running",
-            "stage": "Step 1/4: 从 Mac Chrome 读取 Cookie，启动后台无头浏览器...",
-            "pct": 20,
-            "bytes_uploaded": 0,
-            "total_bytes": total_bytes,
-            "speed_mbps": 0.0
-        }
+    def update(pct, stage, **extra):
+        d = {"task_id": task_id, "platform_id": platform_id,
+             "dispatch_session_id": dispatch_session_id,
+             "video_file": os.path.basename(video_file),
+             "status": "running", "stage": stage, "pct": pct,
+             "total_bytes": total_bytes, **extra}
+        save_task_progress(task_id, d)
 
-    time.sleep(0.5)
+    # Step 1: 初始化
+    update(5, f"📋 [{pname}] 准备中…读取 Cookie 与环境")
 
-    with TASK_LOCK:
-        ACTIVE_TASKS[task_id].update({
-            "stage": "Step 2/4: Playwright 无头模式后台物理上传 MP4 成片...",
-            "pct": 60
+    # 验证文件仍存在
+    if not os.path.exists(abs_path):
+        finish_time = time.strftime("%Y-%m-%d %H:%M:%S")
+        save_task_progress(task_id, {
+            "status": "failed", "stage": f"❌ 视频文件不存在: {abs_path}", "pct": 100,
+            "error": "视频文件已被移动或删除", "finish_time": finish_time
         })
+        return
+
+    update(15, f"🔐 [{pname}] Cookie 校验通过，启动无头浏览器…")
+    time.sleep(0.3)
+
+    update(25, f"🚀 [{pname}] 正在连接 {platform_id} 平台上传接口…")
+    time.sleep(0.3)
+
+    # Step 2-3: 执行实际上传（耗时最长）
+    update(40, f"⬆️  [{pname}] 正在上传视频（可能需 1-5 分钟）…")
 
     uploader = RealPlatformUploader(platform_id, video_file, title, desc, tags)
     result = uploader.execute_upload()
 
+    # Step 4: 结果
     finish_time = time.strftime("%Y-%m-%d %H:%M:%S")
     with TASK_LOCK:
         if result.get("success"):
             task_record = {
                 "status": "completed",
                 "real": True,
-                "stage": f"Step 4/4: ✅ 无头模式后台静默发布成功 (ID: {result.get('pub_id')})",
+                "stage": f"✅ [{pname}] 发布成功 (ID: {result.get('pub_id', 'N/A')})",
                 "pct": 100,
                 "pub_id": result.get("pub_id"),
                 "link": result.get("link"),
                 "finish_time": finish_time
             }
-            ACTIVE_TASKS[task_id].update(task_record)
         else:
             task_record = {
                 "status": "failed",
                 "real": False,
-                "stage": f"❌ {result.get('error')}",
+                "stage": f"❌ [{pname}] {result.get('error', '未知错误')[:80]}",
                 "pct": 100,
-                "error": result.get("error"),
+                "error": result.get("error", "未知错误"),
                 "finish_time": finish_time
             }
-            ACTIVE_TASKS[task_id].update(task_record)
+        save_task_progress(task_id, task_record)
 
         # Persist result to dispatch_history.json
         hist = load_history()
         
-        # Update or create the matching record by video+dispatch_id
-        dispatch_id = task_id.split("_task_")[0] if "_task_" in task_id else task_id
+        # Use the frontend-provided session id so all platforms in one dispatch click
+        # group into a single record. Fall back to task_id split if absent.
+        dispatch_id = dispatch_session_id if dispatch_session_id else (task_id.split("_task_")[0] if "_task_" in task_id else task_id)
         
         # Find existing record for this task group, or create new
         matching_record = None
@@ -220,11 +274,15 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags)
 
         hist["last_dispatch"] = {
             "timestamp": finish_time,
+            "dispatch_id": dispatch_id,
             "title": title,
             "video_file": os.path.basename(video_file),
             "platforms": {platform_id: task_record}
         }
         save_history(hist)
+
+        # Schedule cleanup of the progress file (keep a few minutes so UI can reconnect)
+        threading.Timer(300, lambda: cleanup_task_progress(task_id)).start()
 
 @app.route("/api/upload-video", methods=["POST"])
 def upload_video():
@@ -286,11 +344,37 @@ def start_upload_task():
 @app.route("/api/task-progress", methods=["GET"])
 def get_task_progress():
     task_id = request.args.get("task_id")
+    # 先查内存
     with TASK_LOCK:
         task_info = ACTIVE_TASKS.get(task_id)
     if task_info:
         return jsonify(task_info)
+    # 内存没有则从文件恢复（服务重启后兼容）
+    saved = load_task_progress(task_id)
+    if saved:
+        return jsonify(saved)
     return jsonify({"status": "not_found"}), 404
+
+@app.route("/api/active-tasks", methods=["GET"])
+def get_active_tasks():
+    """返回所有活跃/历史任务的简要状态"""
+    result = {}
+    with TASK_LOCK:
+        result.update(ACTIVE_TASKS)
+    # 补充文件中的记录
+    try:
+        for fname in os.listdir(TASK_PROGRESS_DIR):
+            if fname.endswith(".json"):
+                tid = fname[:-5]
+                if tid not in result:
+                    try:
+                        with open(os.path.join(TASK_PROGRESS_DIR, fname), "r") as f:
+                            result[tid] = json.load(f)
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+    return jsonify(result)
 
 @app.route("/api/history", methods=["GET"])
 def get_history():

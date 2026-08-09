@@ -539,25 +539,40 @@
         function trackRealPythonTask(p, taskId, onComplete) {
             const statusEl = document.getElementById(`status-${p.id}`);
             const fillEl = document.getElementById(`fill-${p.id}`);
+            const rowEl = document.getElementById(`row-${p.id}`);
+            // 标记当前正在执行
+            if (rowEl) rowEl.style.borderLeft = '3px solid var(--accent)';
+            let pollCount = 0;
             const poll = setInterval(async () => {
+                pollCount++;
                 try {
                     const res = await fetch(`${API_BASE}/api/task-progress?task_id=${taskId}`);
                     const info = await res.json();
-                    if (info.pct !== undefined) fillEl.style.width = `${info.pct}%`;
+                    if (info.pct !== undefined) {
+                        fillEl.style.width = `${Math.min(info.pct, 100)}%`;
+                        if (info.pct >= 40) fillEl.style.background = 'var(--accent)';
+                    }
                     if (info.stage) statusEl.innerText = info.stage;
                     if (info.status === 'completed') {
                         clearInterval(poll);
-                        statusEl.innerHTML = `<span style="color:var(--green);font-weight:700;"><i class="fa-solid fa-circle-check"></i> ${info.stage}</span>`;
+                        if (rowEl) rowEl.style.borderLeft = '3px solid var(--green)';
+                        statusEl.innerHTML = `<span style="color:var(--green);font-weight:700;"><i class="fa-solid fa-circle-check"></i> 发布成功</span>`;
                         fillEl.style.width = '100%'; fillEl.style.background = 'var(--green)';
                         onComplete(true);
                     } else if (info.status === 'failed') {
                         clearInterval(poll);
-                        statusEl.innerHTML = `<span style="color:var(--red);font-weight:700;"><i class="fa-solid fa-circle-xmark"></i> ${info.error || '失败'}</span>`;
+                        if (rowEl) rowEl.style.borderLeft = '3px solid var(--red)';
+                        const errText = (info.error || '失败').substring(0, 60);
+                        statusEl.innerHTML = `<span style="color:var(--red);font-weight:700;" title="${errText}"><i class="fa-solid fa-circle-xmark"></i> ${errText}</span>`;
                         fillEl.style.width = '100%'; fillEl.style.background = 'var(--red)';
                         onComplete(false);
+                    } else if (pollCount > 1200) { // 超过 10 分钟强制停止轮询
+                        clearInterval(poll);
+                        statusEl.innerHTML = `<span style="color:var(--amber);"><i class="fa-solid fa-clock"></i> 执行超时（后台仍在运行）</span>`;
+                        onComplete(false); // 不阻塞后续平台
                     }
-                } catch (err) { clearInterval(poll); onComplete(false); }
-            }, 500);
+                } catch (err) { /* 网络抖动不中断 */ }
+            }, 800);
         }
 
         async function startRealDispatch() {
@@ -590,12 +605,13 @@
             const desc = document.getElementById('post-desc').value;
             const targetVideo = uploadedVideoPath;
 
-            activePlatforms.forEach(p => {
+            activePlatforms.forEach((p, idx) => {
                 const item = document.createElement('div');
                 item.className = 'prog-row'; item.id = `row-${p.id}`;
+                const queueLabel = idx === 0 ? '（即将开始）' : `（排队第 ${idx} 位）`;
                 item.innerHTML = `
                     <div class="prog-top"><span><i class="fa-brands ${p.icon}" style="color:${p.color};"></i> ${p.name}</span>
-                    <span id="status-${p.id}" style="color:var(--muted);">等待中…</span></div>
+                    <span id="status-${p.id}" style="color:var(--muted);">就绪 ${queueLabel}</span></div>
                     <div class="prog-bg"><div class="prog-fill" id="fill-${p.id}"></div></div>`;
                 list.appendChild(item);
             });
