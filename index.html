@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Open Matrix Publisher (全域矩阵) · 木齐科技 生物材料 × 氢能 × AI 分发引擎</title>
+    <title>Open Matrix Publisher (全域矩阵) · 开源 AI 原生跨平台视频分发引擎</title>
     <!-- Google Fonts & FontAwesome -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <style>
         :root {
             --bg-dark: #060911;
@@ -31,7 +31,7 @@
             font-family: 'Outfit', 'Noto Sans SC', sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
-            background-image: 
+            background-image:
                 radial-gradient(circle at 15% 15%, rgba(0, 230, 255, 0.08) 0%, transparent 50%),
                 radial-gradient(circle at 85% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
                 radial-gradient(circle at 50% 85%, rgba(0, 255, 200, 0.06) 0%, transparent 60%);
@@ -54,7 +54,9 @@
             align-items: center;
             justify-content: space-between;
             padding: 16px 28px;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 14px;
         }
 
         .brand-box {
@@ -103,25 +105,51 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: 0.5px;
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .title-area h1 .sub {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            letter-spacing: 1px;
         }
 
         .title-area p {
             font-size: 12px;
             color: var(--text-muted);
-            margin-top: 2px;
+            margin-top: 6px;
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
-        .tag-pill-bio {
-            background: rgba(0, 255, 200, 0.12);
-            color: var(--accent-teal);
-            border: 1px solid rgba(0, 255, 200, 0.3);
-            padding: 1px 7px;
+        .brand-tag {
+            background: rgba(0, 230, 255, 0.1);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(0, 230, 255, 0.3);
+            padding: 2px 9px;
             border-radius: 12px;
             font-size: 10px;
             font-weight: 700;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .brand-tag.alt {
+            background: rgba(139, 92, 246, 0.12);
+            color: var(--accent-purple);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+        .brand-tag.green {
+            background: rgba(0, 255, 200, 0.1);
+            color: var(--accent-teal);
+            border-color: rgba(0, 255, 200, 0.3);
         }
 
         .action-area {
@@ -151,6 +179,21 @@
             box-shadow: 0 8px 28px rgba(0, 230, 255, 0.6);
         }
 
+        .hero-strip {
+            background: linear-gradient(90deg, rgba(0, 230, 255, 0.06), rgba(139, 92, 246, 0.06));
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 12px 18px;
+            margin-bottom: 18px;
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .hero-strip strong { color: #fff; }
+
         .main-layout {
             display: grid;
             grid-template-columns: 1fr 420px;
@@ -179,44 +222,48 @@
             border-bottom: 1px solid rgba(0, 230, 255, 0.15);
         }
 
-        .dispatch-mode-selector {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .mode-card {
-            background: rgba(6, 9, 17, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 12px 14px;
-            cursor: pointer;
-            transition: all 0.2s;
+        .stepper {
             display: flex;
-            align-items: flex-start;
-            gap: 10px;
+            align-items: center;
+            margin-bottom: 18px;
         }
-
-        .mode-card.active {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 230, 255, 0.08);
-        }
-
-        .mode-card input[type="radio"] {
-            margin-top: 3px;
-        }
-
-        .mode-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .mode-desc {
-            font-size: 11px;
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             color: var(--text-muted);
-            margin-top: 2px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .step-num {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .step.active { color: #fff; }
+        .step.active .step-num {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-teal));
+            color: #000;
+            border: none;
+            box-shadow: 0 0 12px rgba(0, 230, 255, 0.4);
+        }
+        .step.done .step-num {
+            background: rgba(0, 255, 200, 0.18);
+            color: var(--accent-teal);
+            border-color: var(--accent-teal);
+        }
+        .step-line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.12);
+            margin: 0 10px;
         }
 
         .file-select-banner {
@@ -228,6 +275,8 @@
             border-radius: 12px;
             padding: 12px 16px;
             margin-bottom: 14px;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .btn-file-browse {
@@ -242,6 +291,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            white-space: nowrap;
         }
 
         .btn-file-browse:hover {
@@ -350,7 +400,7 @@
 
         .ai-portal-grid-2 {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 12px;
             margin-top: 12px;
             margin-bottom: 12px;
@@ -390,6 +440,7 @@
             cursor: pointer;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 4px;
             transition: all 0.2s;
         }
@@ -588,14 +639,14 @@
     <header class="glass-panel">
         <div class="brand-box">
             <div class="brand-logo-fusion">
-                <i class="fa-solid fa-atom"></i>
+                <i class="fa-solid fa-share-nodes"></i>
             </div>
             <div class="title-area">
-                <h1>Open Matrix Publisher (全域矩阵)</h1>
+                <h1>Open Matrix Publisher <span class="sub">全域矩阵</span></h1>
                 <p>
-                    <span class="tag-pill-bio"><i class="fa-solid fa-dna"></i> 木齐科技 生物材料</span>
-                    <span class="tag-pill-bio" style="color:var(--accent-cyan); border-color:rgba(0,230,255,0.3); background:rgba(0,230,255,0.1);"><i class="fa-solid fa-vial-virus"></i> 固态氢能</span>
-                    <span class="tag-pill-bio" style="color:var(--accent-purple); border-color:rgba(139,92,246,0.3); background:rgba(139,92,246,0.1);"><i class="fa-solid fa-brain"></i> AI 原生矩阵</span>
+                    <span class="brand-tag"><i class="fa-solid fa-share-nodes"></i> 跨平台视频分发</span>
+                    <span class="brand-tag alt"><i class="fa-solid fa-brain"></i> AI 原生引擎</span>
+                    <span class="brand-tag green"><i class="fa-solid fa-lock-open"></i> MIT 开源免费</span>
                 </p>
             </div>
         </div>
@@ -604,188 +655,188 @@
                 <i class="fa-brands fa-github"></i> GitHub 开源
             </a>
             <button class="btn-primary" onclick="openConfirmDialog()">
-                <i class="fa-solid fa-paper-plane"></i> 启动全域分发
+                <i class="fa-solid fa-paper-plane"></i> 启动分发
             </button>
         </div>
     </header>
 
+    <div class="hero-strip">
+        <i class="fa-solid fa-bolt" style="color:var(--accent-cyan);"></i>
+        <span><strong>一条视频，静默分发到 14+ 内容平台。</strong> 后台无头执行、零前台打扰；开源免费，内置 AI 文案助手。</span>
+    </div>
+
     <div class="main-layout">
-        <!-- 左侧：大画幅主舞台 -->
+        <!-- 左侧：视频选择与文案编辑主舞台 -->
         <div class="video-stage">
             <div class="glass-panel" style="padding: 24px;">
                 <div class="section-header">
-                    <span><i class="fa-solid fa-clapperboard" style="margin-right:8px;"></i> 待分发视频资产选择与编辑</span>
-                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 视频版本点选分发 · 自由跨平台推送</span>
+                    <span><i class="fa-solid fa-clapperboard" style="margin-right:8px;"></i> ① 选择并编辑你的视频</span>
+                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 本地选择 · 一键同步多平台</span>
                 </div>
 
-                <!-- 视频分发工作模式选择 -->
-                <div class="dispatch-mode-selector">
-                    <div class="mode-card active" id="mode-single" onclick="setDispatchMode('single')">
-                        <input type="radio" name="dispatch_mode" checked>
-                        <div>
-                            <div class="mode-title">🎬 选定视频点选分发模式</div>
-                            <div class="mode-desc">把当前浏览选中的这 1 条视频分发至所有勾选的目标平台（支持中文/英文发全网）</div>
-                        </div>
-                    </div>
-                    <div class="mode-card" id="mode-bilingual" onclick="setDispatchMode('bilingual')">
-                        <input type="radio" name="dispatch_mode">
-                        <div>
-                            <div class="mode-title">🚀 矩阵成片全量组合分发</div>
-                            <div class="mode-desc">灵活勾选多个视频版本，一次性批量推送至国内与海外矩阵账号</div>
-                        </div>
-                    </div>
+                <!-- 四步流程指示 -->
+                <div class="stepper">
+                    <div class="step active" id="step-1"><span class="step-num">1</span><span class="step-label">选视频</span></div>
+                    <div class="step-line"></div>
+                    <div class="step" id="step-2"><span class="step-num">2</span><span class="step-label">写文案</span></div>
+                    <div class="step-line"></div>
+                    <div class="step" id="step-3"><span class="step-num">3</span><span class="step-label">选平台</span></div>
+                    <div class="step-line"></div>
+                    <div class="step" id="step-4"><span class="step-num">4</span><span class="step-label">一键分发</span></div>
                 </div>
 
-                <!-- 本地视频选择与浏览条 -->
+                <!-- 本地视频选择 -->
                 <div class="file-select-banner">
                     <div style="display:flex; align-items:center; gap:10px;">
                         <i class="fa-solid fa-file-video" style="font-size:20px; color:var(--accent-cyan);"></i>
                         <div>
-                            <div style="font-size:13px; font-weight:700; color:#fff;" id="selected-video-filename">富氢热灸贴_中文宣传片_电影级_v2_成片.mp4</div>
-                            <div style="font-size:11px; color:var(--text-muted);" id="selected-video-filepath">路径: /Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4</div>
+                            <div style="font-size:13px; font-weight:700; color:#fff;" id="selected-video-filename">尚未选择视频文件</div>
+                            <div style="font-size:11px; color:var(--text-muted);" id="selected-video-filepath">点击下方按钮，从本机选择要分发的视频</div>
                         </div>
                     </div>
                     <button class="btn-file-browse" onclick="document.getElementById('local-file-input').click()">
-                        <i class="fa-solid fa-folder-open"></i> 浏览更换本地视频
+                        <i class="fa-solid fa-folder-open"></i> 浏览本地视频
                     </button>
                     <input type="file" id="local-file-input" accept="video/*" style="display:none;" onchange="handleLocalFileSelect(this)">
                 </div>
 
-                <!-- 16:9 大画幅视频预览框 -->
+                <!-- 视频预览 -->
                 <div class="large-video-box">
-                    <!-- 演示视频：运行时由用户在控制台选择本地视频，无需硬编码路径（避免泄漏本机目录、保证 Pages 部署可用） -->
                     <video id="main-video" controls playsinline></video>
                     <div class="video-meta-bar">
-                        <span><i class="fa-solid fa-film" style="margin-right:6px;"></i> 实时视频流预览</span>
-                        <span><i class="fa-solid fa-hard-drive" style="margin-right:6px;"></i> 大小: 42.9 MB</span>
+                        <span><i class="fa-solid fa-film" style="margin-right:6px;"></i> 视频预览</span>
+                        <span id="video-size"><i class="fa-solid fa-hard-drive" style="margin-right:6px;"></i> 大小: —</span>
                     </div>
                 </div>
 
-                <!-- 文案创作模式切换栏 -->
+                <!-- 文案创作模式切换 -->
                 <div class="copy-mode-tab-bar">
                     <button class="copy-tab-btn active" id="tab-manual" onclick="setCopyMode('manual')">
-                        <i class="fa-solid fa-pen-to-square"></i> 模式一：手动自主撰写 / 模板套用
+                        <i class="fa-solid fa-pen-to-square"></i> 模式一：手动撰写 / 模板
                     </button>
                     <button class="copy-tab-btn" id="tab-ai" onclick="setCopyMode('ai')">
-                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：豆包 / Kimi 免费网页助手
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：AI 文案助手
                     </button>
                 </div>
 
-                <!-- 模式一快捷模板芯片 -->
+                <!-- 模式一：通用模板 -->
                 <div id="manual-template-bar" class="template-chips-bar">
                     <span style="font-size:11px; color:var(--text-muted); align-self:center;">快速套用模板：</span>
-                    <button class="chip-btn" onclick="applyTemplate('moxibustion')"><i class="fa-solid fa-fire"></i> 富氢热灸贴中英文案</button>
-                    <button class="chip-btn" onclick="applyTemplate('viral')"><i class="fa-solid fa-bolt"></i> 爆款种草短视频模板</button>
-                    <button class="chip-btn" onclick="applyTemplate('global')"><i class="fa-solid fa-earth-americas"></i> 跨境英文 Global 模板</button>
+                    <button class="chip-btn" onclick="applyTemplate('product')"><i class="fa-solid fa-lightbulb"></i> 产品亮点模板</button>
+                    <button class="chip-btn" onclick="applyTemplate('viral')"><i class="fa-solid fa-bolt"></i> 种草爆款模板</button>
+                    <button class="chip-btn" onclick="applyTemplate('global')"><i class="fa-solid fa-earth-americas"></i> 跨境英文模板</button>
                     <button class="chip-btn" style="color:var(--accent-red);" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> 清空文本</button>
                 </div>
 
-                <!-- 模式二 专精 豆包 与 Kimi 免费 AI 网页端 -->
+                <!-- 模式二：免费 AI 网页助手 -->
                 <div id="ai-generator-box" class="ai-generator-panel" style="display:none;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-comments"></i> 豆包 & Kimi 免费 AI 网页助手</span>
-                        <span style="font-size:11px; color:var(--accent-teal);">复制网页方案 · 一键智能解析</span>
+                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-comments"></i> 免费 AI 网页助手</span>
+                        <span style="font-size:11px; color:var(--accent-teal);">复制主题 · 一键打开 · 智能解析</span>
                     </div>
 
-                    <!-- 双 AI 卡片 -->
                     <div class="ai-portal-grid-2">
-                        <!-- 豆包卡片 -->
                         <div class="portal-card-box">
                             <div class="portal-card-title">
-                                <span>🫘 豆包 (Doubao)</span>
-                                <span style="font-size:10px; color:var(--accent-teal);">网页免费版</span>
+                                <span>🫘 豆包 Doubao</span>
+                                <span style="font-size:10px; color:var(--accent-teal);">免费</span>
                             </div>
-                            <div style="font-size:11px; color:var(--text-muted);">擅长短视频口播与社交种草文案</div>
+                            <div style="font-size:11px; color:var(--text-muted);">擅长短视频口播与社交种草</div>
                             <button class="btn-action-small" style="margin-top:4px;" onclick="openAiWebPage('doubao')">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 1键复制主题并打开豆包网页
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 复制主题并打开
                             </button>
                         </div>
 
-                        <!-- Kimi 卡片 -->
                         <div class="portal-card-box">
                             <div class="portal-card-title">
-                                <span>🌙 Kimi 智能助手</span>
-                                <span style="font-size:10px; color:var(--accent-teal);">网页免费版</span>
+                                <span>🌙 Kimi</span>
+                                <span style="font-size:10px; color:var(--accent-teal);">免费</span>
                             </div>
-                            <div style="font-size:11px; color:var(--text-muted);">擅长长文本分析与高客单产品亮点</div>
+                            <div style="font-size:11px; color:var(--text-muted);">擅长长文本与结构化亮点</div>
                             <button class="btn-action-small" style="margin-top:4px;" onclick="openAiWebPage('kimi')">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 1键复制主题并打开 Kimi 网页
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 复制主题并打开
+                            </button>
+                        </div>
+
+                        <div class="portal-card-box">
+                            <div class="portal-card-title">
+                                <span>🧠 通义千问</span>
+                                <span style="font-size:10px; color:var(--accent-teal);">免费</span>
+                            </div>
+                            <div style="font-size:11px; color:var(--text-muted);">中英双语与多平台适配</div>
+                            <button class="btn-action-small" style="margin-top:4px;" onclick="openAiWebPage('tongyi')">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 复制主题并打开
                             </button>
                         </div>
                     </div>
 
-                    <!-- 人工精选从剪贴板一键认领 -->
-                    <div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
                         <span style="font-size:11px; color:var(--text-main);">
                             <i class="fa-solid fa-hand-pointer" style="color:var(--accent-gold); margin-right:4px;"></i>
-                            复制豆包/Kimi网页中选中的文案后，点击右侧一键认领 ➔
+                            在网页中复制满意的文案后，点右侧一键认领
                         </span>
-                        <button onclick="parseFromClipboard()" style="background:linear-gradient(135deg, var(--accent-purple), #6366f1); border:none; color:#fff; padding:6px 14px; border-radius:8px; font-weight:700; font-size:11px; cursor:pointer;">
-                            <i class="fa-solid fa-paste"></i> 📋 填入我复制的文案
+                        <button onclick="parseFromClipboard()" style="background:linear-gradient(135deg, var(--accent-purple), #6366f1); border:none; color:#fff; padding:6px 14px; border-radius:8px; font-weight:700; font-size:11px; cursor:pointer; white-space:nowrap;">
+                            <i class="fa-solid fa-paste"></i> 📋 填入复制的文案
                         </button>
                     </div>
                 </div>
 
-                <!-- 视频标题与描述编辑框 -->
+                <!-- 标题与描述 -->
                 <div class="form-group">
-                    <label><i class="fa-solid fa-heading" style="color:var(--accent-cyan); margin-right:6px;"></i> 视频分发标题 (Title)</label>
-                    <input type="text" id="post-title" class="form-control" value="久坐一天，肩颈又石化了？富氢热灸贴温氢双护">
+                    <label><i class="fa-solid fa-heading" style="color:var(--accent-cyan); margin-right:6px;"></i> 视频标题 (Title)</label>
+                    <input type="text" id="post-title" class="form-control" placeholder="给这条视频起一个吸引人的标题（将同步到各平台）" value="一条视频，静默分发到 14+ 平台">
                 </div>
 
                 <div class="form-group">
                     <label><i class="fa-solid fa-align-left" style="color:var(--accent-teal); margin-right:6px;"></i> 视频正文描述 (Description)</label>
-                    <textarea id="post-desc" class="form-control">久坐一天，肩颈又石化了？
-不是暖贴不够热，是只给皮肤烤了个表面。
-这次用的是富氢热灸贴——道地艾草 × 固态氢材料，热的时候氢分子同步工作，80×205mm 的大贴幅服帖整个肩颈和腰背。
-不燥不闷，一觉可以贴着睡。
-体感这个东西，说再多不如试一次。
-木齐科技 自研固态氢 | www.emuqi.com</textarea>
+                    <textarea id="post-desc" class="form-control" placeholder="写一段正文描述…可留空，由各平台默认填充">示例文案：在左侧选好视频、右侧勾选目标平台，点击右上角「启动分发」即可一键静默发布。
+把这里换成你自己的标题与正文，支持中文 / 英文。</textarea>
                 </div>
             </div>
         </div>
 
-        <!-- 右侧：紧凑型矩阵平台选择侧栏 -->
+        <!-- 右侧：平台选择侧栏 -->
         <div class="right-sidebar">
             <div class="summary-bar">
                 <div>
-                    <strong style="color:var(--accent-gold);"><i class="fa-solid fa-check-double"></i> 分发任务概览：</strong>
-                    <span id="selected-summary-text">当前勾选 0 个平台</span>
+                    <strong style="color:var(--accent-gold);"><i class="fa-solid fa-check-double"></i> 分发概览：</strong>
+                    <span id="selected-summary-text">已勾选 0 / 14 个平台</span>
                 </div>
                 <button onclick="clearAllSelections()" style="background:none; border:none; color:var(--accent-red); font-size:11px; cursor:pointer;">重置选单</button>
             </div>
 
-            <!-- 国内平台阵列 -->
+            <!-- 国内平台 -->
             <div class="glass-panel" style="padding: 16px;">
                 <div class="section-header" style="margin-bottom:10px;">
                     <span style="font-size:13px; color:#fff;"><i class="fa-solid fa-flag" style="color:var(--accent-orange); margin-right:6px;"></i> 🇨🇳 国内 8 大平台</span>
-                    <span style="font-size:11px; color:var(--accent-cyan); cursor:pointer;" onclick="toggleCategory('cn')">全选/取消</span>
+                    <span style="font-size:11px; color:var(--accent-cyan); cursor:pointer;" onclick="toggleCategory('cn')">全选 / 取消</span>
                 </div>
                 <div class="compact-platform-grid" id="cn-mini-grid"></div>
             </div>
 
-            <!-- 国际平台阵列 -->
+            <!-- 国际平台 -->
             <div class="glass-panel" style="padding: 16px;">
                 <div class="section-header" style="margin-bottom:10px;">
                     <span style="font-size:13px; color:#fff;"><i class="fa-solid fa-globe" style="color:var(--accent-cyan); margin-right:6px;"></i> 🌏 国际 6 大平台</span>
-                    <span style="font-size:11px; color:var(--accent-cyan); cursor:pointer;" onclick="toggleCategory('global')">全选/取消</span>
+                    <span style="font-size:11px; color:var(--accent-cyan); cursor:pointer;" onclick="toggleCategory('global')">全选 / 取消</span>
                 </div>
                 <div class="compact-platform-grid" id="global-mini-grid"></div>
             </div>
 
-            <!-- 安全防护底栏 -->
-            <div class="glass-panel" style="padding: 14px; font-size:11px; color:var(--text-muted); line-height:1.5;">
+            <!-- 安全说明 -->
+            <div class="glass-panel" style="padding: 14px; font-size:11px; color:var(--text-muted); line-height:1.6;">
                 <i class="fa-solid fa-shield-halved" style="color:var(--accent-gold); margin-right:4px;"></i>
-                <strong style="color:var(--accent-gold);">安全防重阻断：</strong> 平台必须手动勾选才会触发推送。系统会自动拦截历史已成功的平台，绝不重复发送。
+                <strong style="color:var(--accent-gold);">安全防重：</strong> 平台需手动勾选才触发推送；系统自动拦截历史已发布平台，绝不重复发送。
             </div>
         </div>
     </div>
 
-    <!-- 确认二次弹窗 Modal -->
+    <!-- 确认弹窗 -->
     <div id="confirm-modal" class="modal-overlay">
         <div class="modal-content glass-panel">
             <h3 style="font-size: 17px; color: #fff; margin-bottom: 12px;"><i class="fa-solid fa-paper-plane" style="color:var(--accent-cyan)"></i> 确认分发以下视频</h3>
             <div style="background:rgba(0,0,0,0.4); border-radius:10px; padding:12px; margin-bottom:16px; font-size:12px;">
-                <div style="color:var(--accent-gold); font-weight:700; margin-bottom:4px;" id="confirm-video-name">富氢热灸贴_中文宣传片_电影级_v2_成片.mp4</div>
+                <div style="color:var(--accent-gold); font-weight:700; margin-bottom:4px;" id="confirm-video-name">尚未选择视频文件</div>
                 <div style="color:var(--text-muted);">目标平台数：<span id="confirm-count" style="color:var(--accent-cyan); font-weight:800;">0</span> 个</div>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -795,7 +846,7 @@
         </div>
     </div>
 
-    <!-- 推送进度监控 Modal -->
+    <!-- 进度监控弹窗 -->
     <div id="modal" class="modal-overlay">
         <div class="modal-content glass-panel">
             <h3 style="font-size: 17px; color: #fff; margin-bottom: 14px;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent-cyan)"></i> 正在并发分发资产...</h3>
@@ -827,25 +878,35 @@
 
         const AI_PORTALS = {
             "doubao": "https://www.doubao.com/chat/",
-            "kimi": "https://kimi.moonshot.cn/"
+            "kimi": "https://kimi.moonshot.cn/",
+            "tongyi": "https://tongyi.aliyun.com/qianwen/"
         };
 
-        let currentDispatchMode = 'single';
-        let currentSelectedVideoPath = "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4";
+        let currentSelectedVideoPath = "";
+
+        function setStep(n) {
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById('step-' + i);
+                if (!el) continue;
+                el.classList.toggle('active', i === n);
+                el.classList.toggle('done', i < n);
+            }
+        }
 
         function getCleanTopic() {
             let fn = document.getElementById('selected-video-filename').innerText;
-            fn = fn.replace(/\.(mp4|mov|avi|mkv)$/i, '');
+            if (!fn || fn.indexOf('尚未选择') !== -1) return "我的视频作品";
+            fn = fn.replace(/\.(mp4|mov|avi|mkv|webm)$/i, '');
             fn = fn.replace(/_(中文|英文|宣传片|电影级|成片|v\d+)/g, '');
-            return fn.trim() || "富氢热灸贴";
+            return fn.trim() || "我的视频作品";
         }
 
         function openAiWebPage(key) {
             const cleanTopic = getCleanTopic();
-            const promptText = `请帮我为【${cleanTopic}】写一段短视频爆款发布文案：\n标题：（控制在 28 字以内，吸引眼球）\n正文：（突出核心痛点与特点）`;
-            
+            const promptText = `请帮我为【${cleanTopic}】写一段适合短视频平台发布的文案：\n标题：（控制在 28 字以内，有吸引力）\n正文：（突出核心看点，口语化、有共鸣）\n话题标签：3-5 个`;
+
             navigator.clipboard.writeText(promptText).then(() => {
-                alert(`📋 清洗后的主题词【${cleanTopic}】及提示词已复制到剪贴板！\n即将在浏览器打开 ${key.toUpperCase()} 网页，按 Cmd+V / Ctrl+V 即可粘贴发送！`);
+                alert(`📋 主题词【${cleanTopic}】及提示词已复制到剪贴板！\n即将打开 ${key.toUpperCase()} 网页，按 Cmd+V / Ctrl+V 粘贴即可。`);
                 window.open(AI_PORTALS[key], '_blank');
             }).catch(() => {
                 window.open(AI_PORTALS[key], '_blank');
@@ -856,23 +917,23 @@
             try {
                 const text = await navigator.clipboard.readText();
                 if (!text || text.trim().length === 0) {
-                    alert("⚠️ 剪贴板为空，请先在豆包或 Kimi 对话框中复制您选中的满意的文案！");
+                    alert("⚠️ 剪贴板为空，请先在豆包 / Kimi / 通义 网页中复制满意的文案！");
                     return;
                 }
-                
+
                 const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
                 if (lines.length > 0) {
                     let firstLine = lines[0].replace(/^标题[：:]\s*/, '').replace(/^[#【\s]*/, '');
                     document.getElementById('post-title').value = firstLine.slice(0, 80);
-                    
+
                     if (lines.length > 1) {
                         let remaining = lines.slice(1).join('\n').replace(/^正文[：:]\s*/, '');
                         document.getElementById('post-desc').value = remaining;
                     }
-                    alert("🎉 成功领用您复制的满意文案！已填入下表！");
+                    alert("🎉 已成功认领复制的文案，并填入下方编辑框！");
                 }
             } catch (err) {
-                alert("⚠️ 请允许浏览器读取剪贴板权限，或者直接手动粘贴！");
+                alert("⚠️ 请允许浏览器读取剪贴板权限，或直接手动粘贴。");
             }
         }
 
@@ -890,15 +951,15 @@
         }
 
         function applyTemplate(tplKey) {
-            if (tplKey === 'moxibustion') {
-                document.getElementById('post-title').value = "久坐一天，肩颈又石化了？富氢热灸贴温氢双护";
-                document.getElementById('post-desc').value = "久坐一天，肩颈又石化了？\n不是暖贴不够热，是只给皮肤烤了个表面。\n这次用的是富氢热灸贴——道地艾草 × 固态氢材料，热的时候氢分子同步工作，80×205mm 的大贴幅服帖整个肩颈和腰背。\n不燥不闷，一觉可以贴着睡。\n体感这个东西，说再多不如试一次。\n木齐科技 自研固态氢 | www.emuqi.com";
+            if (tplKey === 'product') {
+                document.getElementById('post-title').value = "这款产品，把我日常最头疼的一件事解决了";
+                document.getElementById('post-desc').value = "用了两周，最大的感受是——它把复杂的事变简单了。\n不是堆参数，而是真的在使用场景里帮到我。\n篇幅有限，先说三个我最常用的点：\n① 上手零门槛　② 日常高频可用　③ 细节很走心\n感兴趣的朋友可以聊聊你的使用场景～ #好物分享 #效率工具";
             } else if (tplKey === 'viral') {
-                document.getElementById('post-title').value = "【实测体验】现代打工人的肩颈救星来了！";
-                document.getElementById('post-desc').value = "每天对电脑10小时，肩颈硬得像石头？\n今天给大家分享这款黑科技——富氢热灸贴！\n深层发热，温氢滋养，贴上就像做了一场SPA！\n感兴趣的朋友赶紧试试吧~ #打工人必备 #黑科技体验";
+                document.getElementById('post-title').value = "真的会回购！亲测好用的宝藏好物";
+                document.getElementById('post-desc').value = "刷到就是缘分，这个真的要安利给所有人！\n第一次用就被惊艳到了，质感在线，细节拉满。\n宅家 / 通勤 / 出差都能用上，性价比绝了。\n姐妹们冲！#种草 #宝藏好物 #日常分享";
             } else if (tplKey === 'global') {
-                document.getElementById('post-title').value = "Hydrogen Moxibustion Patch: Warmth & Hydrogen Dual Protection";
-                document.getElementById('post-desc').value = "Sitting all day leaving your shoulders stiff?\nDiscover the Hydrogen Moxibustion Patch — combining natural mugwort & solid hydrogen material. Hydrogen molecules work in sync with deep thermal relief across a large 80×205mm surface.\nMUQI TECH | Solid Hydrogen R&D | www.emuqi.com";
+                document.getElementById('post-title').value = "The everyday tool that quietly upgraded my workflow";
+                document.getElementById('post-desc').value = "Two weeks in, here's my honest take.\nIt doesn't scream features — it just solves a real annoyance I had.\nThree things I use most: ① ... ② ... ③ ...\nCurious how you'd use it? Drop a comment. #Productivity #TechFinds";
             }
         }
 
@@ -907,16 +968,11 @@
             document.getElementById('post-desc').value = "";
         }
 
-        function setDispatchMode(mode) {
-            currentDispatchMode = mode;
-            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
-            if (mode === 'single') {
-                document.getElementById('mode-single').classList.add('active');
-                document.getElementById('mode-single').querySelector('input').checked = true;
-            } else {
-                document.getElementById('mode-bilingual').classList.add('active');
-                document.getElementById('mode-bilingual').querySelector('input').checked = true;
-            }
+        function formatSize(bytes) {
+            if (!bytes) return "—";
+            const mb = bytes / (1024 * 1024);
+            if (mb >= 1) return mb.toFixed(1) + " MB";
+            return Math.max(1, Math.round(bytes / 1024)) + " KB";
         }
 
         function handleLocalFileSelect(input) {
@@ -924,9 +980,11 @@
                 const file = input.files[0];
                 document.getElementById('selected-video-filename').innerText = file.name;
                 document.getElementById('selected-video-filepath').innerText = `已选择本地文件: ${file.name}`;
-                currentSelectedVideoPath = file.name; // Use selected file
+                currentSelectedVideoPath = file.name;
+                document.getElementById('video-size').innerHTML = `<i class="fa-solid fa-hard-drive" style="margin-right:6px;"></i> 大小: ${formatSize(file.size)}`;
                 const objectUrl = URL.createObjectURL(file);
                 document.getElementById('main-video').src = objectUrl;
+                setStep(2);
             }
         }
 
@@ -971,6 +1029,7 @@
         function updateSelectedSummary() {
             const selected = document.querySelectorAll('.platform-mini-card.selected');
             document.getElementById('selected-summary-text').innerText = `已勾选 ${selected.length} / 14 个平台`;
+            if (selected.length > 0) setStep(3);
         }
 
         function clearAllSelections() {
@@ -1056,6 +1115,10 @@
         }
 
         function openConfirmDialog() {
+            if (!currentSelectedVideoPath) {
+                alert("⚠️ 请先在左侧选择要分发的视频文件！");
+                return;
+            }
             const selected = document.querySelectorAll('.platform-mini-card.selected');
             if (selected.length === 0) {
                 alert("⚠️ 请至少手动勾选 1 个要推送的平台！");
@@ -1064,6 +1127,7 @@
             document.getElementById('confirm-video-name').innerText = document.getElementById('selected-video-filename').innerText;
             document.getElementById('confirm-count').innerText = selected.length;
             document.getElementById('confirm-modal').style.display = 'flex';
+            setStep(4);
         }
 
         function closeConfirmDialog() {
@@ -1111,7 +1175,7 @@
             const modal = document.getElementById('modal');
             const list = document.getElementById('progress-list');
             const closeBtn = document.getElementById('close-modal-btn');
-            
+
             modal.style.display = 'flex';
             closeBtn.style.display = 'none';
             list.innerHTML = '';
@@ -1124,7 +1188,7 @@
 
             const title = document.getElementById('post-title').value;
             const desc = document.getElementById('post-desc').value;
-            
+
             // 真实分发：完全取用用户在界面中当前点选/浏览的视频文件
             const targetVideo = currentSelectedVideoPath;
 
@@ -1154,7 +1218,7 @@
                             video_file: targetVideo,
                             title: title,
                             desc: desc,
-                            tags: ["富氢热灸贴", "木齐科技", "温氢双护"]
+                            tags: []
                         })
                     });
                     const startData = await startRes.json();
