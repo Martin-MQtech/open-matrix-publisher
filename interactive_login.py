@@ -7,7 +7,7 @@
 import os, sys, json, time, asyncio
 from pathlib import Path
 
-SAU_ROOT = "/Users/martin/social-auto-upload"
+SAU_ROOT = os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload")
 SAU_COOKIES = os.path.join(SAU_ROOT, "cookies")
 LOCAL_COOKIES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies")
 

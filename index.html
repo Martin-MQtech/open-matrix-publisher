@@ -653,7 +653,8 @@
 
                 <!-- 16:9 大画幅视频预览框 -->
                 <div class="large-video-box">
-                    <video id="main-video" controls src="/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4"></video>
+                    <!-- 演示视频：运行时由用户在控制台选择本地视频，无需硬编码路径（避免泄漏本机目录、保证 Pages 部署可用） -->
+                    <video id="main-video" controls playsinline></video>
                     <div class="video-meta-bar">
                         <span><i class="fa-solid fa-film" style="margin-right:6px;"></i> 实时视频流预览</span>
                         <span><i class="fa-solid fa-hard-drive" style="margin-right:6px;"></i> 大小: 42.9 MB</span>
@@ -988,9 +989,14 @@
             updateSelectedSummary();
         }
 
+        // API 基地址：本地同源运行时用空串(相对路径)；部署到 GitHub Pages 等静态站点时
+        // 回退到本机桥接服务 http://localhost:5001（需用户在本机运行 ./start_ui.sh）。
+        const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+            ? '' : 'http://localhost:5001';
+
         async function refreshSessionStatus() {
             try {
-                const res = await fetch('http://localhost:5001/api/status');
+                const res = await fetch(API_BASE + '/api/status');
                 const data = await res.json();
 
                 const currentVideo = document.getElementById('selected-video-filename').innerText;
@@ -1036,7 +1042,7 @@
         async function launchQrLogin(platformId, event) {
             if (event) event.stopPropagation();
             try {
-                const res = await fetch('http://localhost:5001/api/launch-login', {
+                const res = await fetch(API_BASE + '/api/launch-login', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ platform_id: platformId })
@@ -1075,7 +1081,7 @@
 
             const pollInterval = setInterval(async () => {
                 try {
-                    const res = await fetch(`http://localhost:5001/api/task-progress?task_id=${taskId}`);
+                    const res = await fetch(`${API_BASE}/api/task-progress?task_id=${taskId}`);
                     const info = await res.json();
 
                     if (info.pct !== undefined) fillEl.style.width = `${info.pct}%`;
@@ -1140,7 +1146,7 @@
 
             for (const p of activePlatforms) {
                 try {
-                    const startRes = await fetch('http://localhost:5001/api/start-upload-task', {
+                    const startRes = await fetch(API_BASE + '/api/start-upload-task', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({

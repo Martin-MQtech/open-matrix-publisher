@@ -217,7 +217,7 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags)
 def start_upload_task():
     data = request.json or {}
     platform_id = data.get("platform_id")
-    video_file = data.get("video_file", "富氢热灸贴营销短视频_中文配音版_v1_成片.mp4")
+    video_file = data.get("video_file", "your_video.mp4")
     title = data.get("title", "")
     desc = data.get("desc", "")
     tags = data.get("tags", [])
@@ -260,7 +260,7 @@ def get_history():
 def api_generate_free_ai():
     data = request.json or {}
     provider = data.get("provider", "doubao")
-    topic = data.get("topic", "富氢热灸贴")
+    topic = data.get("topic", "我的视频")
 
     try:
         loop = asyncio.new_event_loop()
@@ -273,7 +273,7 @@ def api_generate_free_ai():
         return jsonify({
             "status": "success",
             "title": f"【实测推荐】{topic} · 养护肩颈黑科技",
-            "desc": f"关于【{topic}】：采用自研固态氢材料与道地艾草结合，热能与氢分子同步作用！\n木齐科技 自研固态氢 | www.emuqi.com"
+            "desc": f"关于【{topic}】：核心亮点与适用场景速览，欢迎在评论区交流讨论。"
         })
 
 if __name__ == "__main__":

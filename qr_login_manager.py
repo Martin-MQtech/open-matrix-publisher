@@ -8,7 +8,7 @@
 import os, sys, json, time, subprocess, threading, base64, asyncio, tempfile
 from pathlib import Path
 
-SAU_ROOT = "/Users/martin/social-auto-upload"
+SAU_ROOT = os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload")
 SAU_VENV_BIN = f"{SAU_ROOT}/.venv/bin"
 SAU_CLI = f"{SAU_VENV_BIN}/sau"
 SAU_PYTHON = f"{SAU_VENV_BIN}/python"

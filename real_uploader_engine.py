@@ -1,7 +1,9 @@
 import os, sys, json, time, subprocess, glob
 from datetime import datetime
 
-SAU_ROOT = "/Users/martin/social-auto-upload"
+# SAU (social-auto-upload) 安装路径：优先读环境变量 SAU_ROOT，
+# 回退到本机历史路径。这样工具在其它机器/用户环境下也能开箱即用，无需硬编码。
+SAU_ROOT = os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload")
 SAU_VENV_BIN = f"{SAU_ROOT}/.venv/bin"
 SAU_CLI = f"{SAU_VENV_BIN}/sau"
 SAU_PYTHON = f"{SAU_VENV_BIN}/python"
@@ -61,7 +63,9 @@ class RealPlatformUploader:
         self.video_path = os.path.abspath(video_path)
         self.title = title
         self.desc = desc
-        self.tags = tags or ["富氢热灸贴", "木齐科技", "温氢双护"]
+        # 默认标签留空：本工具是通用的，文案/标签应由 campaign.json 或 Web 控制台提供。
+        # 不再写入任何具体产品/品牌词，避免污染通用工具。
+        self.tags = tags or []
 
     def execute_upload(self):
         log_time = datetime.now().strftime('%H:%M:%S')

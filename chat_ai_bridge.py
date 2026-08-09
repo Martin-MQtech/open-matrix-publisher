@@ -34,7 +34,7 @@ def clean_video_topic(raw_name: str) -> str:
     name = re.sub(r'\.(mp4|mov|avi|mkv|flv|wmv)$', '', name, flags=re.IGNORECASE)
     name = re.sub(r'_(中文|英文|宣传片|电影级|成片|最终版|v\d+|\d+)', '', name)
     name = name.strip('_').strip()
-    return name if name else "富氢热灸贴"
+    return name if name else "我的视频"
 
 async def generate_copy_via_free_ai(provider: str, raw_topic: str) -> Dict[str, Any]:
     """
@@ -85,8 +85,8 @@ async def generate_copy_via_free_ai(provider: str, raw_topic: str) -> Dict[str, 
         
         return {
             "status": "success",
-            "title": f"久坐一天，肩颈又石化了？【{clean_topic}】温氢双护",
-            "desc": f"关于【{clean_topic}】：道地艾草 × 固态氢材料，热的时候氢分子同步工作，80×205mm 大贴幅服帖整个肩颈和腰背。\n木齐科技 自研固态氢 | www.emuqi.com"
+            "title": f"一条视频，讲清楚【{clean_topic}】",
+            "desc": f"关于【{clean_topic}】：核心亮点与适用场景速览，欢迎在评论区交流讨论。"
         }
 
 def parse_title_and_desc(text: str, topic: str) -> Dict[str, Any]:

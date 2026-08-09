@@ -1,4 +1,8 @@
+# 核心依赖
 playwright>=1.40.0
 patchright>=1.40.0
 requests>=2.31.0
 httpx>=0.25.0
+
+# Web 控制台（local_bridge_server.py）依赖 —— 文档要求 pip install -r requirements.txt 后可直接起 UI
+flask>=3.0.0
