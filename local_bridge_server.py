@@ -1,15 +1,14 @@
 import os, sys, json, time, subprocess, threading, asyncio
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
-from cookie_extractor import sync_all_platforms, sync_cookies_from_chrome
 from real_uploader_engine import load_credentials, save_credentials, check_profile_logged_in, RealPlatformUploader
 from chat_ai_bridge import generate_copy_via_free_ai
 
 app = Flask(__name__)
 
-# cookie_extractor 依赖 browser_cookie3（读取本机 Chrome Cookie），
-# 仅用于"从 Chrome 同步登录态"的便捷功能。若所在 Python 环境未安装该依赖，
-# 不应影响控制台启动与核心分发能力，故改为可选导入。
+# cookie_extractor depends on browser_cookie3 (reads native Chrome cookies).
+# Made optional: if the dependency is missing, the server still starts and
+# login check / dispatch continue to work via SAU's authenticated sessions.
 try:
     from cookie_extractor import sync_all_platforms, sync_cookies_from_chrome
 except Exception:
@@ -19,6 +18,7 @@ except Exception:
 # Active background upload tasks store & History Store
 ACTIVE_TASKS = {}
 TASK_LOCK = threading.Lock()
+HISTORY_FILE_LOCK = threading.Lock()          # dedicated lock for load-modify-write of history json
 HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dispatch_history.json")
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
 TASK_PROGRESS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".task_progress")
@@ -28,10 +28,16 @@ os.makedirs(TASK_PROGRESS_DIR, exist_ok=True)
 def _task_progress_file(task_id):
     return os.path.join(TASK_PROGRESS_DIR, f"{task_id}.json")
 
+_unique_seq = 0
+def make_task_id(platform_id):
+    global _unique_seq
+    _unique_seq += 1
+    return f"{platform_id}_task_{int(time.time()*1000)}_{_unique_seq}"
+
 def save_task_progress(task_id, data):
-    """持久化任务进度到文件，服务重启不丢失"""
+    """Persist task progress to both memory and disk."""
     with TASK_LOCK:
-        ACTIVE_TASKS[task_id] = data
+        ACTIVE_TASKS[task_id] = data.copy()
     try:
         with open(_task_progress_file(task_id), "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
@@ -69,8 +75,49 @@ def load_history():
     return {"records": [], "last_dispatch": {}}
 
 def save_history(history_data):
-    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(history_data, f, indent=2, ensure_ascii=False)
+    """Atomic write with lock to prevent concurrent threads from clobbering."""
+    with HISTORY_FILE_LOCK:
+        tmp = HISTORY_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(history_data, f, indent=2, ensure_ascii=False)
+        os.replace(tmp, HISTORY_FILE)
+
+def record_history_result(dispatch_id, platform_id, title, video_file, success, pub_id="", link="", finish_time=""):
+    """Thread-safe: load -> update (find-or-create session record) -> save."""
+    with HISTORY_FILE_LOCK:
+        hist = load_history()  # re-read under lock to get fresh state
+        matching = None
+        for r in hist.get("records", []):
+            if r.get("dispatch_id") == dispatch_id:
+                matching = r
+                break
+        if matching is None:
+            matching = {
+                "dispatch_id": dispatch_id,
+                "timestamp": finish_time,
+                "video_file": os.path.basename(video_file),
+                "title": title,
+                "platforms": {},
+            }
+            hist.setdefault("records", []).append(matching)
+        if success:
+            matching["platforms"][platform_id] = {
+                "status": "success", "real": True,
+                "pub_id": pub_id, "link": link, "finish_time": finish_time,
+            }
+        matching["last_updated"] = finish_time
+        hist["last_dispatch"] = {
+            "timestamp": finish_time,
+            "dispatch_id": dispatch_id,
+            "title": title,
+            "video_file": os.path.basename(video_file),
+            "platforms_count": len(matching.get("platforms", {})),
+        }
+        # Write atomically (bypass this function's lock since we already hold it)
+        tmp = HISTORY_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(hist, f, indent=2, ensure_ascii=False)
+        os.replace(tmp, HISTORY_FILE)
 
 def is_already_published(video_file, platform_id):
     """Check if this video was already successfully published to this platform.
@@ -225,81 +272,43 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags,
     update(25, f"🚀 [{pname}] 正在连接 {platform_id} 平台上传接口…")
     time.sleep(0.3)
 
-    # Step 2-3: 执行实际上传（耗时最长，实时回传日志）
+    # Step 2-3: Actually execute the upload (longest phase; logs stream in real time)
     update(40, f"⬆️  [{pname}] 正在上传视频（可能需 1-5 分钟）…")
 
-    uploader = RealPlatformUploader(platform_id, video_file, title, desc, tags)
-    result = uploader.execute_upload(on_progress=on_progress, log_file=log_path)
+    try:
+        uploader = RealPlatformUploader(platform_id, video_file, title, desc, tags)
+        result = uploader.execute_upload(on_progress=on_progress, log_file=log_path)
+    except Exception as e:
+        result = {"success": False, "error": f"引擎异常: {str(e)}"}
 
-    # Step 4: 结果
+    # Step 4: Finalise result
     finish_time = time.strftime("%Y-%m-%d %H:%M:%S")
+    task_record = {}
     with TASK_LOCK:
         if result.get("success"):
             task_record = {
-                "status": "completed",
-                "real": True,
+                "status": "completed", "real": True,
                 "stage": f"✅ [{pname}] 发布成功 (ID: {result.get('pub_id', 'N/A')})",
-                "pct": 100,
-                "pub_id": result.get("pub_id"),
-                "link": result.get("link"),
-                "finish_time": finish_time
+                "pct": 100, "pub_id": result.get("pub_id"),
+                "link": result.get("link"), "finish_time": finish_time,
             }
         else:
             task_record = {
-                "status": "failed",
-                "real": False,
+                "status": "failed", "real": False,
                 "stage": f"❌ [{pname}] {result.get('error', '未知错误')[:80]}",
-                "pct": 100,
-                "error": result.get("error", "未知错误"),
-                "finish_time": finish_time
+                "pct": 100, "error": result.get("error", "未知错误"),
+                "finish_time": finish_time,
             }
         save_task_progress(task_id, task_record)
 
-        # Persist result to dispatch_history.json
-        hist = load_history()
-        
-        # Use the frontend-provided session id so all platforms in one dispatch click
-        # group into a single record. Fall back to task_id split if absent.
-        dispatch_id = dispatch_session_id if dispatch_session_id else (task_id.split("_task_")[0] if "_task_" in task_id else task_id)
-        
-        # Find existing record for this task group, or create new
-        matching_record = None
-        for r in hist.get("records", []):
-            if r.get("dispatch_id") == dispatch_id:
-                matching_record = r
-                break
-        
-        if matching_record is None:
-            matching_record = {
-                "dispatch_id": dispatch_id,
-                "timestamp": finish_time,
-                "video_file": os.path.basename(video_file),
-                "title": title,
-                "platforms": {}
-            }
-            hist.setdefault("records", []).append(matching_record)
-
-        # Only record success results (failures don't block future retries)
-        if result.get("success"):
-            matching_record["platforms"][platform_id] = {
-                "status": "success",
-                "real": True,
-                "pub_id": result.get("pub_id"),
-                "link": result.get("link"),
-                "finish_time": finish_time
-            }
-
-        hist["last_dispatch"] = {
-            "timestamp": finish_time,
-            "dispatch_id": dispatch_id,
-            "title": title,
-            "video_file": os.path.basename(video_file),
-            "platforms": {platform_id: task_record}
-        }
-        save_history(hist)
-
-        # Schedule cleanup of the progress file (keep a few minutes so UI can reconnect)
-        threading.Timer(300, lambda: cleanup_task_progress(task_id)).start()
+    # Persist to history (thread-safe: dedupe by dispatch_session_id + append platform)
+    record_history_result(
+        dispatch_id=dispatch_session_id or task_id.rsplit("_task_", 1)[0],
+        platform_id=platform_id, title=title, video_file=video_file,
+        success=result.get("success", False),
+        pub_id=result.get("pub_id", ""), link=result.get("link", ""),
+        finish_time=finish_time,
+    )
 
 @app.route("/api/upload-video", methods=["POST"])
 def upload_video():
@@ -351,7 +360,7 @@ def start_upload_task():
             "msg": f"找不到视频文件：{abs_vf}（请重新选择视频并分发）"
         }), 400
 
-    task_id = f"{platform_id}_task_{int(time.time()*1000)}"
+    task_id = make_task_id(platform_id)
     
     t = threading.Thread(target=_run_real_upload_thread, args=(task_id, platform_id, video_file, title, desc, tags, dispatch_session_id))
     t.daemon = True
@@ -412,7 +421,36 @@ def get_task_log():
 def get_history():
     """Return full publish history for frontend display."""
     hist = load_history()
+    # Also include active-running tasks so users see in-progress work
+    with TASK_LOCK:
+        active = {tid: t for tid, t in ACTIVE_TASKS.items() if t.get("status") == "running"}
+    hist["_active_tasks"] = active
     return jsonify(hist)
+
+@app.route("/api/mark-failed-done", methods=["POST"])
+def mark_failed_as_done():
+    """Force-mark a video+platform as published (when SAU reports success but history write missed)."""
+    data = request.json or {}
+    video_basename = data.get("video_file", "")
+    platform_id = data.get("platform_id", "")
+    if not video_basename or not platform_id:
+        return jsonify({"error": "video_file and platform_id required"}), 400
+    with HISTORY_FILE_LOCK:
+        hist = load_history()
+        for r in hist.get("records", []):
+            if os.path.basename(r.get("video_file", "")) == video_basename:
+                r.setdefault("platforms", {})[platform_id] = {
+                    "status": "success", "real": True,
+                    "pub_id": "manual_" + platform_id,
+                    "finish_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "note": "手动标记",
+                }
+                tmp = HISTORY_FILE + ".tmp"
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(hist, f, indent=2, ensure_ascii=False)
+                os.replace(tmp, HISTORY_FILE)
+                return jsonify({"status": "marked"})
+    return jsonify({"error": "video not found"}), 404
 
 @app.route("/api/generate-free-ai", methods=["POST"])
 def api_generate_free_ai():

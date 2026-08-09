@@ -63,6 +63,34 @@
         .gh-link { color: var(--muted); font-size: 13px; text-decoration: none; display: flex; align-items: center; gap: 6px; }
         .gh-link:hover { color: var(--text); }
 
+        /* ---------- History ---------- */
+        .history-btn {
+            background: none; border: 1px solid var(--border); color: var(--muted);
+            border-radius: 8px; width: 34px; height: 34px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 14px;
+        }
+        .history-btn:hover { color: var(--text); border-color: var(--accent); }
+
+        #history-modal .modal { max-width: 560px; }
+        .hist-item {
+            border-bottom: 1px solid var(--border); padding: 10px 0;
+        }
+        .hist-item:last-child { border-bottom: none; }
+        .hist-meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+        .hist-plats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .hist-plat {
+            font-size: 11px; padding: 3px 9px; border-radius: 6px;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .hist-plat.ok { background: rgba(34,197,94,.12); color: var(--green); }
+        .hist-plat.fail { background: rgba(239,68,68,.10); color: var(--red); }
+        .hist-plat.manual { background: rgba(245,158,11,.10); color: var(--amber); }
+        .retry-btn {
+            background: none; border: 1px solid var(--accent); color: var(--accent);
+            border-radius: 6px; padding: 3px 10px; font-size: 11px; cursor: pointer;
+        }
+        .retry-btn:hover { background: var(--accent-soft); }
+
         /* ---------- Sections ---------- */
         .card {
             background: var(--surface);
@@ -264,6 +292,7 @@
                 <h1>Open Matrix Publisher <span>全域矩阵</span></h1>
             </div>
             <div class="head-right">
+                <button class="history-btn" onclick="showHistory()" title="分发历史"><i class="fa-solid fa-clock-rotate-left"></i></button>
                 <span class="mit-tag">MIT 开源</span>
                 <a class="gh-link" href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
             </div>
@@ -379,6 +408,17 @@
 
     <!-- Toast 推送通知 -->
     <div id="toast" class="toast"><i class="fa-solid fa-circle-check"></i> <span id="toast-text"></span></div>
+
+    <!-- 历史记录弹窗 -->
+    <div id="history-modal" class="overlay" style="display:none;">
+        <div class="modal">
+            <h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--accent)"></i> 分发历史</h3>
+            <div style="max-height:60vh; overflow-y:auto; margin-top:12px;" id="history-list"></div>
+            <div style="margin-top:14px; text-align:right;">
+                <button class="btn-ghost" onclick="document.getElementById('history-modal').style.display='none'">关闭</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const PLATFORMS = [
@@ -503,6 +543,7 @@
 
         function clearAllSelections() {
             document.querySelectorAll('.pf-chip').forEach(c => c.classList.remove('sel'));
+            uploadedVideoPath = "";  // 清除选中时重置视频路径，防呆
             updateSelectedSummary();
         }
 
@@ -632,11 +673,11 @@
                         statusEl.innerHTML = `<span style="color:var(--red);font-weight:700;" title="${errText}"><i class="fa-solid fa-circle-xmark"></i> ${errText}</span>`;
                         fillEl.style.width = '100%';
                         onComplete(false);
-                    } else if (pollCount > 1200) {
+                    } else if (pollCount > 4800) {  // 48 min × (1000/800) ≈ 60 min wall clock
                         clearInterval(poll);
                         if (rowEl) rowEl.classList.remove('running');
                         fillEl.className = 'prog-fill amber';
-                        statusEl.innerHTML = `<span style="color:var(--amber);"><i class="fa-solid fa-clock"></i> 超时（后台继续）</span>`;
+                        statusEl.innerHTML = `<span style="color:var(--amber);"><i class="fa-solid fa-clock"></i> 超时（后台仍在运行）</span>`;
                         onComplete(false);
                     }
                 } catch (err) { /* 网络抖动不中断 */ }
@@ -711,6 +752,7 @@
             const dispatchState = {
                 sessionId: sessionId,
                 tasks: activePlatforms.map(p => ({ id: p.id, name: p.name })),
+                taskIds: {},  // platform_id -> task_id  (for reconnect after modal close)
                 completed: 0,
                 failed: 0,
                 polls: [],
@@ -750,6 +792,7 @@
                         }
                         return r.json().then(d => {
                             if (d.task_id) {
+                                dispatchState.taskIds[p.id] = d.task_id;  // store for reconnect
                                 trackRealPythonTask(p, d.task_id, dispatchState, (ok) => {
                                     if (ok) dispatchState.completed++;
                                     else dispatchState.failed++;
@@ -775,14 +818,63 @@
         }
 
         function closeModal() {
+            // Stop all polling intervals to prevent memory leak + ghost updates
+            if (window._activeDispatch && window._activeDispatch.polls) {
+                window._activeDispatch.polls.forEach(id => clearInterval(id));
+                window._activeDispatch.polls = [];
+            }
             document.getElementById('modal').style.display = 'none';
         }
 
         function openProgressDialog() {
-            if (window._activeDispatch) {
-                document.getElementById('modal').style.display = 'flex';
+            if (!window._activeDispatch) { showToast("暂无进行中的分发任务", false); return; }
+            const state = window._activeDispatch;
+            // Rebuild progress list from stored task data (since DOM was cleared on close)
+            const list = document.getElementById('progress-list');
+            const statusNote = document.getElementById('modal-status-note');
+            list.innerHTML = '';
+            document.getElementById('overall-progress').style.display = 'block';
+
+            // Re-create rows for each platform in the session
+            state.tasks.forEach(t => {
+                const p = PLATFORMS.find(x => x.id === t.id);
+                if (!p) return;
+                const item = document.createElement('div');
+                item.className = 'prog-row'; item.id = `row-${p.id}`;
+                item.innerHTML = `
+                    <div class="prog-top"><span><i class="fa-brands ${p.icon}" style="color:${p.color};"></i> ${p.name}</span>
+                    <span id="status-${p.id}" style="color:var(--muted);">⏳ 已关闭，重启轮询…</span></div>
+                    <div class="prog-bg"><div class="prog-fill" id="fill-${p.id}"></div></div>`;
+                list.appendChild(item);
+            });
+
+            // Restart polling for all tasks
+            state.polls.forEach(id => clearInterval(id));  // clear stale
+            state.polls = [];
+            state.tasks.forEach(t => {
+                const p = PLATFORMS.find(x => x.id === t.id);
+                // We need to find the task_id — it's stored in state
+                if (state.taskIds && state.taskIds[t.id]) {
+                    trackRealPythonTask(p, state.taskIds[t.id], state, (ok) => {
+                        if (ok) state.completed++;
+                        else state.failed++;
+                        updateOverallProgress(state);
+                        checkAllDone(state);
+                    });
+                }
+            });
+
+            document.getElementById('modal').style.display = 'flex';
+            if (state.allDone) {
+                document.getElementById('close-modal-btn').style.display = 'block';
+                document.getElementById('modal-title').innerHTML =
+                    '<i class="fa-solid fa-circle-check" style="color:var(--green)"></i> 分发已完成';
+                statusNote.innerHTML = `✅ ${state.completed} 成功 · ❌ ${state.failed} 失败`;
             } else {
-                showToast("暂无进行中的分发任务", false);
+                document.getElementById('close-modal-btn').style.display = 'none';
+                document.getElementById('modal-title').innerHTML =
+                    '<i class="fa-solid fa-spinner fa-spin" style="color:var(--accent)"></i> 正在分发…';
+                updateOverallProgress(state);
             }
         }
 
@@ -795,6 +887,41 @@
                 openConfirmDialog();
             }
         };
+
+        async function showHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '<div style="color:var(--muted); padding:20px; text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> 加载中…</div>';
+            document.getElementById('history-modal').style.display = 'flex';
+            try {
+                const res = await fetch(API_BASE + '/api/history');
+                const data = await res.json();
+                const records = (data.records || []).slice().reverse();
+                if (records.length === 0) {
+                    list.innerHTML = '<div style="color:var(--muted); padding:30px; text-align:center; font-size:13px;">暂无历史记录<br><br>每次分发的结果会自动记录在这里。</div>';
+                    return;
+                }
+                list.innerHTML = '';
+                records.forEach(r => {
+                    const div = document.createElement('div');
+                    div.className = 'hist-item';
+                    const plats = Object.entries(r.platforms || {});
+                    const okCount = plats.filter(([,v]) => v.status === 'success').length;
+                    let html = `<div class="hist-meta"><strong>${r.video_file || '?'}</strong> · ${r.timestamp || '?'} · ${okCount}/${plats.length} 平台成功</div>`;
+                    html += '<div class="hist-plats">';
+                    plats.forEach(([pid, info]) => {
+                        const p = PLATFORMS.find(x => x.id === pid);
+                        const name = p ? p.name : pid;
+                        const cls = info.note === '手动标记' ? 'manual' : (info.status === 'success' ? 'ok' : 'fail');
+                        html += `<span class="hist-plat ${cls}"><i class="fa-brands ${p ? p.icon : 'fa-globe'}"></i> ${name} ${info.status === 'success' ? '✅' : '❌'}</span>`;
+                    });
+                    html += '</div>';
+                    div.innerHTML = html;
+                    list.appendChild(div);
+                });
+            } catch (err) {
+                list.innerHTML = '<div style="color:var(--red); padding:20px;">⚠️ 加载历史失败：' + err.message + '</div>';
+            }
+        }
 
         refreshSessionStatus();
     </script>
