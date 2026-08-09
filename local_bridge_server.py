@@ -94,6 +94,8 @@ def get_status():
         "published_map": published_map
     })
 
+from interactive_login import PLATFORMS as LOGIN_PLATFORMS
+
 def _run_interactive_login_thread(platform_id):
     script_path = os.path.join(os.path.dirname(__file__), "interactive_login.py")
     cmd = [sys.executable, script_path, platform_id]
@@ -106,6 +108,8 @@ def _run_interactive_login_thread(platform_id):
 def launch_login():
     data = request.json or {}
     platform_id = data.get("platform_id", "zhihu")
+    plat_info = LOGIN_PLATFORMS.get(platform_id, {})
+    plat_name = plat_info.get("name", platform_id)
     
     t = threading.Thread(target=_run_interactive_login_thread, args=(platform_id,))
     t.daemon = True
@@ -114,7 +118,7 @@ def launch_login():
     return jsonify({
         "status": "launched",
         "platform_id": platform_id,
-        "msg": f"🚀 已在桌面为你打开【{platform_id}】的有头浏览器窗口，请使用手机 App 扫码登录！扫码成功后系统将自动捕获凭证。"
+        "msg": f"🚀 已在桌面为你打开【{plat_name}】的有头浏览器窗口，请使用手机 App 扫码或账号登录！登录成功后系统将自动捕获凭证。"
     })
 
 def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags):

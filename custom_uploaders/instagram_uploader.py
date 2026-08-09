@@ -18,9 +18,8 @@ import asyncio
 from pathlib import Path
 
 from custom_uploaders.base import (
-    account_file, launch, load_context, save_cookies, login_flow,
+    account_file, launch, load_context, save_cookies, login_flow, YT_PROXY,
 )
-from conf import YT_PROXY  # 国内访问 Instagram 需经代理
 
 
 async def _wait_publish_enabled(page, btn, timeout: int = 240000):

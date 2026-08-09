@@ -20,15 +20,31 @@ def save_credentials(data):
 
 def check_profile_logged_in(platform_id):
     sau_cookies_dir = f"{SAU_ROOT}/cookies"
-    cookie_file = os.path.join(sau_cookies_dir, f"{platform_id}_default.json")
-    
-    if not os.path.exists(cookie_file) or os.path.getsize(cookie_file) < 100:
+    local_cookies_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies")
+
+    possible_files = [f"{platform_id}_default.json"]
+    if platform_id in ["tiktok", "tk"]:
+        possible_files = ["tk_default.json", "tiktok_default.json"]
+    elif platform_id in ["x", "twitter"]:
+        possible_files = ["x_default.json", "twitter_default.json"]
+
+    found_file = None
+    for d in [sau_cookies_dir, local_cookies_dir]:
+        for pf in possible_files:
+            target = os.path.join(d, pf)
+            if os.path.exists(target) and os.path.getsize(target) >= 50:
+                found_file = target
+                break
+        if found_file:
+            break
+
+    if not found_file:
         return False, "🔑 需扫码登录"
 
     # 特殊平台深度 Cookie Token 校验
     if platform_id == "zhihu":
         try:
-            with open(cookie_file, "r", encoding="utf-8") as f:
+            with open(found_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
             cookies = data.get("cookies", [])
             has_zc0 = any(c.get("name") == "z_c0" for c in cookies)

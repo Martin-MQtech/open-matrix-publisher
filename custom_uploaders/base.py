@@ -11,24 +11,40 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 
+# 确保 SAU 与 项目目录 都在 sys.path 中
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+SAU_ROOT = Path("/Users/martin/social-auto-upload")
+if str(SAU_ROOT) not in sys.path:
+    sys.path.insert(0, str(SAU_ROOT))
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from patchright.async_api import async_playwright
-from utils.base_social_media import set_init_script
+try:
+    from utils.base_social_media import set_init_script
+except ImportError:
+    set_init_script = None
 
-SAU_ROOT = Path(__file__).resolve().parent.parent
 COOKIES_DIR = SAU_ROOT / "cookies"
+LOCAL_COOKIES_DIR = PROJECT_ROOT / "cookies"
 
-# patchright 启动的 chromium 默认 UA 带 "HeadlessChrome" 字样，会被 YouTube Studio 等站点
-# 判定为"不受支持的浏览器"而拒绝渲染（上传框打不开）。统一改成正常 Chrome UA 绕过检测。
-# 版本号与已装 chromium 保持一致即可（YouTube 仅要求"足够新"）。
+try:
+    from conf import YT_PROXY
+except Exception:
+    YT_PROXY = os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy") or "http://127.0.0.1:7890"
+
+# patchright 启动的 chromium 默认 UA 带 "HeadlessChrome" 字样，统一改成正常 Chrome UA 绕过检测
 CHROME_UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
              "(KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36")
 
 # 各平台用于判定"已登录"的会话 cookie 名
 SESSION_COOKIES: dict[str, list[str]] = {
     "x": ["auth_token", "ct0"],
+    "twitter": ["auth_token", "ct0"],
     "linkedin": ["li_at"],
     "instagram": ["sessionid"],
     "facebook": ["c_user", "xs"],
@@ -45,10 +61,30 @@ SESSION_COOKIES: dict[str, list[str]] = {
 
 
 def account_file(platform: str, name: str = "default") -> Path:
-    """返回该平台的 cookie 存储文件路径，并确保父目录存在。"""
-    p = COOKIES_DIR / f"{platform}_{name}.json"
-    p.parent.mkdir(parents=True, exist_ok=True)
-    return p
+    """返回该平台的 cookie 存储文件路径，优先返回已有非空 cookie 的路径，否则默认返回 COOKIES_DIR。"""
+    sau_p = COOKIES_DIR / f"{platform}_{name}.json"
+    local_p = LOCAL_COOKIES_DIR / f"{platform}_{name}.json"
+    if sau_p.exists() and sau_p.stat().st_size >= 50:
+        return sau_p
+    if local_p.exists() and local_p.stat().st_size >= 50:
+        return local_p
+
+    # 别名检测 (如 tiktok / tk, x / twitter)
+    if platform in ("tiktok", "tk"):
+        for alt in ("tk", "tiktok"):
+            for d in (COOKIES_DIR, LOCAL_COOKIES_DIR):
+                alt_p = d / f"{alt}_{name}.json"
+                if alt_p.exists() and alt_p.stat().st_size >= 50:
+                    return alt_p
+    elif platform in ("x", "twitter"):
+        for alt in ("x", "twitter"):
+            for d in (COOKIES_DIR, LOCAL_COOKIES_DIR):
+                alt_p = d / f"{alt}_{name}.json"
+                if alt_p.exists() and alt_p.stat().st_size >= 50:
+                    return alt_p
+
+    sau_p.parent.mkdir(parents=True, exist_ok=True)
+    return sau_p
 
 
 async def launch(headless: bool = True, proxy: str | None = None):
@@ -65,16 +101,11 @@ async def launch(headless: bool = True, proxy: str | None = None):
     return pw, browser
 
 
-# 统一视口大小。太小（如默认 1280x720）会导致 FB 首页"What's on your mind?"编辑器不渲染。
 _VIEWPORT = {"width": 1920, "height": 1080}
 
 
 async def load_context(browser, cookie_path: Path | None = None):
-    """新建 context；若 cookie_path 存在则直接注入登录态。
-
-    注意：不调用 set_init_script()。patchright 自带 stealth 能力已足够，
-    而 set_init_script 会注入自定义 JS，导致 FB 首页"What's on your mind?"按钮不可见。
-    """
+    """新建 context；若 cookie_path 存在则直接注入登录态。"""
     if cookie_path and Path(cookie_path).exists():
         try:
             context = await browser.new_context(storage_state=str(cookie_path), user_agent=CHROME_UA,
@@ -93,10 +124,19 @@ def _has_session(cookies: list[dict], platform: str) -> bool:
 
 
 async def save_cookies(context, cookie_path: Path) -> None:
-    cookie_path = Path(cookie_path)
-    cookie_path.parent.mkdir(parents=True, exist_ok=True)
     state = await context.storage_state()
-    cookie_path.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+    content = json.dumps(state, ensure_ascii=False, indent=2)
+    # 保存到 SAU_DIR 和 LOCAL_DIR 两个目录
+    for d in (COOKIES_DIR, LOCAL_COOKIES_DIR):
+        d.mkdir(parents=True, exist_ok=True)
+        (d / cookie_path.name).write_text(content, encoding="utf-8")
+        # 兼容性多存一份别名
+        if "tiktok" in cookie_path.name:
+            alt_name = cookie_path.name.replace("tiktok", "tk")
+            (d / alt_name).write_text(content, encoding="utf-8")
+        elif "tk_" in cookie_path.name:
+            alt_name = cookie_path.name.replace("tk_", "tiktok_")
+            (d / alt_name).write_text(content, encoding="utf-8")
 
 
 async def login_flow(
@@ -107,12 +147,7 @@ async def login_flow(
     timeout: int = 600,
     proxy: str | None = None,
 ) -> bool:
-    """通用登录流程：开浏览器 → 进入登录页 → 轮询直到出现会话 cookie → 存盘。
-
-    headless=False 时会弹出真实窗口，由用户手动完成扫码/输密登录。
-    登录成功自动存 cookies/{platform}_default.json，返回 True。
-    国内访问 X/领英/FB/IG 等需经 proxy（如 http://127.0.0.1:7890）。
-    """
+    """通用登录流程：开浏览器 → 进入登录页 → 轮询直到出现会话 cookie → 存盘。"""
     pw, browser = await launch(headless=headless, proxy=proxy)
     context = await browser.new_context(user_agent=CHROME_UA, viewport=_VIEWPORT)
     page = await context.new_page()

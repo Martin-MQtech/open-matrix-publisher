@@ -11,7 +11,6 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from conf import YT_PROXY  # 国内访问 X 需经代理
 from custom_uploaders.base import (
     account_file,
     launch,
@@ -19,6 +18,7 @@ from custom_uploaders.base import (
     save_cookies,
     login_flow,
     SESSION_COOKIES,
+    YT_PROXY,
 )
 
 PLATFORM = "x"
