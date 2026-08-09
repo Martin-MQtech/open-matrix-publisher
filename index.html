@@ -3,886 +3,359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Open Matrix Publisher (全域矩阵) · 开源 AI 原生跨平台视频分发引擎</title>
-    <!-- Google Fonts & FontAwesome -->
+    <title>Open Matrix Publisher · 全域矩阵</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
-            --bg-dark: #0a0e17;
-            --panel-bg: rgba(18, 25, 43, 0.72);
-            --panel-border: rgba(120, 145, 200, 0.14);
-            --accent-gold: #eab308;
-            --accent-orange: #f59e0b;
-            --accent-cyan: #38bdf8;
-            --accent-teal: #2dd4bf;
-            --accent-purple: #8b5cf6;
-            --accent-red: #ef4444;
-            --text-main: #e8ecf4;
-            --text-muted: #8b94a7;
+            --bg: #0b0e14;
+            --surface: #141925;
+            --surface-2: #0f1420;
+            --border: rgba(255,255,255,0.08);
+            --border-strong: rgba(255,255,255,0.14);
+            --accent: #3b82f6;
+            --accent-soft: rgba(59,130,246,0.12);
+            --text: #e6e9ef;
+            --muted: #8a93a6;
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --red: #ef4444;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Outfit', 'Noto Sans SC', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            background-image:
-                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.07) 0%, transparent 50%),
-                radial-gradient(circle at 85% 20%, rgba(139, 92, 246, 0.07) 0%, transparent 50%),
-                radial-gradient(circle at 50% 85%, rgba(45, 212, 191, 0.05) 0%, transparent 60%);
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            padding: 20px;
-            overflow-x: hidden;
+            padding: 0 20px 120px;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .glass-panel {
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--panel-border);
-            border-radius: 16px;
-            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
-        }
+        .wrap { max-width: 880px; margin: 0 auto; }
 
+        /* ---------- Header ---------- */
         header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 28px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 14px;
+            padding: 22px 0 18px;
         }
-
-        .brand-box {
-            display: flex;
-            align-items: center;
-            gap: 16px;
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .logo {
+            width: 34px; height: 34px; border-radius: 9px;
+            background: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 16px;
         }
+        .brand h1 { font-size: 16px; font-weight: 700; letter-spacing: .3px; }
+        .brand span { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 6px; }
+        .head-right { display: flex; align-items: center; gap: 14px; }
+        .mit-tag {
+            font-size: 11px; color: var(--muted);
+            border: 1px solid var(--border); border-radius: 20px;
+            padding: 3px 10px;
+        }
+        .gh-link { color: var(--muted); font-size: 13px; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+        .gh-link:hover { color: var(--text); }
 
-        .brand-logo-fusion {
-            width: 48px;
-            height: 48px;
+        /* ---------- Sections ---------- */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 14px;
-            background: linear-gradient(135deg, #38bdf8, #2dd4bf, #8b5cf6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow: 0 6px 18px rgba(56, 189, 248, 0.28);
-        }
-
-        .brand-logo-fusion i {
-            font-size: 22px;
-            color: #000;
-        }
-
-        .brand-logo-fusion::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 14px;
-            border: 2px solid rgba(234, 179, 8, 0.4);
-            animation: pulse-ring 2.5s infinite;
-        }
-
-        @keyframes pulse-ring {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.08); opacity: 0.3; }
-            100% { transform: scale(0.95); opacity: 0.8; }
-        }
-
-        .title-area h1 {
-            font-size: 21px;
-            font-weight: 800;
-            background: linear-gradient(90deg, #ffffff, var(--accent-cyan), var(--accent-teal));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 0.5px;
-            display: flex;
-            align-items: baseline;
-            gap: 10px;
-        }
-
-        .title-area h1 .sub {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-muted);
-            -webkit-text-fill-color: var(--text-muted);
-            letter-spacing: 1px;
-        }
-
-        .title-area p {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .brand-tag {
-            background: rgba(56, 189, 248, 0.1);
-            color: var(--accent-cyan);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            padding: 2px 9px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: 700;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .brand-tag.alt {
-            background: rgba(139, 92, 246, 0.12);
-            color: var(--accent-purple);
-            border-color: rgba(139, 92, 246, 0.3);
-        }
-        .brand-tag.green {
-            background: rgba(45, 212, 191, 0.1);
-            color: var(--accent-teal);
-            border-color: rgba(45, 212, 191, 0.3);
-        }
-
-        .action-area {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-teal));
-            color: #000;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 6px 18px rgba(56, 189, 248, 0.28);
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 22px rgba(56, 189, 248, 0.45);
-        }
-
-        .hero-strip {
-            background: linear-gradient(90deg, rgba(56, 189, 248, 0.06), rgba(139, 92, 246, 0.06));
-            border: 1px solid var(--panel-border);
-            border-radius: 14px;
-            padding: 12px 18px;
-            margin-bottom: 18px;
-            font-size: 13px;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .hero-strip strong { color: #fff; }
-
-        .main-layout {
-            display: grid;
-            grid-template-columns: 1fr 420px;
-            gap: 20px;
-        }
-
-        @media (max-width: 1100px) {
-            .main-layout { grid-template-columns: 1fr; }
-        }
-
-        .video-stage {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
-
-        .section-header {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--accent-cyan);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(56, 189, 248, 0.15);
-        }
-
-        .stepper {
-            display: flex;
-            align-items: center;
-            margin-bottom: 18px;
-        }
-        .step {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        .step-num {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
-        .step.active { color: #fff; }
-        .step.active .step-num {
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-teal));
-            color: #000;
-            border: none;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-        }
-        .step.done .step-num {
-            background: rgba(45, 212, 191, 0.18);
-            color: var(--accent-teal);
-            border-color: var(--accent-teal);
-        }
-        .step-line {
-            flex: 1;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.12);
-            margin: 0 10px;
-        }
-
-        .file-select-banner {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(56, 189, 248, 0.05);
-            border: 1px dashed var(--accent-cyan);
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 14px;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .btn-file-browse {
-            background: rgba(56, 189, 248, 0.15);
-            color: var(--accent-cyan);
-            border: 1px solid var(--accent-cyan);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
-
-        .btn-file-browse:hover {
-            background: var(--accent-cyan);
-            color: #000;
-        }
-
-        .large-video-box {
-            background: #000;
-            border-radius: 14px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            position: relative;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-        }
-
-        .large-video-box video {
-            width: 100%;
-            height: 350px;
-            object-fit: contain;
-            display: block;
-            background: #000;
-        }
-
-        .video-meta-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(13, 20, 36, 0.9);
-            padding: 10px 16px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .copy-mode-tab-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(6, 9, 17, 0.7);
-            border: 1px solid var(--panel-border);
-            border-radius: 12px;
-            padding: 4px;
-            margin-top: 20px;
-            margin-bottom: 14px;
-        }
-
-        .copy-tab-btn {
-            flex: 1;
-            padding: 9px 14px;
-            border: none;
-            border-radius: 8px;
-            background: none;
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .copy-tab-btn.active {
-            background: rgba(56, 189, 248, 0.15);
-            color: #fff;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            box-shadow: 0 2px 10px rgba(56, 189, 248, 0.2);
-        }
-
-        .template-chips-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-
-        .chip-btn {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: var(--text-main);
-            font-size: 11px;
-            padding: 5px 11px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .chip-btn:hover {
-            border-color: var(--accent-cyan);
-            color: var(--accent-cyan);
-            background: rgba(56, 189, 248, 0.08);
-        }
-
-        .ai-generator-panel {
-            background: rgba(139, 92, 246, 0.08);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 14px;
-            padding: 16px;
+            padding: 22px;
             margin-bottom: 16px;
         }
-
-        .ai-portal-grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 12px;
-            margin-top: 12px;
-            margin-bottom: 12px;
+        .card-head {
+            font-size: 13px; font-weight: 600; color: var(--muted);
+            margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
         }
+        .card-head i { color: var(--accent); }
 
-        .portal-card-box {
-            background: rgba(6, 9, 17, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+        /* ---------- Video dropzone ---------- */
+        .dropzone {
+            border: 1.5px dashed var(--border-strong);
             border-radius: 12px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .portal-card-box:hover {
-            border-color: var(--accent-purple);
-        }
-
-        .portal-card-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .btn-action-small {
-            background: rgba(56, 189, 248, 0.15);
-            border: 1px solid var(--accent-cyan);
-            color: var(--accent-cyan);
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            transition: all 0.2s;
-        }
-
-        .btn-action-small:hover {
-            background: var(--accent-cyan);
-            color: #000;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
-
-        .form-control {
-            width: 100%;
-            background: rgba(6, 9, 17, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 10px;
-            padding: 12px 16px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-            transition: border 0.3s;
-        }
-
-        .form-control:focus {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
-        }
-
-        textarea.form-control {
-            resize: vertical;
-            min-height: 110px;
-            line-height: 1.6;
-        }
-
-        .right-sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .compact-platform-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .platform-mini-card {
-            background: rgba(6, 9, 17, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 10px 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            opacity: 0.65;
-        }
-
-        .platform-mini-card:hover {
-            border-color: rgba(56, 189, 248, 0.5);
-            opacity: 0.9;
-        }
-
-        .platform-mini-card.selected {
-            border-color: var(--accent-cyan);
-            background: rgba(56, 189, 248, 0.1);
-            opacity: 1;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.15);
-        }
-
-        .mini-card-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 6px;
-        }
-
-        .mini-platform-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .mini-icon {
-            width: 26px;
-            height: 26px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-        }
-
-        .mini-name {
-            font-size: 12px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .checkbox-mini {
-            width: 16px;
-            height: 16px;
-            border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            color: transparent;
-        }
-
-        .platform-mini-card.selected .checkbox-mini {
-            background: var(--accent-cyan);
-            border-color: var(--accent-cyan);
-            color: #000;
-        }
-
-        .mini-card-bottom {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 10px;
-            margin-top: 4px;
-        }
-
-        .btn-qr-mini {
-            background: none;
-            border: none;
-            color: var(--accent-cyan);
-            font-size: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .summary-bar {
-            background: rgba(234, 179, 8, 0.08);
-            border: 1px solid var(--accent-gold);
-            border-radius: 12px;
-            padding: 12px 14px;
-            font-size: 12px;
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(12px);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            width: 620px;
-            max-width: 90vw;
             padding: 28px;
-            border-radius: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .2s, background .2s;
+        }
+        .dropzone:hover, .dropzone.drag { border-color: var(--accent); background: var(--accent-soft); }
+        .dropzone .dz-icon { font-size: 26px; color: var(--muted); margin-bottom: 8px; }
+        .dropzone .dz-title { font-size: 14px; color: var(--text); font-weight: 600; }
+        .dropzone .dz-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+        .video-loaded { display: none; }
+        .video-loaded.active { display: block; }
+        .video-preview {
+            width: 100%; border-radius: 12px; background: #000;
+            max-height: 340px; object-fit: contain; display: block;
+        }
+        .video-info {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 10px; font-size: 12px; color: var(--muted);
+        }
+        .video-info .fname { color: var(--text); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .change-btn {
+            background: none; border: 1px solid var(--border-strong); color: var(--muted);
+            border-radius: 8px; padding: 5px 12px; font-size: 12px; cursor: pointer;
+        }
+        .change-btn:hover { color: var(--text); border-color: var(--accent); }
+
+        /* ---------- Copy ---------- */
+        .field { margin-bottom: 14px; }
+        .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+        .input, .textarea {
+            width: 100%; background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 10px;
+            padding: 11px 14px; color: var(--text); font-size: 14px; outline: none;
+            font-family: inherit; transition: border-color .2s;
+        }
+        .input:focus, .textarea:focus { border-color: var(--accent); }
+        .textarea { resize: vertical; min-height: 96px; line-height: 1.6; }
+
+        .ai-toggle {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; color: var(--accent); cursor: pointer;
+            background: none; border: none; padding: 0; margin-top: 2px;
+        }
+        .ai-panel {
+            display: none; margin-top: 12px; padding: 14px;
+            background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+        }
+        .ai-panel.open { display: block; }
+        .ai-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .ai-btn {
+            flex: 1; min-width: 120px; background: var(--surface); border: 1px solid var(--border-strong);
+            border-radius: 9px; padding: 10px; color: var(--text); font-size: 12px; cursor: pointer;
+            display: flex; flex-direction: column; gap: 4px; align-items: flex-start;
+        }
+        .ai-btn:hover { border-color: var(--accent); }
+        .ai-btn b { font-size: 13px; }
+        .ai-btn small { color: var(--muted); }
+        .ai-paste {
+            margin-top: 10px; width: 100%; background: var(--accent-soft); color: var(--accent);
+            border: 1px solid rgba(59,130,246,.3); border-radius: 9px; padding: 8px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
         }
 
-        .progress-row { margin-bottom: 14px; }
-        .progress-fill-bg {
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 6px;
+        /* ---------- Platforms ---------- */
+        .group-label {
+            font-size: 12px; color: var(--muted); margin: 4px 0 12px;
+            display: flex; align-items: center; justify-content: space-between;
         }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-teal));
-            transition: width 0.3s ease;
+        .group-label a { color: var(--accent); font-size: 12px; cursor: pointer; text-decoration: none; }
+        .pf-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+        @media (max-width: 720px) { .pf-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 480px) { .pf-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .pf-chip {
+            position: relative; background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 11px;
+            padding: 12px 10px 10px; cursor: pointer; text-align: center;
+            transition: border-color .15s, background .15s;
         }
+        .pf-chip:hover { border-color: var(--border-strong); }
+        .pf-chip.sel { border-color: var(--accent); background: var(--accent-soft); }
+        .pf-icon {
+            width: 34px; height: 34px; border-radius: 9px; margin: 0 auto 7px;
+            display: flex; align-items: center; justify-content: center; font-size: 16px;
+        }
+        .pf-name { font-size: 12px; font-weight: 600; color: var(--text); }
+        .pf-dot {
+            display: block; font-size: 10px; margin-top: 4px; color: var(--muted);
+        }
+        .pf-dot.logged { color: var(--green); }
+        .pf-dot.need { color: var(--amber); }
+        .pf-dot.off { color: var(--muted); }
+        .pf-qr {
+            position: absolute; top: 7px; right: 7px;
+            background: none; border: none; color: var(--muted);
+            font-size: 12px; cursor: pointer; opacity: .55;
+        }
+        .pf-qr:hover { color: var(--accent); opacity: 1; }
+
+        /* ---------- Action bar ---------- */
+        .action-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(11,14,20,.92); backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            padding: 14px 20px;
+        }
+        .action-inner { max-width: 880px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .action-summary { font-size: 13px; color: var(--muted); }
+        .action-summary b { color: var(--text); font-size: 15px; }
+        .btn-go {
+            background: var(--accent); color: #fff; border: none;
+            border-radius: 11px; padding: 13px 28px; font-size: 15px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; gap: 8px;
+        }
+        .btn-go:hover { filter: brightness(1.08); }
+        .btn-go:disabled { opacity: .45; cursor: not-allowed; }
+
+        /* ---------- Modals ---------- */
+        .overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,.8);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal {
+            width: 480px; max-width: 92vw; background: var(--surface);
+            border: 1px solid var(--border); border-radius: 16px; padding: 24px;
+        }
+        .modal h3 { font-size: 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .modal .box { background: var(--surface-2); border-radius: 10px; padding: 12px; font-size: 12px; margin-bottom: 16px; }
+        .modal .box .vn { color: var(--accent); font-weight: 700; margin-bottom: 4px; }
+        .modal .row { display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-ghost { background: rgba(255,255,255,.08); border: none; color: var(--text); padding: 9px 18px; border-radius: 9px; cursor: pointer; font-size: 13px; }
+        .btn-ghost:hover { background: rgba(255,255,255,.14); }
+
+        .prog-row { margin-bottom: 12px; }
+        .prog-top { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+        .prog-bg { height: 5px; background: rgba(255,255,255,.1); border-radius: 3px; overflow: hidden; }
+        .prog-fill { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+
+        /* ---------- Footer ---------- */
+        footer {
+            max-width: 880px; margin: 24px auto 0; padding-top: 16px;
+            border-top: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 12px; color: var(--muted); flex-wrap: wrap; gap: 10px;
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: var(--text); }
     </style>
 </head>
 <body>
+    <div class="wrap">
+        <header>
+            <div class="brand">
+                <div class="logo"><i class="fa-solid fa-share-nodes"></i></div>
+                <h1>Open Matrix Publisher <span>全域矩阵</span></h1>
+            </div>
+            <div class="head-right">
+                <span class="mit-tag">MIT 开源</span>
+                <a class="gh-link" href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
+            </div>
+        </header>
 
-    <header class="glass-panel">
-        <div class="brand-box">
-            <div class="brand-logo-fusion">
-                <i class="fa-solid fa-share-nodes"></i>
+        <!-- 1. 视频 -->
+        <section class="card">
+            <div class="card-head"><i class="fa-solid fa-film"></i> 选择视频</div>
+
+            <div class="dropzone" id="dropzone" onclick="document.getElementById('local-file-input').click()">
+                <div class="dz-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                <div class="dz-title">点击或拖拽视频到此处</div>
+                <div class="dz-sub">支持 mp4 / mov / avi / mkv / webm</div>
             </div>
-            <div class="title-area">
-                <h1>Open Matrix Publisher <span class="sub">全域矩阵</span></h1>
-                <p>
-                    <span class="brand-tag"><i class="fa-solid fa-share-nodes"></i> 跨平台视频分发</span>
-                    <span class="brand-tag alt"><i class="fa-solid fa-brain"></i> AI 原生引擎</span>
-                    <span class="brand-tag green"><i class="fa-solid fa-lock-open"></i> MIT 开源免费</span>
-                </p>
+            <input type="file" id="local-file-input" accept="video/*" style="display:none;" onchange="handleLocalFileSelect(this)">
+
+            <div class="video-loaded" id="video-loaded">
+                <video id="main-video" class="video-preview" controls playsinline></video>
+                <div class="video-info">
+                    <span class="fname"><i class="fa-solid fa-file-video"></i> <span id="selected-video-filename">—</span></span>
+                    <span id="video-size">—</span>
+                </div>
+                <div style="margin-top:10px; text-align:right;">
+                    <button class="change-btn" onclick="document.getElementById('local-file-input').click()">更换视频</button>
+                </div>
             </div>
-        </div>
-        <div class="action-area">
-            <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank" style="color:var(--text-muted); text-decoration:none; font-size:13px; display:flex; align-items:center; gap:6px;">
-                <i class="fa-brands fa-github"></i> GitHub 开源
-            </a>
-            <button class="btn-primary" onclick="openConfirmDialog()">
-                <i class="fa-solid fa-paper-plane"></i> 启动分发
+        </section>
+
+        <!-- 2. 文案 -->
+        <section class="card">
+            <div class="card-head"><i class="fa-solid fa-pen"></i> 文案（可选）</div>
+            <div class="field">
+                <label>标题</label>
+                <input class="input" type="text" id="post-title" placeholder="给视频起个标题，将同步到各平台">
+            </div>
+            <div class="field">
+                <label>正文描述</label>
+                <textarea class="textarea" id="post-desc" placeholder="写一段描述，可留空"></textarea>
+            </div>
+            <button class="ai-toggle" onclick="toggleAi()"><i class="fa-solid fa-wand-magic-sparkles"></i> 用 AI 写文案</button>
+            <div class="ai-panel" id="ai-panel">
+                <div class="ai-row">
+                    <button class="ai-btn" onclick="openAiWebPage('doubao')"><b>豆包</b><small>短视频口播</small></button>
+                    <button class="ai-btn" onclick="openAiWebPage('kimi')"><b>Kimi</b><small>长文本结构</small></button>
+                    <button class="ai-btn" onclick="openAiWebPage('tongyi')"><b>通义千问</b><small>中英双语</small></button>
+                </div>
+                <button class="ai-paste" onclick="parseFromClipboard()"><i class="fa-solid fa-paste"></i> 粘贴并认领复制的文案</button>
+            </div>
+        </section>
+
+        <!-- 3. 平台 -->
+        <section class="card">
+            <div class="card-head"><i class="fa-solid fa-layer-group"></i> 选择分发平台</div>
+
+            <div class="group-label">国内平台 <a onclick="toggleCategory('cn')">全选 / 取消</a></div>
+            <div class="pf-grid" id="cn-mini-grid"></div>
+
+            <div class="group-label">国际平台 <a onclick="toggleCategory('global')">全选 / 取消</a></div>
+            <div class="pf-grid" id="global-mini-grid"></div>
+        </section>
+
+        <footer>
+            <span>Open Matrix Publisher · 全域矩阵 · 一条视频，静默分发到 14+ 平台</span>
+            <span><a href="https://martin-mqtech.github.io/open-matrix-publisher/" target="_blank">文档</a> · v1.0</span>
+        </footer>
+    </div>
+
+    <!-- 底部操作栏 -->
+    <div class="action-bar">
+        <div class="action-inner">
+            <div class="action-summary">已选 <b id="selected-count">0</b> / 14 个平台</div>
+            <button class="btn-go" id="go-btn" onclick="openConfirmDialog()" disabled>
+                <i class="fa-solid fa-paper-plane"></i> 一键分发
             </button>
         </div>
-    </header>
-
-    <div class="hero-strip">
-        <i class="fa-solid fa-bolt" style="color:var(--accent-cyan);"></i>
-        <span><strong>一条视频，静默分发到 14+ 内容平台。</strong> 后台无头执行、零前台打扰；开源免费，内置 AI 文案助手。</span>
     </div>
-
-    <div class="main-layout">
-        <!-- 左侧：视频选择与文案编辑主舞台 -->
-        <div class="video-stage">
-            <div class="glass-panel" style="padding: 24px;">
-                <div class="section-header">
-                    <span><i class="fa-solid fa-clapperboard" style="margin-right:8px;"></i> ① 选择并编辑你的视频</span>
-                    <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 本地选择 · 一键同步多平台</span>
-                </div>
-
-                <!-- 四步流程指示 -->
-                <div class="stepper">
-                    <div class="step active" id="step-1"><span class="step-num">1</span><span class="step-label">选视频</span></div>
-                    <div class="step-line"></div>
-                    <div class="step" id="step-2"><span class="step-num">2</span><span class="step-label">写文案</span></div>
-                    <div class="step-line"></div>
-                    <div class="step" id="step-3"><span class="step-num">3</span><span class="step-label">选平台</span></div>
-                    <div class="step-line"></div>
-                    <div class="step" id="step-4"><span class="step-num">4</span><span class="step-label">一键分发</span></div>
-                </div>
-
-                <!-- 本地视频选择 -->
-                <div class="file-select-banner">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <i class="fa-solid fa-file-video" style="font-size:20px; color:var(--accent-cyan);"></i>
-                        <div>
-                            <div style="font-size:13px; font-weight:700; color:#fff;" id="selected-video-filename">尚未选择视频文件</div>
-                            <div style="font-size:11px; color:var(--text-muted);" id="selected-video-filepath">点击下方按钮，从本机选择要分发的视频</div>
-                        </div>
-                    </div>
-                    <button class="btn-file-browse" onclick="document.getElementById('local-file-input').click()">
-                        <i class="fa-solid fa-folder-open"></i> 浏览本地视频
-                    </button>
-                    <input type="file" id="local-file-input" accept="video/*" style="display:none;" onchange="handleLocalFileSelect(this)">
-                </div>
-
-                <!-- 视频预览 -->
-                <div class="large-video-box">
-                    <video id="main-video" controls playsinline></video>
-                    <div class="video-meta-bar">
-                        <span><i class="fa-solid fa-film" style="margin-right:6px;"></i> 视频预览</span>
-                        <span id="video-size"><i class="fa-solid fa-hard-drive" style="margin-right:6px;"></i> 大小: —</span>
-                    </div>
-                </div>
-
-                <!-- 文案创作模式切换 -->
-                <div class="copy-mode-tab-bar">
-                    <button class="copy-tab-btn active" id="tab-manual" onclick="setCopyMode('manual')">
-                        <i class="fa-solid fa-pen-to-square"></i> 模式一：手动撰写 / 模板
-                    </button>
-                    <button class="copy-tab-btn" id="tab-ai" onclick="setCopyMode('ai')">
-                        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：AI 文案助手
-                    </button>
-                </div>
-
-                <!-- 模式一：通用模板 -->
-                <div id="manual-template-bar" class="template-chips-bar">
-                    <span style="font-size:11px; color:var(--text-muted); align-self:center;">快速套用模板：</span>
-                    <button class="chip-btn" onclick="applyTemplate('product')"><i class="fa-solid fa-lightbulb"></i> 产品亮点模板</button>
-                    <button class="chip-btn" onclick="applyTemplate('viral')"><i class="fa-solid fa-bolt"></i> 种草爆款模板</button>
-                    <button class="chip-btn" onclick="applyTemplate('global')"><i class="fa-solid fa-earth-americas"></i> 跨境英文模板</button>
-                    <button class="chip-btn" style="color:var(--accent-red);" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> 清空文本</button>
-                </div>
-
-                <!-- 模式二：免费 AI 网页助手 -->
-                <div id="ai-generator-box" class="ai-generator-panel" style="display:none;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-comments"></i> 免费 AI 网页助手</span>
-                        <span style="font-size:11px; color:var(--accent-teal);">复制主题 · 一键打开 · 智能解析</span>
-                    </div>
-
-                    <div class="ai-portal-grid-2">
-                        <div class="portal-card-box">
-                            <div class="portal-card-title">
-                                <span>🫘 豆包 Doubao</span>
-                                <span style="font-size:10px; color:var(--accent-teal);">免费</span>
-                            </div>
-                            <div style="font-size:11px; color:var(--text-muted);">擅长短视频口播与社交种草</div>
-                            <button class="btn-action-small" style="margin-top:4px;" onclick="openAiWebPage('doubao')">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 复制主题并打开
-                            </button>
-                        </div>
-
-                        <div class="portal-card-box">
-                            <div class="portal-card-title">
-                                <span>🌙 Kimi</span>
-                                <span style="font-size:10px; color:var(--accent-teal);">免费</span>
-                            </div>
-                            <div style="font-size:11px; color:var(--text-muted);">擅长长文本与结构化亮点</div>
-                            <button class="btn-action-small" style="margin-top:4px;" onclick="openAiWebPage('kimi')">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 复制主题并打开
-                            </button>
-                        </div>
-
-                        <div class="portal-card-box">
-                            <div class="portal-card-title">
-                                <span>🧠 通义千问</span>
-                                <span style="font-size:10px; color:var(--accent-teal);">免费</span>
-                            </div>
-                            <div style="font-size:11px; color:var(--text-muted);">中英双语与多平台适配</div>
-                            <button class="btn-action-small" style="margin-top:4px;" onclick="openAiWebPage('tongyi')">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 复制主题并打开
-                            </button>
-                        </div>
-                    </div>
-
-                    <div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-                        <span style="font-size:11px; color:var(--text-main);">
-                            <i class="fa-solid fa-hand-pointer" style="color:var(--accent-gold); margin-right:4px;"></i>
-                            在网页中复制满意的文案后，点右侧一键认领
-                        </span>
-                        <button onclick="parseFromClipboard()" style="background:linear-gradient(135deg, var(--accent-purple), #6366f1); border:none; color:#fff; padding:6px 14px; border-radius:8px; font-weight:700; font-size:11px; cursor:pointer; white-space:nowrap;">
-                            <i class="fa-solid fa-paste"></i> 📋 填入复制的文案
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 标题与描述 -->
-                <div class="form-group">
-                    <label><i class="fa-solid fa-heading" style="color:var(--accent-cyan); margin-right:6px;"></i> 视频标题 (Title)</label>
-                    <input type="text" id="post-title" class="form-control" placeholder="给这条视频起一个吸引人的标题（将同步到各平台）" value="一条视频，静默分发到 14+ 平台">
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fa-solid fa-align-left" style="color:var(--accent-teal); margin-right:6px;"></i> 视频正文描述 (Description)</label>
-                    <textarea id="post-desc" class="form-control" placeholder="写一段正文描述…可留空，由各平台默认填充">示例文案：在左侧选好视频、右侧勾选目标平台，点击右上角「启动分发」即可一键静默发布。
-把这里换成你自己的标题与正文，支持中文 / 英文。</textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- 右侧：平台选择侧栏 -->
-        <div class="right-sidebar">
-            <div class="summary-bar">
-                <div>
-                    <strong style="color:var(--accent-gold);"><i class="fa-solid fa-check-double"></i> 分发概览：</strong>
-                    <span id="selected-summary-text">已勾选 0 / 14 个平台</span>
-                </div>
-                <button onclick="clearAllSelections()" style="background:none; border:none; color:var(--accent-red); font-size:11px; cursor:pointer;">重置选单</button>
-            </div>
-
-            <!-- 国内平台 -->
-            <div class="glass-panel" style="padding: 16px;">
-                <div class="section-header" style="margin-bottom:10px;">
-                    <span style="font-size:13px; color:#fff;"><i class="fa-solid fa-flag" style="color:var(--accent-orange); margin-right:6px;"></i> 🇨🇳 国内 8 大平台</span>
-                    <span style="font-size:11px; color:var(--accent-cyan); cursor:pointer;" onclick="toggleCategory('cn')">全选 / 取消</span>
-                </div>
-                <div class="compact-platform-grid" id="cn-mini-grid"></div>
-            </div>
-
-            <!-- 国际平台 -->
-            <div class="glass-panel" style="padding: 16px;">
-                <div class="section-header" style="margin-bottom:10px;">
-                    <span style="font-size:13px; color:#fff;"><i class="fa-solid fa-globe" style="color:var(--accent-cyan); margin-right:6px;"></i> 🌏 国际 6 大平台</span>
-                    <span style="font-size:11px; color:var(--accent-cyan); cursor:pointer;" onclick="toggleCategory('global')">全选 / 取消</span>
-                </div>
-                <div class="compact-platform-grid" id="global-mini-grid"></div>
-            </div>
-
-            <!-- 安全说明 -->
-            <div class="glass-panel" style="padding: 14px; font-size:11px; color:var(--text-muted); line-height:1.6;">
-                <i class="fa-solid fa-shield-halved" style="color:var(--accent-gold); margin-right:4px;"></i>
-                <strong style="color:var(--accent-gold);">安全防重：</strong> 平台需手动勾选才触发推送；系统自动拦截历史已发布平台，绝不重复发送。
-            </div>
-        </div>
-    </div>
-
-    <footer style="margin-top: 24px; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--panel-border);">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span class="brand-logo-fusion" style="width: 26px; height: 26px; border-radius: 8px; box-shadow: none;"><i class="fa-solid fa-share-nodes" style="font-size: 12px;"></i></span>
-            <span>Open Matrix Publisher · 全域矩阵 · MIT 开源，免费使用</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank" style="color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 6px;"><i class="fa-brands fa-github"></i> 开源仓库</a>
-            <a href="https://martin-mqtech.github.io/open-matrix-publisher/" target="_blank" style="color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-globe"></i> 在线文档</a>
-            <span style="color: var(--accent-cyan); font-weight: 700;">v1.0</span>
-        </div>
-    </footer>
 
     <!-- 确认弹窗 -->
-    <div id="confirm-modal" class="modal-overlay">
-        <div class="modal-content glass-panel">
-            <h3 style="font-size: 17px; color: #fff; margin-bottom: 12px;"><i class="fa-solid fa-paper-plane" style="color:var(--accent-cyan)"></i> 确认分发以下视频</h3>
-            <div style="background:rgba(0,0,0,0.4); border-radius:10px; padding:12px; margin-bottom:16px; font-size:12px;">
-                <div style="color:var(--accent-gold); font-weight:700; margin-bottom:4px;" id="confirm-video-name">尚未选择视频文件</div>
-                <div style="color:var(--text-muted);">目标平台数：<span id="confirm-count" style="color:var(--accent-cyan); font-weight:800;">0</span> 个</div>
+    <div id="confirm-modal" class="overlay">
+        <div class="modal">
+            <h3><i class="fa-solid fa-paper-plane" style="color:var(--accent)"></i> 确认分发</h3>
+            <div class="box">
+                <div class="vn" id="confirm-video-name">—</div>
+                <div style="color:var(--muted);">目标平台：<span id="confirm-count" style="color:var(--accent); font-weight:700;">0</span> 个</div>
             </div>
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button onclick="closeConfirmDialog()" style="background: rgba(255,255,255,0.1); border:none; padding: 8px 18px; border-radius: 8px; color:#fff; cursor:pointer; font-size:13px;">取消</button>
-                <button onclick="confirmAndDispatch()" class="btn-primary" style="padding:8px 20px; font-size:13px;">确认并开始发送</button>
+            <div class="row">
+                <button class="btn-ghost" onclick="closeConfirmDialog()">取消</button>
+                <button class="btn-go" style="padding:9px 20px;" onclick="confirmAndDispatch()">开始发送</button>
             </div>
         </div>
     </div>
 
-    <!-- 进度监控弹窗 -->
-    <div id="modal" class="modal-overlay">
-        <div class="modal-content glass-panel">
-            <h3 style="font-size: 17px; color: #fff; margin-bottom: 14px;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent-cyan)"></i> 正在并发分发资产...</h3>
+    <!-- 进度弹窗 -->
+    <div id="modal" class="overlay">
+        <div class="modal">
+            <h3><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent)"></i> 正在分发…</h3>
             <div id="progress-list"></div>
-            <div style="margin-top: 20px; text-align: right;">
-                <button id="close-modal-btn" onclick="closeModal()" class="btn-primary" style="display:none; margin-left:auto; font-size:13px; padding:8px 18px;">完成并关闭</button>
+            <div style="margin-top:18px; text-align:right;">
+                <button id="close-modal-btn" class="btn-go" style="display:none; padding:9px 18px;" onclick="closeModal()">完成并关闭</button>
             </div>
         </div>
     </div>
 
     <script>
         const PLATFORMS = [
-            { id: "tencent", name: "微信视频号", cat: "cn", color: "#07c160", icon: "fa-weixin" },
+            { id: "tencent", name: "视频号", cat: "cn", color: "#07c160", icon: "fa-weixin" },
             { id: "douyin", name: "抖音", cat: "cn", color: "#000000", icon: "fa-tiktok" },
             { id: "bilibili", name: "B站", cat: "cn", color: "#00a1d6", icon: "fa-play" },
             { id: "kuaishou", name: "快手", cat: "cn", color: "#ff5000", icon: "fa-video" },
             { id: "weibo", name: "微博", cat: "cn", color: "#e6162d", icon: "fa-weibo" },
-            { id: "toutiao", name: "今日头条", cat: "cn", color: "#f04142", icon: "fa-newspaper" },
+            { id: "toutiao", name: "头条", cat: "cn", color: "#f04142", icon: "fa-newspaper" },
             { id: "zhihu", name: "知乎", cat: "cn", color: "#0066ff", icon: "fa-brain" },
             { id: "xiaohongshu", name: "小红书", cat: "cn", color: "#ff2442", icon: "fa-book-bookmark" },
 
             { id: "youtube", name: "YouTube", cat: "global", color: "#ff0000", icon: "fa-youtube" },
             { id: "facebook", name: "Facebook", cat: "global", color: "#1877f2", icon: "fa-facebook" },
-            { id: "x", name: "X (Twitter)", cat: "global", color: "#000000", icon: "fa-x-twitter" },
+            { id: "x", name: "X", cat: "global", color: "#000000", icon: "fa-x-twitter" },
             { id: "linkedin", name: "LinkedIn", cat: "global", color: "#0a66c2", icon: "fa-linkedin" },
             { id: "instagram", name: "Instagram", cat: "global", color: "#e4405f", icon: "fa-instagram" },
             { id: "tiktok", name: "TikTok", cat: "global", color: "#00f2fe", icon: "fa-tiktok" }
@@ -896,18 +369,9 @@
 
         let currentSelectedVideoPath = "";
 
-        function setStep(n) {
-            for (let i = 1; i <= 4; i++) {
-                const el = document.getElementById('step-' + i);
-                if (!el) continue;
-                el.classList.toggle('active', i === n);
-                el.classList.toggle('done', i < n);
-            }
-        }
-
         function getCleanTopic() {
             let fn = document.getElementById('selected-video-filename').innerText;
-            if (!fn || fn.indexOf('尚未选择') !== -1) return "我的视频作品";
+            if (!fn || fn === '—') return "我的视频作品";
             fn = fn.replace(/\.(mp4|mov|avi|mkv|webm)$/i, '');
             fn = fn.replace(/_(中文|英文|宣传片|电影级|成片|v\d+)/g, '');
             return fn.trim() || "我的视频作品";
@@ -916,68 +380,27 @@
         function openAiWebPage(key) {
             const cleanTopic = getCleanTopic();
             const promptText = `请帮我为【${cleanTopic}】写一段适合短视频平台发布的文案：\n标题：（控制在 28 字以内，有吸引力）\n正文：（突出核心看点，口语化、有共鸣）\n话题标签：3-5 个`;
-
             navigator.clipboard.writeText(promptText).then(() => {
-                alert(`📋 主题词【${cleanTopic}】及提示词已复制到剪贴板！\n即将打开 ${key.toUpperCase()} 网页，按 Cmd+V / Ctrl+V 粘贴即可。`);
+                alert(`主题词【${cleanTopic}】已复制，打开 ${key} 后按 Cmd+V / Ctrl+V 粘贴。`);
                 window.open(AI_PORTALS[key], '_blank');
-            }).catch(() => {
-                window.open(AI_PORTALS[key], '_blank');
-            });
+            }).catch(() => { window.open(AI_PORTALS[key], '_blank'); });
         }
 
         async function parseFromClipboard() {
             try {
                 const text = await navigator.clipboard.readText();
-                if (!text || text.trim().length === 0) {
-                    alert("⚠️ 剪贴板为空，请先在豆包 / Kimi / 通义 网页中复制满意的文案！");
-                    return;
-                }
-
+                if (!text || !text.trim()) { alert("剪贴板为空，请先在 AI 网页复制文案。"); return; }
                 const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
                 if (lines.length > 0) {
-                    let firstLine = lines[0].replace(/^标题[：:]\s*/, '').replace(/^[#【\s]*/, '');
-                    document.getElementById('post-title').value = firstLine.slice(0, 80);
-
-                    if (lines.length > 1) {
-                        let remaining = lines.slice(1).join('\n').replace(/^正文[：:]\s*/, '');
-                        document.getElementById('post-desc').value = remaining;
-                    }
-                    alert("🎉 已成功认领复制的文案，并填入下方编辑框！");
+                    document.getElementById('post-title').value = lines[0].replace(/^标题[：:]\s*/, '').replace(/^[#【\s]*/, '').slice(0, 80);
+                    if (lines.length > 1) document.getElementById('post-desc').value = lines.slice(1).join('\n').replace(/^正文[：:]\s*/, '');
+                    alert("已认领文案并填入。");
                 }
-            } catch (err) {
-                alert("⚠️ 请允许浏览器读取剪贴板权限，或直接手动粘贴。");
-            }
+            } catch (err) { alert("请允许浏览器读取剪贴板，或直接手动粘贴。"); }
         }
 
-        function setCopyMode(mode) {
-            document.querySelectorAll('.copy-tab-btn').forEach(b => b.classList.remove('active'));
-            if (mode === 'manual') {
-                document.getElementById('tab-manual').classList.add('active');
-                document.getElementById('manual-template-bar').style.display = 'flex';
-                document.getElementById('ai-generator-box').style.display = 'none';
-            } else {
-                document.getElementById('tab-ai').classList.add('active');
-                document.getElementById('manual-template-bar').style.display = 'none';
-                document.getElementById('ai-generator-box').style.display = 'block';
-            }
-        }
-
-        function applyTemplate(tplKey) {
-            if (tplKey === 'product') {
-                document.getElementById('post-title').value = "这款产品，把我日常最头疼的一件事解决了";
-                document.getElementById('post-desc').value = "用了两周，最大的感受是——它把复杂的事变简单了。\n不是堆参数，而是真的在使用场景里帮到我。\n篇幅有限，先说三个我最常用的点：\n① 上手零门槛　② 日常高频可用　③ 细节很走心\n感兴趣的朋友可以聊聊你的使用场景～ #好物分享 #效率工具";
-            } else if (tplKey === 'viral') {
-                document.getElementById('post-title').value = "真的会回购！亲测好用的宝藏好物";
-                document.getElementById('post-desc').value = "刷到就是缘分，这个真的要安利给所有人！\n第一次用就被惊艳到了，质感在线，细节拉满。\n宅家 / 通勤 / 出差都能用上，性价比绝了。\n姐妹们冲！#种草 #宝藏好物 #日常分享";
-            } else if (tplKey === 'global') {
-                document.getElementById('post-title').value = "The everyday tool that quietly upgraded my workflow";
-                document.getElementById('post-desc').value = "Two weeks in, here's my honest take.\nIt doesn't scream features — it just solves a real annoyance I had.\nThree things I use most: ① ... ② ... ③ ...\nCurious how you'd use it? Drop a comment. #Productivity #TechFinds";
-            }
-        }
-
-        function clearForm() {
-            document.getElementById('post-title').value = "";
-            document.getElementById('post-desc').value = "";
+        function toggleAi() {
+            document.getElementById('ai-panel').classList.toggle('open');
         }
 
         function formatSize(bytes) {
@@ -991,127 +414,90 @@
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 document.getElementById('selected-video-filename').innerText = file.name;
-                document.getElementById('selected-video-filepath').innerText = `已选择本地文件: ${file.name}`;
                 currentSelectedVideoPath = file.name;
-                document.getElementById('video-size').innerHTML = `<i class="fa-solid fa-hard-drive" style="margin-right:6px;"></i> 大小: ${formatSize(file.size)}`;
-                const objectUrl = URL.createObjectURL(file);
-                document.getElementById('main-video').src = objectUrl;
-                setStep(2);
+                document.getElementById('video-size').innerText = formatSize(file.size);
+                document.getElementById('main-video').src = URL.createObjectURL(file);
+                document.getElementById('video-loaded').classList.add('active');
+                document.getElementById('dropzone').style.display = 'none';
+                updateSelectedSummary();
             }
         }
+
+        // 拖拽支持
+        const dz = document.getElementById('dropzone');
+        ['dragover','dragenter'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.add('drag'); }));
+        ['dragleave','drop'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.remove('drag'); }));
+        dz.addEventListener('drop', ev => {
+            if (ev.dataTransfer.files && ev.dataTransfer.files[0]) {
+                const fi = document.getElementById('local-file-input');
+                fi.files = ev.dataTransfer.files;
+                handleLocalFileSelect(fi);
+            }
+        });
 
         function renderMiniGrids() {
             const cnGrid = document.getElementById('cn-mini-grid');
             const globalGrid = document.getElementById('global-mini-grid');
-
             PLATFORMS.forEach(p => {
                 const card = document.createElement('div');
-                card.className = 'platform-mini-card';
+                card.className = 'pf-chip';
                 card.id = `card-${p.id}`;
-                card.setAttribute('data-platform-id', p.id);
-                card.onclick = () => {
-                    card.classList.toggle('selected');
-                    updateSelectedSummary();
-                };
-
+                card.onclick = () => { card.classList.toggle('sel'); updateSelectedSummary(); };
                 card.innerHTML = `
-                    <div class="mini-card-top">
-                        <div class="mini-platform-info">
-                            <div class="mini-icon" style="background: ${p.color}22; color: ${p.color};">
-                                <i class="fa-brands ${p.icon}"></i>
-                            </div>
-                            <span class="mini-name">${p.name}</span>
-                        </div>
-                        <div class="checkbox-mini"><i class="fa-solid fa-check"></i></div>
-                    </div>
-                    <div class="mini-card-bottom">
-                        <span id="status-pill-${p.id}" style="color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-circle"></i> 待校验</span>
-                        <button class="btn-qr-mini" onclick="launchQrLogin('${p.id}', event)"><i class="fa-solid fa-qrcode"></i> 扫码</button>
-                    </div>
+                    <button class="pf-qr" title="扫码登录" onclick="launchQrLogin('${p.id}', event)"><i class="fa-solid fa-qrcode"></i></button>
+                    <div class="pf-icon" style="background:${p.color}22; color:${p.color};"><i class="fa-brands ${p.icon}"></i></div>
+                    <div class="pf-name">${p.name}</div>
+                    <span class="pf-dot off" id="status-pill-${p.id}"><i class="fa-regular fa-circle"></i> 待校验</span>
                 `;
-
-                if (p.cat === 'cn') cnGrid.appendChild(card);
-                else globalGrid.appendChild(card);
+                (p.cat === 'cn' ? cnGrid : globalGrid).appendChild(card);
             });
             updateSelectedSummary();
         }
-
         renderMiniGrids();
 
         function updateSelectedSummary() {
-            const selected = document.querySelectorAll('.platform-mini-card.selected');
-            document.getElementById('selected-summary-text').innerText = `已勾选 ${selected.length} / 14 个平台`;
-            if (selected.length > 0) setStep(3);
+            const selected = document.querySelectorAll('.pf-chip.sel');
+            document.getElementById('selected-count').innerText = selected.length;
+            document.getElementById('go-btn').disabled = !(currentSelectedVideoPath && selected.length > 0);
         }
 
         function clearAllSelections() {
-            document.querySelectorAll('.platform-mini-card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('.pf-chip').forEach(c => c.classList.remove('sel'));
             updateSelectedSummary();
         }
 
         function toggleCategory(cat) {
             const list = PLATFORMS.filter(p => p.cat === cat);
-            const allSelected = list.every(p => document.getElementById(`card-${p.id}`).classList.contains('selected'));
-            list.forEach(p => {
-                const card = document.getElementById(`card-${p.id}`);
-                if (allSelected) card.classList.remove('selected');
-                else card.classList.add('selected');
-            });
+            const allSel = list.every(p => document.getElementById(`card-${p.id}`).classList.contains('sel'));
+            list.forEach(p => document.getElementById(`card-${p.id}`).classList.toggle('sel', !allSel));
             updateSelectedSummary();
         }
 
-        // API 基地址：本地同源运行时用空串(相对路径)；部署到 GitHub Pages 等静态站点时
-        // 回退到本机桥接服务 http://localhost:5001（需用户在本机运行 ./start_ui.sh）。
-        const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-            ? '' : 'http://localhost:5001';
+        // API 基地址
+        const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? '' : 'http://localhost:5001';
 
         async function refreshSessionStatus() {
             try {
                 const res = await fetch(API_BASE + '/api/status');
                 const data = await res.json();
-
-                const currentVideo = document.getElementById('selected-video-filename').innerText;
-                const pubMap = data.published_map || {};
-                const currentPubs = pubMap[currentVideo] || {};
                 const sessions = data.sessions || {};
-
                 PLATFORMS.forEach(p => {
-                    const card = document.getElementById(`card-${p.id}`);
                     const pill = document.getElementById(`status-pill-${p.id}`);
-                    const pubInfo = currentPubs[p.id];
-                    const sess = sessions[p.id] || {};
-
                     if (!pill) return;
+                    const sess = sessions[p.id] || {};
                     if (sess.logged_in) {
-                        pill.style.color = "var(--accent-teal)";
-                        pill.innerHTML = `<i class="fa-solid fa-circle-check"></i> 已登录`;
+                        pill.className = 'pf-dot logged';
+                        pill.innerHTML = '<i class="fa-solid fa-circle-check"></i> 已登录';
                     } else {
-                        pill.style.color = "var(--accent-orange)";
-                        pill.innerHTML = `<i class="fa-solid fa-qrcode"></i> 需扫码`;
-                    }
-
-                    if (pubInfo && card) {
-                        card.style.borderColor = 'var(--accent-gold)';
-                        let existingPill = card.querySelector('.pub-lock-tag');
-                        if (!existingPill) {
-                            const tag = document.createElement('div');
-                            tag.className = 'pub-lock-tag';
-                            tag.style.cssText = 'margin-top:4px;padding:2px 6px;border-radius:4px;background:rgba(234,179,8,0.14);color:var(--accent-gold);font-size:10px;font-weight:700;text-align:center;';
-                            tag.innerHTML = `<i class="fa-solid fa-lock"></i> 已发布 (锁定)`;
-                            card.appendChild(tag);
-                        }
+                        pill.className = 'pf-dot need';
+                        pill.innerHTML = '<i class="fa-solid fa-qrcode"></i> 需扫码';
                     }
                 });
             } catch (err) {
-                // 静态部署（GitHub Pages）且未连接本地引擎时的优雅降级
                 PLATFORMS.forEach(p => {
                     const pill = document.getElementById(`status-pill-${p.id}`);
-                    if (pill) {
-                        pill.style.color = "var(--text-muted)";
-                        pill.innerHTML = `<i class="fa-solid fa-plug-circle-xmark"></i> 未连接`;
-                    }
+                    if (pill) { pill.className = 'pf-dot off'; pill.innerHTML = '<i class="fa-solid fa-plug-circle-xmark"></i> 未连接'; }
                 });
-                console.log("Status sync warning:", err);
             }
         }
 
@@ -1119,72 +505,47 @@
             if (event) event.stopPropagation();
             try {
                 const res = await fetch(API_BASE + '/api/launch-login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ platform_id: platformId })
                 });
                 const data = await res.json();
                 alert(`🚀 ${data.msg}`);
                 refreshSessionStatus();
-            } catch (err) {
-                alert("⚠️ 无法连接本地 Python API 服务 (http://localhost:5001)！");
-            }
+            } catch (err) { alert("⚠️ 无法连接本地服务 (localhost:5001)，请先运行 ./start_ui.sh"); }
         }
 
         function openConfirmDialog() {
-            if (!currentSelectedVideoPath) {
-                alert("⚠️ 请先在左侧选择要分发的视频文件！");
-                return;
-            }
-            const selected = document.querySelectorAll('.platform-mini-card.selected');
-            if (selected.length === 0) {
-                alert("⚠️ 请至少手动勾选 1 个要推送的平台！");
-                return;
-            }
+            if (!currentSelectedVideoPath) { alert("请先选择视频。"); return; }
+            const selected = document.querySelectorAll('.pf-chip.sel');
+            if (selected.length === 0) { alert("请至少勾选 1 个平台。"); return; }
             document.getElementById('confirm-video-name').innerText = document.getElementById('selected-video-filename').innerText;
             document.getElementById('confirm-count').innerText = selected.length;
             document.getElementById('confirm-modal').style.display = 'flex';
-            setStep(4);
         }
-
-        function closeConfirmDialog() {
-            document.getElementById('confirm-modal').style.display = 'none';
-        }
-
-        function confirmAndDispatch() {
-            closeConfirmDialog();
-            startRealDispatch();
-        }
+        function closeConfirmDialog() { document.getElementById('confirm-modal').style.display = 'none'; }
+        function confirmAndDispatch() { closeConfirmDialog(); startRealDispatch(); }
 
         function trackRealPythonTask(p, taskId, onComplete) {
             const statusEl = document.getElementById(`status-${p.id}`);
             const fillEl = document.getElementById(`fill-${p.id}`);
-
-            const pollInterval = setInterval(async () => {
+            const poll = setInterval(async () => {
                 try {
                     const res = await fetch(`${API_BASE}/api/task-progress?task_id=${taskId}`);
                     const info = await res.json();
-
                     if (info.pct !== undefined) fillEl.style.width = `${info.pct}%`;
                     if (info.stage) statusEl.innerText = info.stage;
-
                     if (info.status === 'completed') {
-                        clearInterval(pollInterval);
-                        statusEl.innerHTML = `<span style="color: var(--accent-teal); font-weight:700;"><i class="fa-solid fa-circle-check"></i> ${info.stage}</span>`;
-                        fillEl.style.width = '100%';
-                        fillEl.style.background = 'var(--accent-teal)';
+                        clearInterval(poll);
+                        statusEl.innerHTML = `<span style="color:var(--green);font-weight:700;"><i class="fa-solid fa-circle-check"></i> ${info.stage}</span>`;
+                        fillEl.style.width = '100%'; fillEl.style.background = 'var(--green)';
                         onComplete(true);
                     } else if (info.status === 'failed') {
-                        clearInterval(pollInterval);
-                        statusEl.innerHTML = `<span style="color: var(--accent-red); font-weight:700;"><i class="fa-solid fa-circle-xmark"></i> ${info.error || '失败'}</span>`;
-                        fillEl.style.width = '100%';
-                        fillEl.style.background = 'var(--accent-red)';
+                        clearInterval(poll);
+                        statusEl.innerHTML = `<span style="color:var(--red);font-weight:700;"><i class="fa-solid fa-circle-xmark"></i> ${info.error || '失败'}</span>`;
+                        fillEl.style.width = '100%'; fillEl.style.background = 'var(--red)';
                         onComplete(false);
                     }
-                } catch (err) {
-                    clearInterval(pollInterval);
-                    onComplete(false);
-                }
+                } catch (err) { clearInterval(poll); onComplete(false); }
             }, 500);
         }
 
@@ -1192,78 +553,45 @@
             const modal = document.getElementById('modal');
             const list = document.getElementById('progress-list');
             const closeBtn = document.getElementById('close-modal-btn');
+            modal.style.display = 'flex'; closeBtn.style.display = 'none'; list.innerHTML = '';
 
-            modal.style.display = 'flex';
-            closeBtn.style.display = 'none';
-            list.innerHTML = '';
-
-            const selected = document.querySelectorAll('.platform-mini-card.selected');
-            const activePlatforms = Array.from(selected).map(c => {
-                const id = c.id.replace('card-', '');
-                return PLATFORMS.find(p => p.id === id);
-            });
-
+            const selected = document.querySelectorAll('.pf-chip.sel');
+            const activePlatforms = Array.from(selected).map(c => PLATFORMS.find(p => p.id === c.id.replace('card-', '')));
             const title = document.getElementById('post-title').value;
             const desc = document.getElementById('post-desc').value;
-
-            // 真实分发：完全取用用户在界面中当前点选/浏览的视频文件
             const targetVideo = currentSelectedVideoPath;
 
             activePlatforms.forEach(p => {
                 const item = document.createElement('div');
-                item.className = 'progress-row';
-                item.id = `row-${p.id}`;
+                item.className = 'prog-row'; item.id = `row-${p.id}`;
                 item.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600;">
-                        <span><i class="fa-brands ${p.icon}" style="color: ${p.color};"></i> ${p.name}</span>
-                        <span id="status-${p.id}" style="color: var(--text-muted);">等待分配后端任务...</span>
-                    </div>
-                    <div class="progress-fill-bg">
-                        <div class="progress-fill" id="fill-${p.id}" style="width: 0%;"></div>
-                    </div>
-                `;
+                    <div class="prog-top"><span><i class="fa-brands ${p.icon}" style="color:${p.color};"></i> ${p.name}</span>
+                    <span id="status-${p.id}" style="color:var(--muted);">等待中…</span></div>
+                    <div class="prog-bg"><div class="prog-fill" id="fill-${p.id}"></div></div>`;
                 list.appendChild(item);
             });
 
             for (const p of activePlatforms) {
                 try {
                     const startRes = await fetch(API_BASE + '/api/start-upload-task', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            platform_id: p.id,
-                            video_file: targetVideo,
-                            title: title,
-                            desc: desc,
-                            tags: []
-                        })
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ platform_id: p.id, video_file: targetVideo, title: title, desc: desc, tags: [] })
                     });
                     const startData = await startRes.json();
-
                     if (startRes.status === 409 || startData.status === 'blocked_duplicate') {
                         const statusEl = document.getElementById(`status-${p.id}`);
                         const fillEl = document.getElementById(`fill-${p.id}`);
-                        statusEl.innerHTML = `<span style="color:var(--accent-gold); font-weight:700;"><i class="fa-solid fa-lock"></i> 已成功发布 · 防重锁拦截</span>`;
-                        fillEl.style.width = '100%';
-                        fillEl.style.background = 'var(--accent-gold)';
+                        statusEl.innerHTML = `<span style="color:var(--amber);font-weight:700;"><i class="fa-solid fa-lock"></i> 已发布 · 防重拦截</span>`;
+                        fillEl.style.width = '100%'; fillEl.style.background = 'var(--amber)';
                         continue;
                     }
-
-                    if (startData.task_id) {
-                        await new Promise(resolve => trackRealPythonTask(p, startData.task_id, resolve));
-                    }
-                } catch (err) {
-                    console.error(err);
-                }
+                    if (startData.task_id) await new Promise(resolve => trackRealPythonTask(p, startData.task_id, resolve));
+                } catch (err) { console.error(err); }
             }
-
             closeBtn.style.display = 'block';
             refreshSessionStatus();
         }
-
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
         refreshSessionStatus();
     </script>
