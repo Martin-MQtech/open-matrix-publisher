@@ -8,6 +8,47 @@ SAU_VENV_BIN = f"{SAU_ROOT}/.venv/bin"
 SAU_CLI = f"{SAU_VENV_BIN}/sau"
 SAU_PYTHON = f"{SAU_VENV_BIN}/python"
 
+def _run_with_progress(cmd, env, cwd, timeout, on_progress=None):
+    """运行子进程并实时回传进度与日志行。
+    on_progress(pct, log_line) —— pct 为推断进度(0-90)，log_line 为最新一行日志(可为None)。
+    返回 (returncode, combined_output)。"""
+    import subprocess as sp, time
+    try:
+        proc = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.STDOUT, text=True,
+                        env=env, cwd=cwd, bufsize=1)
+    except Exception as e:
+        return -1, f"启动进程失败: {e}"
+    logs = []
+    pct = 40
+    last_tick = time.time()
+    while True:
+        line = proc.stdout.readline() if proc.stdout else ""
+        if not line and proc.poll() is not None:
+            break
+        if line:
+            line = line.strip()
+            if line:
+                logs.append(line)
+                low = line.lower()
+                if "upload" in low or "上传" in line:
+                    pct = max(pct, 55)
+                elif "progress" in low or "进度" in line or "%" in line:
+                    pct = max(pct, 70)
+                elif "publish" in low or "发布" in line or "成功" in line:
+                    pct = max(pct, 85)
+                if on_progress:
+                    try: on_progress(pct, line)
+                    except Exception: pass
+        now = time.time()
+        if now - last_tick > 4:
+            pct = min(pct + 2, 90)
+            last_tick = now
+            if on_progress:
+                try: on_progress(pct, None)
+                except Exception: pass
+    rc = proc.wait()
+    return rc, "\n".join(logs[-800:])
+
 CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), "platform_credentials.json")
 
 def load_credentials():
@@ -67,7 +108,7 @@ class RealPlatformUploader:
         # 不再写入任何具体产品/品牌词，避免污染通用工具。
         self.tags = tags or []
 
-    def execute_upload(self):
+    def execute_upload(self, on_progress=None):
         log_time = datetime.now().strftime('%H:%M:%S')
         print(f"[{log_time}] 启动 Workbuddy 融合自动化引擎: {self.platform_id}...")
 
@@ -107,16 +148,15 @@ class RealPlatformUploader:
                               f"export PYTHONPATH={SAU_ROOT}; {inner_cmd}"]
                 print(f"执行 B站 (pseudo-TTY) 指令")
                 try:
-                    proc = subprocess.run(script_cmd, capture_output=True, text=True, timeout=600, env=env, cwd=SAU_ROOT)
-                    output = proc.stdout + "\n" + proc.stderr
+                    rc, output = _run_with_progress(script_cmd, env, SAU_ROOT, 600, on_progress)
                     tail = output[-400:]
                     print(f"sau bilibili 输出: {tail}")
-                    ok = proc.returncode == 0 or "成功" in output or "upload" in output.lower()
+                    ok = rc == 0 or "成功" in output or "upload" in output.lower()
                     if ok:
                         return {"success": True, "pub_id": f"sau_bilibili_{int(time.time())}",
                                 "link": creator_links["bilibili"], "msg": "✅ B站发布成功"}
                     else:
-                        return {"success": False, "error": f"B站 ({proc.returncode}): {tail[-200:]}"}
+                        return {"success": False, "error": f"B站 ({rc}): {tail[-200:]}"}
                 except Exception as e:
                     return {"success": False, "error": f"B站 pseudo-TTY 异常: {str(e)}"}
 
@@ -126,15 +166,14 @@ class RealPlatformUploader:
                     cmd_try = cmd + [mode]
                     print(f"执行 视频号 ({mode}) 指令")
                     try:
-                        proc = subprocess.run(cmd_try, capture_output=True, text=True, timeout=600, env=env, cwd=SAU_ROOT)
-                        output = proc.stdout + "\n" + proc.stderr
+                        rc, output = _run_with_progress(cmd_try, env, SAU_ROOT, 600, on_progress)
                         tail = output[-400:]
                         print(f"sau tencent ({mode}) 输出: {tail[-200:]}")
                         cookie_expired = "cookie 已失效" in output or "重新登录" in output or "login" in output.lower()
                         if cookie_expired and mode == "--headless":
                             print("视频号 Cookie 过期，切换 headed 模式重试...")
                             continue
-                        ok = proc.returncode == 0 or ("成功" in output and not cookie_expired)
+                        ok = rc == 0 or ("成功" in output and not cookie_expired)
                         if ok:
                             return {"success": True, "pub_id": f"sau_tencent_{int(time.time())}",
                                     "link": creator_links["tencent"], "msg": "✅ 视频号发布成功"}
@@ -148,11 +187,10 @@ class RealPlatformUploader:
                 cmd += ["--headless"]
                 print(f"执行 sau CLI (headless) 指令: {' '.join(cmd)}")
                 try:
-                    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600, env=env, cwd=SAU_ROOT)
-                    output = proc.stdout + "\n" + proc.stderr
+                    rc, output = _run_with_progress(cmd, env, SAU_ROOT, 600, on_progress)
                     tail = output[-400:]
                     print(f"sau {self.platform_id} 输出: {tail}")
-                    if proc.returncode == 0:
+                    if rc == 0:
                         return {
                             "success": True,
                             "pub_id": f"sau_{self.platform_id}_{int(time.time())}",
@@ -162,7 +200,7 @@ class RealPlatformUploader:
                     else:
                         return {
                             "success": False,
-                            "error": f"sau 发布提示 ({proc.returncode}): {tail[-200:]}"
+                            "error": f"sau 发布提示 ({rc}): {tail[-200:]}"
                         }
                 except Exception as e:
                     return {"success": False, "error": f"sau 执行异常: {str(e)}"}
@@ -212,8 +250,7 @@ class RealPlatformUploader:
             env["OMP_PUBLISH_ARGS"] = args_payload
 
             try:
-                proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600, env=env, cwd=SAU_ROOT)
-                output = proc.stdout + "\n" + proc.stderr
+                rc, output = _run_with_progress(cmd, env, SAU_ROOT, 600, on_progress)
                 print(f"custom {self.platform_id} 输出: {output[-300:]}")
 
                 if "CUSTOM_RESULT: True" in output:

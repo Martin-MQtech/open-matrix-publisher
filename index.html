@@ -366,6 +366,10 @@
                 <div class="prog-bg"><div class="prog-fill" id="overall-fill"></div></div>
             </div>
             <div id="progress-list"></div>
+            <details id="live-log-panel" style="margin-top:14px; background:var(--bg-soft); border-radius:8px; padding:8px 12px; border:1px solid var(--border-soft);">
+                <summary style="cursor:pointer; font-size:13px; color:var(--muted); user-select:none;"><i class="fa-solid fa-terminal"></i> 实时后台日志（点开看引擎到底在干啥）</summary>
+                <pre id="live-log" style="white-space:pre-wrap; word-break:break-all; font-size:11px; line-height:1.5; color:var(--text-dim); max-height:220px; overflow-y:auto; margin:8px 0 2px; font-family:monospace;"></pre>
+            </details>
             <div style="margin-top:18px; text-align:right; display:flex; justify-content:space-between; align-items:center;">
                 <span id="modal-status-note" style="font-size:12px; color:var(--muted);"></span>
                 <button id="close-modal-btn" class="btn-go" style="display:none; padding:9px 18px;" onclick="closeModal()">完成并关闭</button>
@@ -599,6 +603,16 @@
                         fillEl.style.width = `${Math.min(info.pct, 100)}%`;
                     }
                     if (info.stage) statusEl.innerText = info.stage;
+                    // 实时后台日志：把上传引擎真实输出回显给用户
+                    try {
+                        const lr = await fetch(`${API_BASE}/api/task-log?task_id=${taskId}`);
+                        const ld = await lr.json();
+                        const logEl = document.getElementById('live-log');
+                        if (logEl && ld.log && ld.log.length) {
+                            logEl.innerText = ld.log.join('\n');
+                            logEl.scrollTop = logEl.scrollHeight;
+                        }
+                    } catch (e) {}
                     if (info.status === 'completed') {
                         clearInterval(poll);
                         if (rowEl) { rowEl.classList.remove('running'); rowEl.style.borderLeft = '3px solid var(--green)'; }
