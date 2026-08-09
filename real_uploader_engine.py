@@ -21,11 +21,13 @@ def _run_with_progress(cmd, env, cwd, timeout, on_progress=None):
     logs = []
     pct = 40
     last_tick = time.time()
+    last_output_time = time.time()
     while True:
         line = proc.stdout.readline() if proc.stdout else ""
         if not line and proc.poll() is not None:
             break
         if line:
+            last_output_time = time.time()  # 有新输出，重置计时
             line = line.strip()
             if line:
                 logs.append(line)
@@ -46,6 +48,15 @@ def _run_with_progress(cmd, env, cwd, timeout, on_progress=None):
             if on_progress:
                 try: on_progress(pct, None)
                 except Exception: pass
+        # 超过 timeout 秒无输出 → 进程可能卡死，主动 kill
+        if timeout and (now - last_output_time) > timeout:
+            try:
+                proc.kill()
+                proc.wait(timeout=5)
+            except Exception:
+                pass
+            logs.append(f"[BRIDGE TIMEOUT] 进程 {timeout}s 后被终止")
+            return -1, "\n".join(logs[-800:])
     rc = proc.wait()
     return rc, "\n".join(logs[-800:])
 
@@ -108,9 +119,21 @@ class RealPlatformUploader:
         # 不再写入任何具体产品/品牌词，避免污染通用工具。
         self.tags = tags or []
 
-    def execute_upload(self, on_progress=None):
+    def execute_upload(self, on_progress=None, log_file=None):
+        """执行上传。on_progress(pct, log_line) 用于实时进度回传；
+        log_file 若提供，引擎每一步的关键事件也会写入该文件以便排错。"""
+        def log(msg):
+            line = f"[{datetime.now().strftime('%H:%M:%S')}] {msg}"
+            print(line)  # 仍输出到控制台
+            if log_file:
+                try:
+                    with open(log_file, "a", encoding="utf-8") as lf:
+                        lf.write(line + "\n")
+                except Exception:
+                    pass
+
         log_time = datetime.now().strftime('%H:%M:%S')
-        print(f"[{log_time}] 启动 Workbuddy 融合自动化引擎: {self.platform_id}...")
+        log(f"启动上传引擎: {self.platform_id}")
 
         sau_platforms = ["douyin", "kuaishou", "xiaohongshu", "tencent", "bilibili", "youtube"]
         custom_platforms = ["x", "linkedin", "facebook", "tiktok", "instagram",
@@ -146,11 +169,11 @@ class RealPlatformUploader:
                 inner_cmd = " ".join(f'"{c}"' if " " in c else c for c in cmd)
                 script_cmd = ["script", "-q", "/dev/null", "/bin/bash", "-c",
                               f"export PYTHONPATH={SAU_ROOT}; {inner_cmd}"]
-                print(f"执行 B站 (pseudo-TTY) 指令")
+                log("执行 B站 (pseudo-TTY) 指令")
                 try:
                     rc, output = _run_with_progress(script_cmd, env, SAU_ROOT, 600, on_progress)
                     tail = output[-400:]
-                    print(f"sau bilibili 输出: {tail}")
+                    log(f"sau bilibili 输出: {tail}")
                     ok = rc == 0 or "成功" in output or "upload" in output.lower()
                     if ok:
                         return {"success": True, "pub_id": f"sau_bilibili_{int(time.time())}",
@@ -164,14 +187,14 @@ class RealPlatformUploader:
                 # 视频号：先试 headless（Cookie 有效时可行），失败再 headed
                 for mode in ["--headless", "--headed"]:
                     cmd_try = cmd + [mode]
-                    print(f"执行 视频号 ({mode}) 指令")
+                    log(f"执行 视频号 ({mode}) 指令")
                     try:
                         rc, output = _run_with_progress(cmd_try, env, SAU_ROOT, 600, on_progress)
                         tail = output[-400:]
-                        print(f"sau tencent ({mode}) 输出: {tail[-200:]}")
+                        log(f"sau tencent ({mode}) 输出: {tail[-200:]}")
                         cookie_expired = "cookie 已失效" in output or "重新登录" in output or "login" in output.lower()
                         if cookie_expired and mode == "--headless":
-                            print("视频号 Cookie 过期，切换 headed 模式重试...")
+                            log("视频号 Cookie 过期，切换 headed 模式重试...")
                             continue
                         ok = rc == 0 or ("成功" in output and not cookie_expired)
                         if ok:
@@ -185,11 +208,11 @@ class RealPlatformUploader:
             else:
                 # 其余平台 (douyin/kuaishou/xiaohongshu/youtube) 走 --headless
                 cmd += ["--headless"]
-                print(f"执行 sau CLI (headless) 指令: {' '.join(cmd)}")
+                log(f"执行 sau {self.platform_id} (headless)")
                 try:
                     rc, output = _run_with_progress(cmd, env, SAU_ROOT, 600, on_progress)
                     tail = output[-400:]
-                    print(f"sau {self.platform_id} 输出: {tail}")
+                    log(f"sau {self.platform_id} 输出: {tail}")
                     if rc == 0:
                         return {
                             "success": True,
@@ -244,14 +267,14 @@ class RealPlatformUploader:
                 "print('CUSTOM_RESULT:', res)\n"
             )
             cmd = [SAU_PYTHON, "-c", code]
-            print(f"执行 custom_uploader: {self.platform_id}")
+            log(f"执行 custom_uploader: {self.platform_id}")
             env = os.environ.copy()
             env["PYTHONPATH"] = SAU_ROOT
             env["OMP_PUBLISH_ARGS"] = args_payload
 
             try:
                 rc, output = _run_with_progress(cmd, env, SAU_ROOT, 600, on_progress)
-                print(f"custom {self.platform_id} 输出: {output[-300:]}")
+                log(f"custom {self.platform_id} 输出: {output[-300:]}")
 
                 if "CUSTOM_RESULT: True" in output:
                     return {

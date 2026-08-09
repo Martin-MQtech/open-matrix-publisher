@@ -229,7 +229,7 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags,
     update(40, f"⬆️  [{pname}] 正在上传视频（可能需 1-5 分钟）…")
 
     uploader = RealPlatformUploader(platform_id, video_file, title, desc, tags)
-    result = uploader.execute_upload(on_progress=on_progress)
+    result = uploader.execute_upload(on_progress=on_progress, log_file=log_path)
 
     # Step 4: 结果
     finish_time = time.strftime("%Y-%m-%d %H:%M:%S")
