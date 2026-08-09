@@ -12,17 +12,17 @@
 
     <style>
         :root {
-            --bg-dark: #060911;
-            --panel-bg: rgba(13, 20, 36, 0.85);
-            --panel-border: rgba(0, 230, 255, 0.18);
-            --accent-gold: #ffd700;
-            --accent-orange: #f58220;
-            --accent-cyan: #00e6ff;
-            --accent-teal: #00ffc8;
+            --bg-dark: #0a0e17;
+            --panel-bg: rgba(18, 25, 43, 0.72);
+            --panel-border: rgba(120, 145, 200, 0.14);
+            --accent-gold: #eab308;
+            --accent-orange: #f59e0b;
+            --accent-cyan: #38bdf8;
+            --accent-teal: #2dd4bf;
             --accent-purple: #8b5cf6;
-            --accent-red: #ff4757;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --accent-red: #ef4444;
+            --text-main: #e8ecf4;
+            --text-muted: #8b94a7;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,9 +32,9 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             background-image:
-                radial-gradient(circle at 15% 15%, rgba(0, 230, 255, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 85% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 50% 85%, rgba(0, 255, 200, 0.06) 0%, transparent 60%);
+                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.07) 0%, transparent 50%),
+                radial-gradient(circle at 85% 20%, rgba(139, 92, 246, 0.07) 0%, transparent 50%),
+                radial-gradient(circle at 50% 85%, rgba(45, 212, 191, 0.05) 0%, transparent 60%);
             min-height: 100vh;
             padding: 20px;
             overflow-x: hidden;
@@ -45,8 +45,8 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--panel-border);
-            border-radius: 18px;
-            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+            border-radius: 16px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
         }
 
         header {
@@ -69,12 +69,12 @@
             width: 48px;
             height: 48px;
             border-radius: 14px;
-            background: linear-gradient(135deg, #00e6ff, #00ffc8, #8b5cf6);
+            background: linear-gradient(135deg, #38bdf8, #2dd4bf, #8b5cf6);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            box-shadow: 0 0 25px rgba(0, 230, 255, 0.5);
+            box-shadow: 0 6px 18px rgba(56, 189, 248, 0.28);
         }
 
         .brand-logo-fusion i {
@@ -88,7 +88,7 @@
             width: 100%;
             height: 100%;
             border-radius: 14px;
-            border: 2px solid rgba(255, 215, 0, 0.6);
+            border: 2px solid rgba(234, 179, 8, 0.4);
             animation: pulse-ring 2.5s infinite;
         }
 
@@ -129,9 +129,9 @@
         }
 
         .brand-tag {
-            background: rgba(0, 230, 255, 0.1);
+            background: rgba(56, 189, 248, 0.1);
             color: var(--accent-cyan);
-            border: 1px solid rgba(0, 230, 255, 0.3);
+            border: 1px solid rgba(56, 189, 248, 0.3);
             padding: 2px 9px;
             border-radius: 12px;
             font-size: 10px;
@@ -147,9 +147,9 @@
             border-color: rgba(139, 92, 246, 0.3);
         }
         .brand-tag.green {
-            background: rgba(0, 255, 200, 0.1);
+            background: rgba(45, 212, 191, 0.1);
             color: var(--accent-teal);
-            border-color: rgba(0, 255, 200, 0.3);
+            border-color: rgba(45, 212, 191, 0.3);
         }
 
         .action-area {
@@ -170,17 +170,17 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 4px 20px rgba(0, 230, 255, 0.35);
+            box-shadow: 0 6px 18px rgba(56, 189, 248, 0.28);
             transition: all 0.3s ease;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 28px rgba(0, 230, 255, 0.6);
+            box-shadow: 0 8px 22px rgba(56, 189, 248, 0.45);
         }
 
         .hero-strip {
-            background: linear-gradient(90deg, rgba(0, 230, 255, 0.06), rgba(139, 92, 246, 0.06));
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.06), rgba(139, 92, 246, 0.06));
             border: 1px solid var(--panel-border);
             border-radius: 14px;
             padding: 12px 18px;
@@ -219,7 +219,7 @@
             justify-content: space-between;
             margin-bottom: 14px;
             padding-bottom: 8px;
-            border-bottom: 1px solid rgba(0, 230, 255, 0.15);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.15);
         }
 
         .stepper {
@@ -252,10 +252,10 @@
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-teal));
             color: #000;
             border: none;
-            box-shadow: 0 0 12px rgba(0, 230, 255, 0.4);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
         }
         .step.done .step-num {
-            background: rgba(0, 255, 200, 0.18);
+            background: rgba(45, 212, 191, 0.18);
             color: var(--accent-teal);
             border-color: var(--accent-teal);
         }
@@ -270,7 +270,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(0, 230, 255, 0.05);
+            background: rgba(56, 189, 248, 0.05);
             border: 1px dashed var(--accent-cyan);
             border-radius: 12px;
             padding: 12px 16px;
@@ -280,7 +280,7 @@
         }
 
         .btn-file-browse {
-            background: rgba(0, 230, 255, 0.15);
+            background: rgba(56, 189, 248, 0.15);
             color: var(--accent-cyan);
             border: 1px solid var(--accent-cyan);
             padding: 8px 16px;
@@ -357,10 +357,10 @@
         }
 
         .copy-tab-btn.active {
-            background: rgba(0, 230, 255, 0.15);
+            background: rgba(56, 189, 248, 0.15);
             color: #fff;
-            border: 1px solid rgba(0, 230, 255, 0.3);
-            box-shadow: 0 2px 10px rgba(0, 230, 255, 0.2);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 2px 10px rgba(56, 189, 248, 0.2);
         }
 
         .template-chips-bar {
@@ -387,7 +387,7 @@
         .chip-btn:hover {
             border-color: var(--accent-cyan);
             color: var(--accent-cyan);
-            background: rgba(0, 230, 255, 0.08);
+            background: rgba(56, 189, 248, 0.08);
         }
 
         .ai-generator-panel {
@@ -430,7 +430,7 @@
         }
 
         .btn-action-small {
-            background: rgba(0, 230, 255, 0.15);
+            background: rgba(56, 189, 248, 0.15);
             border: 1px solid var(--accent-cyan);
             color: var(--accent-cyan);
             padding: 5px 10px;
@@ -476,7 +476,7 @@
 
         .form-control:focus {
             border-color: var(--accent-cyan);
-            box-shadow: 0 0 12px rgba(0, 230, 255, 0.2);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
         }
 
         textarea.form-control {
@@ -512,15 +512,15 @@
         }
 
         .platform-mini-card:hover {
-            border-color: rgba(0, 230, 255, 0.5);
+            border-color: rgba(56, 189, 248, 0.5);
             opacity: 0.9;
         }
 
         .platform-mini-card.selected {
             border-color: var(--accent-cyan);
-            background: rgba(0, 230, 255, 0.1);
+            background: rgba(56, 189, 248, 0.1);
             opacity: 1;
-            box-shadow: 0 4px 15px rgba(0, 230, 255, 0.15);
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.15);
         }
 
         .mini-card-top {
@@ -590,7 +590,7 @@
         }
 
         .summary-bar {
-            background: rgba(255, 215, 0, 0.08);
+            background: rgba(234, 179, 8, 0.08);
             border: 1px solid var(--accent-gold);
             border-radius: 12px;
             padding: 12px 14px;
@@ -831,6 +831,18 @@
         </div>
     </div>
 
+    <footer style="margin-top: 24px; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--panel-border);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="brand-logo-fusion" style="width: 26px; height: 26px; border-radius: 8px; box-shadow: none;"><i class="fa-solid fa-share-nodes" style="font-size: 12px;"></i></span>
+            <span>Open Matrix Publisher · 全域矩阵 · MIT 开源，免费使用</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank" style="color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 6px;"><i class="fa-brands fa-github"></i> 开源仓库</a>
+            <a href="https://martin-mqtech.github.io/open-matrix-publisher/" target="_blank" style="color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-globe"></i> 在线文档</a>
+            <span style="color: var(--accent-cyan); font-weight: 700;">v1.0</span>
+        </div>
+    </footer>
+
     <!-- 确认弹窗 -->
     <div id="confirm-modal" class="modal-overlay">
         <div class="modal-content glass-panel">
@@ -1013,7 +1025,7 @@
                         <div class="checkbox-mini"><i class="fa-solid fa-check"></i></div>
                     </div>
                     <div class="mini-card-bottom">
-                        <span id="status-pill-${p.id}" style="color:var(--text-muted); font-weight:600;">⏳ 校验中...</span>
+                        <span id="status-pill-${p.id}" style="color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-circle"></i> 待校验</span>
                         <button class="btn-qr-mini" onclick="launchQrLogin('${p.id}', event)"><i class="fa-solid fa-qrcode"></i> 扫码</button>
                     </div>
                 `;
@@ -1069,16 +1081,13 @@
                     const pubInfo = currentPubs[p.id];
                     const sess = sessions[p.id] || {};
 
+                    if (!pill) return;
                     if (sess.logged_in) {
-                        if (pill) {
-                            pill.style.color = "var(--accent-teal)";
-                            pill.innerHTML = `✅ 已登录`;
-                        }
+                        pill.style.color = "var(--accent-teal)";
+                        pill.innerHTML = `<i class="fa-solid fa-circle-check"></i> 已登录`;
                     } else {
-                        if (pill) {
-                            pill.style.color = "var(--accent-orange)";
-                            pill.innerHTML = `🔑 需扫码`;
-                        }
+                        pill.style.color = "var(--accent-orange)";
+                        pill.innerHTML = `<i class="fa-solid fa-qrcode"></i> 需扫码`;
                     }
 
                     if (pubInfo && card) {
@@ -1087,13 +1096,21 @@
                         if (!existingPill) {
                             const tag = document.createElement('div');
                             tag.className = 'pub-lock-tag';
-                            tag.style.cssText = 'margin-top:4px;padding:2px 6px;border-radius:4px;background:rgba(255,215,0,0.15);color:var(--accent-gold);font-size:10px;font-weight:700;text-align:center;';
-                            tag.innerText = `🔒 已发布 (锁定)`;
+                            tag.style.cssText = 'margin-top:4px;padding:2px 6px;border-radius:4px;background:rgba(234,179,8,0.14);color:var(--accent-gold);font-size:10px;font-weight:700;text-align:center;';
+                            tag.innerHTML = `<i class="fa-solid fa-lock"></i> 已发布 (锁定)`;
                             card.appendChild(tag);
                         }
                     }
                 });
             } catch (err) {
+                // 静态部署（GitHub Pages）且未连接本地引擎时的优雅降级
+                PLATFORMS.forEach(p => {
+                    const pill = document.getElementById(`status-pill-${p.id}`);
+                    if (pill) {
+                        pill.style.color = "var(--text-muted)";
+                        pill.innerHTML = `<i class="fa-solid fa-plug-circle-xmark"></i> 未连接`;
+                    }
+                });
                 console.log("Status sync warning:", err);
             }
         }
@@ -1226,7 +1243,7 @@
                     if (startRes.status === 409 || startData.status === 'blocked_duplicate') {
                         const statusEl = document.getElementById(`status-${p.id}`);
                         const fillEl = document.getElementById(`fill-${p.id}`);
-                        statusEl.innerHTML = `<span style="color:var(--accent-gold); font-weight:700;">🔒 已成功发布 · 防重锁拦截</span>`;
+                        statusEl.innerHTML = `<span style="color:var(--accent-gold); font-weight:700;"><i class="fa-solid fa-lock"></i> 已成功发布 · 防重锁拦截</span>`;
                         fillEl.style.width = '100%';
                         fillEl.style.background = 'var(--accent-gold)';
                         continue;
