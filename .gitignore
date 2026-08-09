@@ -25,6 +25,7 @@ platform_credentials.json
 *.gif
 temp_/
 uploads/
+covers/
 
 # === OS ===
 .DS_Store

@@ -6,6 +6,13 @@ from chat_ai_bridge import generate_copy_via_free_ai
 
 app = Flask(__name__)
 
+# Serve cover images statically (simplest approach: dedicated route)
+@app.route("/covers/<filename>")
+def serve_cover(filename):
+    """Serve a cover image from COVER_DIR."""
+    from flask import send_from_directory
+    return send_from_directory(COVER_DIR, filename)
+
 # cookie_extractor depends on browser_cookie3 (reads native Chrome cookies).
 # Made optional: if the dependency is missing, the server still starts and
 # login check / dispatch continue to work via SAU's authenticated sessions.
@@ -21,9 +28,16 @@ TASK_LOCK = threading.Lock()
 HISTORY_FILE_LOCK = threading.Lock()          # dedicated lock for load-modify-write of history json
 HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dispatch_history.json")
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+COVER_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "covers")   # 封面帧图片
 TASK_PROGRESS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".task_progress")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(COVER_DIR, exist_ok=True)
 os.makedirs(TASK_PROGRESS_DIR, exist_ok=True)
+
+# Concurrency cap: at most N Chromium instances running simultaneously
+# to prevent memory exhaustion from 14 parallel browser launches.
+MAX_CONCURRENT_UPLOADS = int(os.environ.get("OMP_MAX_CONCURRENT", "4"))
+UPLOAD_SEMAPHORE = threading.Semaphore(MAX_CONCURRENT_UPLOADS)
 
 def _task_progress_file(task_id):
     return os.path.join(TASK_PROGRESS_DIR, f"{task_id}.json")
@@ -217,7 +231,7 @@ def launch_login():
         "msg": f"🚀 已在桌面为你打开【{plat_name}】的有头浏览器窗口，请使用手机 App 扫码或账号登录！登录成功后系统将自动捕获凭证。"
     })
 
-def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags, dispatch_session_id=""):
+def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags, dispatch_session_id="", cover_file=""):
     abs_path = os.path.abspath(video_file)
     total_bytes = os.path.getsize(abs_path) if os.path.exists(abs_path) else 20761840
     platform_names = {
@@ -269,17 +283,20 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags,
     update(15, f"🔐 [{pname}] Cookie 校验通过，启动无头浏览器…")
     time.sleep(0.3)
 
-    update(25, f"🚀 [{pname}] 正在连接 {platform_id} 平台上传接口…")
-    time.sleep(0.3)
+    # Concurrency gate: wait for a free slot
+    update(20, f"⏳ [{pname}] 排队等待上传槽位 (并发上限 {MAX_CONCURRENT_UPLOADS})…")
+    with UPLOAD_SEMAPHORE:
+        update(25, f"🚀 [{pname}] 获取上传槽位，正在连接平台…")
+        time.sleep(0.3)
 
-    # Step 2-3: Actually execute the upload (longest phase; logs stream in real time)
-    update(40, f"⬆️  [{pname}] 正在上传视频（可能需 1-5 分钟）…")
+        # Step 2-3: Actually execute the upload (longest phase; logs stream in real time)
+        update(40, f"⬆️  [{pname}] 正在上传视频（可能需 1-5 分钟）…")
 
-    try:
-        uploader = RealPlatformUploader(platform_id, video_file, title, desc, tags)
-        result = uploader.execute_upload(on_progress=on_progress, log_file=log_path)
-    except Exception as e:
-        result = {"success": False, "error": f"引擎异常: {str(e)}"}
+        try:
+            uploader = RealPlatformUploader(platform_id, video_file, title, desc, tags, cover_file=cover_file)
+            result = uploader.execute_upload(on_progress=on_progress, log_file=log_path)
+        except Exception as e:
+            result = {"success": False, "error": f"引擎异常: {str(e)}"}
 
     # Step 4: Finalise result
     finish_time = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -330,6 +347,23 @@ def upload_video():
     return jsonify({"saved_path": os.path.abspath(dest), "size": os.path.getsize(dest)})
 
 
+@app.route("/api/upload-cover", methods=["POST"])
+def upload_cover():
+    """Receive a cover image (PNG/JPG) captured from video frame by frontend."""
+    f = request.files.get("file")
+    if not f or not f.filename:
+        return jsonify({"error": "未收到封面图片"}), 400
+    original = secure_filename(f.filename)
+    if not original:
+        original = "cover.png"
+    base, ext = os.path.splitext(original)
+    if ext.lower() not in (".png", ".jpg", ".jpeg", ".webp"):
+        ext = ".png"
+    dest = os.path.join(COVER_DIR, f"{base}_{int(time.time()*1000)}{ext}")
+    f.save(dest)
+    return jsonify({"saved_path": os.path.abspath(dest), "size": os.path.getsize(dest)})
+
+
 @app.route("/api/start-upload-task", methods=["POST"])
 def start_upload_task():
     data = request.json or {}
@@ -339,7 +373,8 @@ def start_upload_task():
     desc = data.get("desc", "")
     tags = data.get("tags", [])
     force = data.get("force", False)  # Allow override for forced re-publish
-    dispatch_session_id = data.get("dispatch_session_id", "")  # Groups tasks from one click
+    dispatch_session_id = data.get("dispatch_session_id", "")
+    cover_file = data.get("cover_file", "")  # Optional cover image path (absolute)
 
     # ===== DUPLICATE PUBLISH GUARD =====
     if not force:
@@ -362,7 +397,7 @@ def start_upload_task():
 
     task_id = make_task_id(platform_id)
     
-    t = threading.Thread(target=_run_real_upload_thread, args=(task_id, platform_id, video_file, title, desc, tags, dispatch_session_id))
+    t = threading.Thread(target=_run_real_upload_thread, args=(task_id, platform_id, video_file, title, desc, tags, dispatch_session_id, cover_file))
     t.daemon = True
     t.start()
 

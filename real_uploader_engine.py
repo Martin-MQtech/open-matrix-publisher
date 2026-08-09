@@ -11,11 +11,14 @@ SAU_PYTHON = f"{SAU_VENV_BIN}/python"
 def _run_with_progress(cmd, env, cwd, timeout, on_progress=None):
     """运行子进程并实时回传进度与日志行。
     on_progress(pct, log_line) —— pct 为推断进度(0-90)，log_line 为最新一行日志(可为None)。
-    返回 (returncode, combined_output)。"""
-    import subprocess as sp, time
+    返回 (returncode, combined_output)。
+    Windows 兼容: 使用 universal_newlines=True (text=True) 统一换行符处理。"""
+    import subprocess as sp, time, sys
     try:
         proc = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.STDOUT, text=True,
-                        env=env, cwd=cwd, bufsize=1)
+                        env=env, cwd=cwd, bufsize=1,
+                        # Windows 兼容性: 不显示黑框控制台窗口
+                        **({"creationflags": sp.CREATE_NO_WINDOW} if sys.platform == "win32" else {}))
     except Exception as e:
         return -1, f"启动进程失败: {e}"
     logs = []
@@ -110,11 +113,12 @@ def check_profile_logged_in(platform_id):
     return True, "✅ 已登录"
 
 class RealPlatformUploader:
-    def __init__(self, platform_id, video_path, title, desc, tags=None):
+    def __init__(self, platform_id, video_path, title, desc, tags=None, cover_file=None):
         self.platform_id = platform_id
         self.video_path = os.path.abspath(video_path)
         self.title = title
         self.desc = desc
+        self.cover_file = os.path.abspath(cover_file) if cover_file else None
         # 默认标签留空：本工具是通用的，文案/标签应由 campaign.json 或 Web 控制台提供。
         # 不再写入任何具体产品/品牌词，避免污染通用工具。
         self.tags = tags or []
@@ -163,25 +167,40 @@ class RealPlatformUploader:
             env = os.environ.copy()
             env["PYTHONPATH"] = SAU_ROOT
 
+            # Add --thumbnail if a cover image was provided (SAU platforms like
+            # douyin/tencent/kuaishou/xiaohongshu/bilibili/youtube all support it).
+            if self.cover_file and os.path.exists(self.cover_file):
+                cmd += ["--thumbnail", self.cover_file]
+                log(f"附带封面: {self.cover_file}")
+
             if self.platform_id == "bilibili":
-                # B站必须用真实 TTY，用 script 伪终端包裹执行
                 cmd += ["--tid", "188"]
-                inner_cmd = " ".join(f'"{c}"' if " " in c else c for c in cmd)
-                script_cmd = ["script", "-q", "/dev/null", "/bin/bash", "-c",
-                              f"export PYTHONPATH={SAU_ROOT}; {inner_cmd}"]
-                log("执行 B站 (pseudo-TTY) 指令")
-                try:
-                    rc, output = _run_with_progress(script_cmd, env, SAU_ROOT, 600, on_progress)
-                    tail = output[-400:]
-                    log(f"sau bilibili 输出: {tail}")
-                    ok = rc == 0 or "成功" in output or "upload" in output.lower()
-                    if ok:
-                        return {"success": True, "pub_id": f"sau_bilibili_{int(time.time())}",
-                                "link": creator_links["bilibili"], "msg": "✅ B站发布成功"}
-                    else:
-                        return {"success": False, "error": f"B站 ({rc}): {tail[-200:]}"}
-                except Exception as e:
-                    return {"success": False, "error": f"B站 pseudo-TTY 异常: {str(e)}"}
+                sys = __import__("sys")
+                if sys.platform == "win32":
+                    # Windows: 无 script 命令，直接运行
+                    log("执行 B站 (Windows 直连模式)")
+                    try:
+                        rc, output = _run_with_progress(cmd, env, SAU_ROOT, 600, on_progress)
+                    except Exception as e:
+                        return {"success": False, "error": f"B站 执行异常: {str(e)}"}
+                else:
+                    # macOS / Linux: 用 script 伪终端
+                    inner_cmd = " ".join(f'"{c}"' if " " in c else c for c in cmd)
+                    script_cmd = ["script", "-q", "/dev/null", "/bin/bash", "-c",
+                                  f"export PYTHONPATH={SAU_ROOT}; {inner_cmd}"]
+                    log("执行 B站 (pseudo-TTY) 指令")
+                    try:
+                        rc, output = _run_with_progress(script_cmd, env, SAU_ROOT, 600, on_progress)
+                    except Exception as e:
+                        return {"success": False, "error": f"B站 pseudo-TTY 异常: {str(e)}"}
+                tail = output[-400:]
+                log(f"sau bilibili 输出: {tail}")
+                ok = rc == 0 or "成功" in output or "upload" in output.lower()
+                if ok:
+                    return {"success": True, "pub_id": f"sau_bilibili_{int(time.time())}",
+                            "link": creator_links["bilibili"], "msg": "✅ B站发布成功"}
+                else:
+                    return {"success": False, "error": f"B站 ({rc}): {tail[-200:]}"}
 
             elif self.platform_id == "tencent":
                 # 视频号：先试 headless（Cookie 有效时可行），失败再 headed

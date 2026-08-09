@@ -136,6 +136,33 @@
         }
         .change-btn:hover { color: var(--text); border-color: var(--accent); }
 
+        /* ---------- Cover frame selector ---------- */
+        .cover-panel {
+            margin-top: 12px; padding: 12px; background: rgba(255,255,255,.02);
+            border: 1px solid var(--border); border-radius: 12px;
+        }
+        .cover-panel.hidden { display: none; }
+        .cover-panel .cover-row {
+            display: flex; gap: 12px; align-items: center;
+        }
+        .cover-preview-wrap {
+            width: 120px; height: 68px; border-radius: 8px; overflow: hidden;
+            background: #000; border: 1px solid var(--border); flex-shrink: 0;
+        }
+        .cover-preview-wrap img { width: 100%; height: 100%; object-fit: contain; }
+        .cover-controls { flex: 1; }
+        .cover-controls input[type="range"] { width: 100%; accent-color: var(--accent); }
+        .cover-controls .cover-time { font-size: 11px; color: var(--muted); margin: 4px 0 8px; }
+        .cover-actions { display: flex; gap: 8px; align-items: center; }
+        .cover-actions button {
+            background: none; border: 1px solid var(--border); color: var(--muted);
+            border-radius: 8px; padding: 6px 14px; cursor: pointer; font-size: 12px;
+        }
+        .cover-actions button:hover { border-color: var(--accent); color: var(--text); }
+        .cover-actions button.primary { border-color: var(--accent); color: var(--accent); }
+        .cover-actions .cover-status { font-size: 11px; margin-left: auto; }
+        .cover-actions .cover-status.ok { color: var(--green); }
+
         /* ---------- Copy ---------- */
         .field { margin-bottom: 14px; }
         .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
@@ -318,6 +345,22 @@
                 <div style="margin-top:10px; text-align:right;">
                     <button class="change-btn" onclick="document.getElementById('local-file-input').click()">更换视频</button>
                 </div>
+
+                <!-- Cover frame selector -->
+                <div class="cover-panel hidden" id="cover-panel">
+                    <div class="cover-row">
+                        <div class="cover-preview-wrap"><img id="cover-preview-img" alt="封面预览"></div>
+                        <div class="cover-controls">
+                            <input type="range" id="cover-scrubber" min="0" max="100" value="50">
+                            <div class="cover-time" id="cover-time-label">拖拽选择一帧 (建议避开黑屏)</div>
+                            <div class="cover-actions">
+                                <button class="primary" id="cover-capture-btn" onclick="captureCoverFrame()">设为此帧为封面</button>
+                                <button id="cover-skip-btn" onclick="skipCover()">跳过封面</button>
+                                <span class="cover-status" id="cover-status"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -447,6 +490,7 @@
 
         let selectedFile = null;
         let uploadedVideoPath = "";  // 已上传到本地桥接服务的绝对路径（浏览器拿不到真实路径，必须上传）
+        let selectedCoverPath = "";  // 用户选择的封面帧上传后的服务端绝对路径
 
         function getCleanTopic() {
             let fn = document.getElementById('selected-video-filename').innerText;
@@ -495,8 +539,11 @@
                 document.getElementById('selected-video-filename').innerText = file.name;
                 selectedFile = file;
                 uploadedVideoPath = "";
+                selectedCoverPath = "";
                 document.getElementById('video-size').innerText = formatSize(file.size);
-                document.getElementById('main-video').src = URL.createObjectURL(file);
+                const v = document.getElementById('main-video');
+                v.src = URL.createObjectURL(file);
+                v.addEventListener('loadedmetadata', () => initCoverPanel(), { once: true });
                 document.getElementById('video-loaded').classList.add('active');
                 document.getElementById('dropzone').style.display = 'none';
                 updateSelectedSummary();
@@ -544,7 +591,79 @@
         function clearAllSelections() {
             document.querySelectorAll('.pf-chip').forEach(c => c.classList.remove('sel'));
             uploadedVideoPath = "";  // 清除选中时重置视频路径，防呆
+            selectedCoverPath = "";
             updateSelectedSummary();
+        }
+
+        // ========== Cover frame selection ==========
+        let _coverVideoDuration = 0;
+        function initCoverPanel() {
+            const v = document.getElementById('main-video');
+            _coverVideoDuration = v.duration || 0;
+            const panel = document.getElementById('cover-panel');
+            panel.classList.remove('hidden');
+            const scrubber = document.getElementById('cover-scrubber');
+            scrubber.value = Math.min(30, Math.floor(_coverVideoDuration * 0.3));  // default to ~30% in
+            scrubber.oninput = () => {
+                const t = (scrubber.value / 100) * _coverVideoDuration;
+                v.currentTime = t;
+                document.getElementById('cover-time-label').innerText =
+                    `帧 @ ${t.toFixed(1)}s / 总 ${_coverVideoDuration.toFixed(1)}s`;
+            };
+            // Trigger initial seek
+            v.currentTime = (scrubber.value / 100) * _coverVideoDuration;
+            document.getElementById('cover-status').innerText = "";
+            document.getElementById('cover-status').className = "cover-status";
+        }
+
+        async function captureCoverFrame() {
+            const v = document.getElementById('main-video');
+            const status = document.getElementById('cover-status');
+            status.innerText = "⏳ 截取中...";
+            status.className = "cover-status";
+
+            // Draw current video frame to canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = v.videoWidth || 640;
+            canvas.height = v.videoHeight || 360;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+
+            // Convert canvas to Blob → File → upload to server
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    status.innerText = "❌ 截图失败";
+                    return;
+                }
+                const formData = new FormData();
+                const ts = Date.now();
+                formData.append('file', new File([blob], `cover_${ts}.png`, { type: 'image/png' }));
+
+                try {
+                    const res = await fetch(API_BASE + '/api/upload-cover', {
+                        method: 'POST', body: formData,
+                    });
+                    const data = await res.json();
+                    if (data.saved_path) {
+                        selectedCoverPath = data.saved_path;
+                        const coverName = data.saved_path.split('/').pop();
+                        document.getElementById('cover-preview-img').src = '/covers/' + coverName;
+                        status.innerText = "✅ 封面已设置";
+                        status.classList.add('ok');
+                    } else {
+                        status.innerText = "❌ " + (data.error || '上传失败');
+                    }
+                } catch (err) {
+                    status.innerText = "❌ 上传失败: " + err.message;
+                }
+            }, 'image/png');
+        }
+
+        function skipCover() {
+            selectedCoverPath = "";
+            const status = document.getElementById('cover-status');
+            status.innerText = "⏭ 将使用平台默认封面";
+            status.className = "cover-status ok";
         }
 
         function toggleCategory(cat) {
@@ -670,8 +789,15 @@
                         if (rowEl) { rowEl.classList.remove('running'); rowEl.style.borderLeft = '3px solid var(--red)'; }
                         fillEl.className = 'prog-fill red';
                         const errText = (info.error || info.stage || '失败').substring(0, 60);
-                        statusEl.innerHTML = `<span style="color:var(--red);font-weight:700;" title="${errText}"><i class="fa-solid fa-circle-xmark"></i> ${errText}</span>`;
+                        statusEl.innerHTML = `<span style="color:var(--red);font-weight:700;" title="${errText}"><i class="fa-solid fa-circle-xmark"></i> ${errText}</span>
+                            <button class="retry-btn" onclick="retryTask('${p.id}')" style="margin-left:8px;">↻ 重发</button>`;
                         fillEl.style.width = '100%';
+                        onComplete(false);
+                    } else if (info.status === 'blocked_duplicate') {
+                        clearInterval(poll);
+                        if (rowEl) { rowEl.classList.remove('running'); fillEl.classList.add('amber'); fillEl.style.width = '100%'; }
+                        statusEl.innerHTML = `<span style="color:var(--amber);font-weight:700;"><i class="fa-solid fa-lock"></i> 已发布·防重拦截</span>
+                            <button class="retry-btn" onclick="retryTask('${p.id}', true)" style="margin-left:8px;">强制重发</button>`;
                         onComplete(false);
                     } else if (pollCount > 4800) {  // 48 min × (1000/800) ≈ 60 min wall clock
                         clearInterval(poll);
@@ -683,6 +809,40 @@
                 } catch (err) { /* 网络抖动不中断 */ }
             }, 800);
             if (dispatchState) dispatchState.polls.push(poll);
+        }
+
+        async function retryTask(platformId, force=false) {
+            const state = window._activeDispatch;
+            if (!state || !uploadedVideoPath) { showToast("请先选择视频再重发", false); return; }
+            const p = PLATFORMS.find(x => x.id === platformId);
+            if (!p) return;
+            // Re-opening this task: recompute overall progress later; clear "all done" flag
+            state.allDone = false;
+            try {
+                const res = await fetch(API_BASE + '/api/start-upload-task', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        platform_id: p.id, video_file: uploadedVideoPath,
+                        title: document.getElementById('post-title').value,
+                        desc: document.getElementById('post-desc').value,
+                        tags: [], dispatch_session_id: state.sessionId,
+                        force: force, cover_file: selectedCoverPath || "",
+                    })
+                });
+                const d = await res.json();
+                if (d.task_id) {
+                    state.taskIds[p.id] = d.task_id;
+                    trackRealPythonTask(p, d.task_id, state, (ok) => {
+                        if (ok) state.completed++;
+                        else state.failed++;
+                        updateOverallProgress(state);
+                        checkAllDone(state);
+                    });
+                    showToast(`已重新发起 ${p.name} 上传${force ? '（强制）' : ''}`, true);
+                }
+            } catch (err) {
+                showToast("重发失败: " + err.message, false);
+            }
         }
 
         function updateOverallProgress(state) {
@@ -778,7 +938,8 @@
                         body: JSON.stringify({
                             platform_id: p.id, video_file: targetVideo,
                             title: title, desc: desc, tags: [],
-                            dispatch_session_id: sessionId
+                            dispatch_session_id: sessionId,
+                            cover_file: selectedCoverPath || ""
                         })
                     }).then(r => {
                         if (r.status === 409) {
