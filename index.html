@@ -367,7 +367,8 @@
             "tongyi": "https://tongyi.aliyun.com/qianwen/"
         };
 
-        let currentSelectedVideoPath = "";
+        let selectedFile = null;
+        let uploadedVideoPath = "";  // 已上传到本地桥接服务的绝对路径（浏览器拿不到真实路径，必须上传）
 
         function getCleanTopic() {
             let fn = document.getElementById('selected-video-filename').innerText;
@@ -414,7 +415,8 @@
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 document.getElementById('selected-video-filename').innerText = file.name;
-                currentSelectedVideoPath = file.name;
+                selectedFile = file;
+                uploadedVideoPath = "";
                 document.getElementById('video-size').innerText = formatSize(file.size);
                 document.getElementById('main-video').src = URL.createObjectURL(file);
                 document.getElementById('video-loaded').classList.add('active');
@@ -458,7 +460,7 @@
         function updateSelectedSummary() {
             const selected = document.querySelectorAll('.pf-chip.sel');
             document.getElementById('selected-count').innerText = selected.length;
-            document.getElementById('go-btn').disabled = !(currentSelectedVideoPath && selected.length > 0);
+            document.getElementById('go-btn').disabled = !(selectedFile && selected.length > 0);
         }
 
         function clearAllSelections() {
@@ -515,7 +517,7 @@
         }
 
         function openConfirmDialog() {
-            if (!currentSelectedVideoPath) { alert("请先选择视频。"); return; }
+            if (!selectedFile) { alert("请先选择视频。"); return; }
             const selected = document.querySelectorAll('.pf-chip.sel');
             if (selected.length === 0) { alert("请至少勾选 1 个平台。"); return; }
             document.getElementById('confirm-video-name').innerText = document.getElementById('selected-video-filename').innerText;
@@ -524,6 +526,15 @@
         }
         function closeConfirmDialog() { document.getElementById('confirm-modal').style.display = 'none'; }
         function confirmAndDispatch() { closeConfirmDialog(); startRealDispatch(); }
+
+        async function uploadVideoToServer() {
+            const fd = new FormData();
+            fd.append("file", selectedFile);
+            const res = await fetch(API_BASE + '/api/upload-video', { method: 'POST', body: fd });
+            const j = await res.json();
+            if (!res.ok || !j.saved_path) throw new Error(j.error || "未知错误");
+            return j.saved_path;
+        }
 
         function trackRealPythonTask(p, taskId, onComplete) {
             const statusEl = document.getElementById(`status-${p.id}`);
@@ -555,11 +566,29 @@
             const closeBtn = document.getElementById('close-modal-btn');
             modal.style.display = 'flex'; closeBtn.style.display = 'none'; list.innerHTML = '';
 
+            if (!selectedFile) { alert("请先选择视频。"); modal.style.display = 'none'; return; }
+            // 浏览器出于安全拿不到文件真实路径，必须把文件本体上传到本地桥接服务，
+            // 由服务端保存为绝对路径后再交给上传引擎。
+            if (!uploadedVideoPath) {
+                const uh = document.createElement('div');
+                uh.className = 'prog-row'; uh.id = 'uploading-hint';
+                uh.innerHTML = `<div class="prog-top"><span><i class="fa-solid fa-spinner fa-spin"></i> 正在上传视频到本地服务…</span></div>`;
+                list.appendChild(uh);
+                try {
+                    uploadedVideoPath = await uploadVideoToServer();
+                } catch (e) {
+                    uh.remove();
+                    alert("⚠️ 视频上传到本地服务失败：" + (e.message || e) + "\n请确认 ./start_ui.sh 控制台正在运行。");
+                    modal.style.display = 'none';
+                    return;
+                }
+                uh.remove();
+            }
             const selected = document.querySelectorAll('.pf-chip.sel');
             const activePlatforms = Array.from(selected).map(c => PLATFORMS.find(p => p.id === c.id.replace('card-', '')));
             const title = document.getElementById('post-title').value;
             const desc = document.getElementById('post-desc').value;
-            const targetVideo = currentSelectedVideoPath;
+            const targetVideo = uploadedVideoPath;
 
             activePlatforms.forEach(p => {
                 const item = document.createElement('div');

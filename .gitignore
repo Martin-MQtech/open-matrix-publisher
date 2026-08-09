@@ -23,7 +23,8 @@ platform_credentials.json
 *.jpeg
 *.png
 *.gif
-temp_*/
+temp_/
+uploads/
 
 # === OS ===
 .DS_Store

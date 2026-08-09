@@ -1,5 +1,6 @@
 import os, sys, json, time, subprocess, threading, asyncio
 from flask import Flask, request, jsonify
+from werkzeug.utils import secure_filename
 from cookie_extractor import sync_all_platforms, sync_cookies_from_chrome
 from real_uploader_engine import load_credentials, save_credentials, check_profile_logged_in, RealPlatformUploader
 from chat_ai_bridge import generate_copy_via_free_ai
@@ -19,6 +20,8 @@ except Exception:
 ACTIVE_TASKS = {}
 TASK_LOCK = threading.Lock()
 HISTORY_FILE = os.path.join(os.path.dirname(__file__), "dispatch_history.json")
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def load_history():
     if os.path.exists(HISTORY_FILE):
@@ -223,6 +226,26 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags)
         }
         save_history(hist)
 
+@app.route("/api/upload-video", methods=["POST"])
+def upload_video():
+    """接收前端选中的本地视频文件（浏览器拿不到真实绝对路径，必须由前端上传本体），
+    保存到项目 uploads/ 目录，返回服务端绝对路径供上传引擎使用。"""
+    f = request.files.get("file")
+    if not f or not f.filename:
+        return jsonify({"error": "未收到文件"}), 400
+    original = secure_filename(f.filename)
+    if not original:
+        original = "video.mp4"
+    base, ext = os.path.splitext(original)
+    dest = os.path.join(UPLOAD_DIR, original)
+    i = 1
+    while os.path.exists(dest):
+        dest = os.path.join(UPLOAD_DIR, f"{base}_{i}{ext}")
+        i += 1
+    f.save(dest)
+    return jsonify({"saved_path": os.path.abspath(dest), "size": os.path.getsize(dest)})
+
+
 @app.route("/api/start-upload-task", methods=["POST"])
 def start_upload_task():
     data = request.json or {}
@@ -242,6 +265,15 @@ def start_upload_task():
                 "platform_id": platform_id,
                 "msg": detail
             }), 409
+
+    # ===== FILE EXISTS CHECK (前端上传后的服务端绝对路径) =====
+    abs_vf = os.path.abspath(video_file)
+    if not os.path.exists(abs_vf):
+        return jsonify({
+            "status": "file_not_found",
+            "platform_id": platform_id,
+            "msg": f"找不到视频文件：{abs_vf}（请重新选择视频并分发）"
+        }), 400
 
     task_id = f"{platform_id}_task_{int(time.time()*1000)}"
     
