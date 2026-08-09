@@ -2,7 +2,7 @@
 """
 有头浏览器扫码/交互登录助手 (Headful Browser Login Assistant)
 用于弹出可交互的 Chrome/Chromium 浏览器窗口，供用户扫码或输入凭据登录，
-并自动检测会话状态、捕获并持久化保存 Cookie 至 SAU 和本地 cookies 目录。
+并自动检测核心会话凭证状态、捕获并持久化保存 Cookie 至 SAU 和本地 cookies 目录。
 """
 import os, sys, json, time, asyncio
 from pathlib import Path
@@ -16,29 +16,30 @@ CHROME_UA = (
     "(KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36"
 )
 
+# 各平台严格的核心登录鉴权 Token 列表（绝不包含未登录访客/CSRF Token，防止提前误判退出）
 PLATFORMS = {
     # ── 国内平台 ──────────────────────────────────────────────────────────
     "douyin": {
         "name": "抖音",
         "url": "https://creator.douyin.com/",
         "cookie_files": ["douyin_default.json"],
-        "session_cookies": ["sessionid", "sessionid_ss", "passport_csrf_token", "odin_tt"],
+        "auth_cookies": ["sessionid_ss", "sessionid"],
         "success_domains": ["creator.douyin.com"],
-        "exclude_keywords": ["login", "signin"]
+        "exclude_keywords": ["login", "signin", "passport"]
     },
     "kuaishou": {
         "name": "快手",
         "url": "https://cp.kuaishou.com/article/publish/video",
         "cookie_files": ["kuaishou_default.json"],
-        "session_cookies": ["kuaishou.server.web_st", "userId", "did"],
+        "auth_cookies": ["kuaishou.server.web_st"],
         "success_domains": ["cp.kuaishou.com"],
-        "exclude_keywords": ["login"]
+        "exclude_keywords": ["login", "pass"]
     },
     "xiaohongshu": {
         "name": "小红书",
         "url": "https://creator.xiaohongshu.com/login",
         "cookie_files": ["xiaohongshu_default.json"],
-        "session_cookies": ["web_session", "a1", "webId"],
+        "auth_cookies": ["web_session"],
         "success_domains": ["creator.xiaohongshu.com"],
         "exclude_keywords": ["login"]
     },
@@ -46,7 +47,7 @@ PLATFORMS = {
         "name": "微信视频号",
         "url": "https://channels.weixin.qq.com/login.html",
         "cookie_files": ["tencent_default.json"],
-        "session_cookies": ["sessionid", "wxuin", "channels_token"],
+        "auth_cookies": ["sessionid", "wxuin"],
         "success_domains": ["channels.weixin.qq.com/platform"],
         "exclude_keywords": ["login.html"]
     },
@@ -54,31 +55,31 @@ PLATFORMS = {
         "name": "B站",
         "url": "https://passport.bilibili.com/login",
         "cookie_files": ["bilibili_default.json"],
-        "session_cookies": ["SESSDATA", "bili_jct", "DedeUserID"],
+        "auth_cookies": ["SESSDATA"],
         "success_domains": ["bilibili.com", "member.bilibili.com"],
-        "exclude_keywords": ["passport.bilibili.com/login"]
+        "exclude_keywords": ["passport.bilibili.com/login", "passport.bilibili.com"]
     },
     "weibo": {
         "name": "微博",
         "url": "https://weibo.com/upload/channel",
         "cookie_files": ["weibo_default.json"],
-        "session_cookies": ["SUB", "SUBP"],
+        "auth_cookies": ["SUB"],
         "success_domains": ["weibo.com"],
-        "exclude_keywords": ["login.php", "login"]
+        "exclude_keywords": ["login.php", "login", "s.weibo.com"]
     },
     "toutiao": {
         "name": "今日头条",
         "url": "https://mp.toutiao.com/auth/page/login",
         "cookie_files": ["toutiao_default.json"],
-        "session_cookies": ["LOGIN_A", "sessionid", "passport_csrf_token"],
+        "auth_cookies": ["LOGIN_A", "sessionid"],
         "success_domains": ["mp.toutiao.com/profile_v4"],
-        "exclude_keywords": ["auth/page/login"]
+        "exclude_keywords": ["auth/page/login", "login"]
     },
     "zhihu": {
         "name": "知乎",
         "url": "https://www.zhihu.com/signin",
         "cookie_files": ["zhihu_default.json"],
-        "session_cookies": ["z_c0"],
+        "auth_cookies": ["z_c0"],
         "success_domains": ["zhihu.com"],
         "exclude_keywords": ["signin"]
     },
@@ -88,65 +89,65 @@ PLATFORMS = {
         "name": "TikTok",
         "url": "https://www.tiktok.com/login?lang=en",
         "cookie_files": ["tk_default.json", "tiktok_default.json"],
-        "session_cookies": ["sid_tt", "sessionid_ss", "tt_csrf_token", "sessionid"],
+        "auth_cookies": ["sessionid_ss", "sid_tt", "sessionid"],
         "success_domains": ["tiktok.com"],
-        "exclude_keywords": ["login", "signin"]
+        "exclude_keywords": ["login", "signin", "accounts.google", "appleid.apple.com"]
     },
     "tk": {
         "name": "TikTok",
         "url": "https://www.tiktok.com/login?lang=en",
         "cookie_files": ["tk_default.json", "tiktok_default.json"],
-        "session_cookies": ["sid_tt", "sessionid_ss", "tt_csrf_token", "sessionid"],
+        "auth_cookies": ["sessionid_ss", "sid_tt", "sessionid"],
         "success_domains": ["tiktok.com"],
-        "exclude_keywords": ["login", "signin"]
+        "exclude_keywords": ["login", "signin", "accounts.google", "appleid.apple.com"]
     },
     "youtube": {
         "name": "YouTube",
         "url": "https://studio.youtube.com/",
         "cookie_files": ["youtube_default.json"],
-        "session_cookies": ["SID", "HSID", "SSID", "LOGIN_INFO"],
+        "auth_cookies": ["SID", "SSID", "HSID", "LOGIN_INFO"],
         "success_domains": ["studio.youtube.com"],
-        "exclude_keywords": ["accounts.google.com"]
+        "exclude_keywords": ["accounts.google.com", "signin"]
     },
     "facebook": {
         "name": "Facebook",
         "url": "https://www.facebook.com/login",
         "cookie_files": ["facebook_default.json"],
-        "session_cookies": ["c_user", "xs"],
+        "auth_cookies": ["c_user"],
         "success_domains": ["facebook.com"],
-        "exclude_keywords": ["login.php", "login"]
+        "exclude_keywords": ["login.php", "login", "recover"]
     },
     "x": {
         "name": "X (Twitter)",
         "url": "https://twitter.com/i/flow/login",
         "cookie_files": ["x_default.json", "twitter_default.json"],
-        "session_cookies": ["auth_token", "ct0"],
+        "auth_cookies": ["auth_token"],
         "success_domains": ["twitter.com", "x.com"],
-        "exclude_keywords": ["flow/login", "login"]
+        "exclude_keywords": ["flow/login", "login", "signin"]
     },
     "twitter": {
         "name": "X (Twitter)",
         "url": "https://twitter.com/i/flow/login",
         "cookie_files": ["x_default.json", "twitter_default.json"],
-        "session_cookies": ["auth_token", "ct0"],
+        "auth_cookies": ["auth_token"],
         "success_domains": ["twitter.com", "x.com"],
-        "exclude_keywords": ["flow/login", "login"]
+        "exclude_keywords": ["flow/login", "login", "signin"]
     },
     "linkedin": {
         "name": "LinkedIn",
         "url": "https://www.linkedin.com/login",
         "cookie_files": ["linkedin_default.json"],
-        "session_cookies": ["li_at"],
+        "auth_cookies": ["li_at"],
         "success_domains": ["linkedin.com/feed", "linkedin.com/in", "linkedin.com"],
-        "exclude_keywords": ["login", "checkpoint"]
+        "exclude_keywords": ["login", "checkpoint", "authwall"]
     },
     "instagram": {
         "name": "Instagram",
         "url": "https://www.instagram.com/accounts/login/",
         "cookie_files": ["instagram_default.json"],
-        "session_cookies": ["sessionid", "ds_user_id"],
+        "auth_cookies": ["sessionid"],
         "success_domains": ["instagram.com"],
-        "exclude_keywords": ["accounts/login"]
+        "exclude_keywords": ["accounts/login", "login"]
     }
 }
 
@@ -161,7 +162,7 @@ async def login_platform(platform_key):
     print(f"\n==================================================")
     print(f"  🚀 正在为你打开【{info['name']}】登录浏览器窗口...")
     print(f"  🔗 目标地址: {info['url']}")
-    print(f"  📱 请在弹出的浏览器中进行扫码或账号登录！")
+    print(f"  📱 请在弹出的浏览器中扫码或使用 Google/账号 登录！")
     print(f"==================================================\n")
 
     try:
@@ -189,37 +190,97 @@ async def login_platform(platform_key):
             print(f"⚠️ 页面加载提示: {e}，请在浏览器中继续操作...")
 
         print(f"⏳ 正在等待你在浏览器中完成【{info['name']}】登录...")
-        print(f"（提示：检测到登录成功并进入后台后，系统将自动捕获凭证并持久化保存）\n")
+        print(f"（提示：检测到真正登录成功进入后台后，系统将自动捕获凭证并持久化保存）\n")
 
-        deadline = time.time() + 300  # 5分钟超时时间
+        deadline = time.time() + 600  # 10分钟超时时间
         login_success = False
 
         while time.time() < deadline:
             await asyncio.sleep(2)
             try:
+                # 检查窗口是否被用户手动全部关闭
                 if len(context.pages) == 0:
-                    print("⚠️ 浏览器窗口已被手动关闭")
+                    print("⚠️ 浏览器窗口已被用户手动关闭")
                     break
 
-                curr_url = page.url
+                # 获取所有打开页面的 URL（支持 Google 登录弹窗等子页面）
+                active_urls = [p.url for p in context.pages if not p.is_closed()]
+                main_url = active_urls[0] if active_urls else page.url
+
+                # 获取当前 context 中保存的所有 Cookie
                 state = await context.storage_state()
                 cookies = state.get("cookies", [])
-                cookie_names = {c.get("name") for c in cookies}
+                
+                # 过滤出有实际值的 Cookie 名称
+                cookie_map = {c.get("name"): c.get("value", "") for c in cookies if len(c.get("value", "")) > 0}
 
-                has_session_cookie = any(req in cookie_names for req in info.get("session_cookies", []))
-                url_match = any(domain in curr_url for domain in info.get("success_domains", []))
-                url_not_excluded = not any(kw in curr_url.lower() for kw in info.get("exclude_keywords", []))
+                # 检查是否存在必须的真实鉴权 Cookie (严格匹配)
+                has_auth_token = any(
+                    token in cookie_map and len(cookie_map[token]) >= 6 
+                    for token in info.get("auth_cookies", [])
+                )
 
-                # 特殊平台强化规则
-                if platform_key == "zhihu":
-                    is_logged_in = "z_c0" in cookie_names and "signin" not in curr_url.lower()
+                # 检查 URL 状态：是否有任何一个页面进入了成功页面，且未停留在登录/认证页
+                in_oauth_page = any(
+                    "accounts.google" in u or "appleid.apple" in u or "oauth" in u.lower() or "login" in u.lower() or "signin" in u.lower()
+                    for u in active_urls
+                )
+
+                # 专属平台严格判定规则
+                is_logged_in = False
+                
+                if platform_key in ["tiktok", "tk"]:
+                    # TikTok: 必须持有 sessionid_ss 或 sid_tt，且不能还在 Google/Apple OAuth 中间页
+                    has_tk_session = ("sessionid_ss" in cookie_map and len(cookie_map["sessionid_ss"]) > 10) or \
+                                     ("sid_tt" in cookie_map and len(cookie_map["sid_tt"]) > 10) or \
+                                     ("sessionid" in cookie_map and len(cookie_map["sessionid"]) > 10)
+                    is_logged_in = has_tk_session and (not in_oauth_page or "tiktok.com/@" in main_url or "tiktok.com/foryou" in main_url or "tiktok.com/upload" in main_url)
+
+                elif platform_key == "zhihu":
+                    is_logged_in = "z_c0" in cookie_map and len(cookie_map["z_c0"]) > 10 and "signin" not in main_url.lower()
+
                 elif platform_key == "tencent":
-                    is_logged_in = ("channels.weixin.qq.com/platform" in curr_url) or ("sessionid" in cookie_names and "login" not in curr_url.lower())
+                    is_logged_in = "channels.weixin.qq.com/platform" in main_url
+
+                elif platform_key in ["x", "twitter"]:
+                    is_logged_in = "auth_token" in cookie_map and len(cookie_map["auth_token"]) > 15 and "flow/login" not in main_url
+
+                elif platform_key == "facebook":
+                    is_logged_in = "c_user" in cookie_map and len(cookie_map["c_user"]) > 4 and "login" not in main_url.lower()
+
+                elif platform_key == "linkedin":
+                    is_logged_in = "li_at" in cookie_map and len(cookie_map["li_at"]) > 15 and "login" not in main_url.lower()
+
+                elif platform_key == "instagram":
+                    is_logged_in = "sessionid" in cookie_map and len(cookie_map["sessionid"]) > 10 and "accounts/login" not in main_url.lower()
+
+                elif platform_key == "youtube":
+                    is_logged_in = has_auth_token and "studio.youtube.com" in main_url and "accounts.google" not in main_url
+
+                elif platform_key == "bilibili":
+                    is_logged_in = "SESSDATA" in cookie_map and len(cookie_map["SESSDATA"]) > 10 and "passport" not in main_url.lower()
+
+                elif platform_key == "weibo":
+                    is_logged_in = "SUB" in cookie_map and len(cookie_map["SUB"]) > 15 and "login" not in main_url.lower()
+
+                elif platform_key == "toutiao":
+                    is_logged_in = ("LOGIN_A" in cookie_map or "sessionid" in cookie_map) and "profile_v4" in main_url
+
+                elif platform_key == "xiaohongshu":
+                    is_logged_in = "web_session" in cookie_map and len(cookie_map["web_session"]) > 10 and "login" not in main_url.lower()
+
+                elif platform_key == "kuaishou":
+                    is_logged_in = "kuaishou.server.web_st" in cookie_map and len(cookie_map["kuaishou.server.web_st"]) > 10
+
+                elif platform_key == "douyin":
+                    is_logged_in = ("sessionid_ss" in cookie_map or "sessionid" in cookie_map) and "login" not in main_url.lower()
+
                 else:
-                    is_logged_in = has_session_cookie or (url_match and url_not_excluded)
+                    is_logged_in = has_auth_token and not in_oauth_page
 
                 if is_logged_in:
-                    print(f"🎉 检测到【{info['name']}】已成功登录！当前页面: {curr_url}")
+                    print(f"🎉 检测到【{info['name']}】已成功完成登录！捕获到核心会话凭据。")
+                    print(f"📍 当前最终页面: {main_url}")
                     await asyncio.sleep(3)  # 等待所有 Cookie 充分写盘
                     state = await context.storage_state()
 
@@ -235,11 +296,11 @@ async def login_platform(platform_key):
                     login_success = True
                     break
             except Exception as e:
-                # 忽略导航瞬时错误
+                # 忽略轮询瞬时错误
                 pass
 
         if not login_success:
-            print(f"❌ 【{info['name']}】登录超时或未检测到凭证。")
+            print(f"❌ 【{info['name']}】登录超时或未检测到有效凭证。")
 
         try:
             await browser.close()
