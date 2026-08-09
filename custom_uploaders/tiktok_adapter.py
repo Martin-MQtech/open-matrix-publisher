@@ -8,11 +8,11 @@ SAU 原登录用 page.pause()（调试器暂停，需手动点继续），这里
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
 
-sys.path.insert(0, "/Users/martin/social-auto-upload")
+sys.path.insert(0, os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"))
 
 from custom_uploaders.base import account_file, login_flow  # noqa: E402
 from uploader.tk_uploader.main_chrome import TiktokVideo  # noqa: E402
@@ -26,18 +26,18 @@ def login(headless: bool = False, timeout: int = 600) -> bool:
 
 
 def publish(video_path: str, title: str, tags: list[str] | None = None,
-            schedule_hour: int = 16) -> bool:
-    """调用 SAU 的 TiktokVideo 上传（当天 schedule_hour 点发布）。"""
+            desc=None) -> bool:
+    """调用 SAU 的 TiktokVideo 上传并立即发布（publish_date=0 表示不排期、直接发）。
+
+    注意：引擎以 publish(video, title, tags, desc) 四参调用，desc 在 TikTok 无对应字段，
+    此处接收并忽略，保证参数顺序一致、不被误当作排期小时数。
+    """
     cookie_path = str(account_file(PLATFORM))
-    # 默认排到下一个 schedule_hour 点（与 SAU 习惯一致；传 0 表示立即）
-    publish_date = datetime.now() + timedelta(days=1)
-    hour_val = int(schedule_hour) if str(schedule_hour).isdigit() else 16
-    publish_date = publish_date.replace(hour=hour_val, minute=0, second=0, microsecond=0)
     app = TiktokVideo(
         title=title,
         file_path=video_path,
         tags=tags or [],
-        publish_date=publish_date,
+        publish_date=0,  # 0 = 立即发布，不排期
         account_file=cookie_path,
     )
     try:

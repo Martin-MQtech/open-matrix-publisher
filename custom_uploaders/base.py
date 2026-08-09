@@ -17,7 +17,7 @@ from pathlib import Path
 
 # 确保 SAU 与 项目目录 都在 sys.path 中
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SAU_ROOT = Path("/Users/martin/social-auto-upload")
+SAU_ROOT = Path(os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"))
 if str(SAU_ROOT) not in sys.path:
     sys.path.insert(0, str(SAU_ROOT))
 if str(PROJECT_ROOT) not in sys.path:

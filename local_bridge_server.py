@@ -6,6 +6,15 @@ from chat_ai_bridge import generate_copy_via_free_ai
 
 app = Flask(__name__)
 
+# cookie_extractor 依赖 browser_cookie3（读取本机 Chrome Cookie），
+# 仅用于"从 Chrome 同步登录态"的便捷功能。若所在 Python 环境未安装该依赖，
+# 不应影响控制台启动与核心分发能力，故改为可选导入。
+try:
+    from cookie_extractor import sync_all_platforms, sync_cookies_from_chrome
+except Exception:
+    sync_all_platforms = None
+    sync_cookies_from_chrome = None
+
 # Active background upload tasks store & History Store
 ACTIVE_TASKS = {}
 TASK_LOCK = threading.Lock()
@@ -55,7 +64,8 @@ def after_request(response):
 @app.route("/api/status", methods=["GET"])
 def get_status():
     try:
-        sync_all_platforms()
+        if sync_all_platforms:
+            sync_all_platforms()
     except Exception as e:
         print("Syncing cookies warning:", e)
 

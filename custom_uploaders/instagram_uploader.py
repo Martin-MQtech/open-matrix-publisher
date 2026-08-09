@@ -67,39 +67,85 @@ async def _click_visible(page, selectors: list[str], force: bool = False):
 
 async def upload(video_path: str, title: str, tags: list[str] | None = None,
                 desc: str | None = None, headless: bool = True, timeout: int = 180) -> bool:
-    """Instagram headless 上传已确认被反自动化拦截（详见模块文档）。
-    本函数快速诊断一次后立即返回 False，避免长时间空转。"""
+    """Instagram 上传：headless 下 IG 反自动化较严格，这里做一次真实尝试而非直接放弃。
+    流程：首页 → 点击「新建」→ 选择文件 → 下一步 → 填写文案 → 分享。
+    若任一关键步骤被拦截/未渲染，返回 False 并打印诊断；成功跳转到帖子页才算发布成功。
+    """
     cookie_path = account_file(PLATFORM)
     pw, browser = await launch(headless=headless, proxy=YT_PROXY)
     context = await load_context(browser, cookie_path)
     page = await context.new_page()
     try:
-        await page.goto("https://www.instagram.com/create/reel/", wait_until="domcontentloaded")
-        await page.wait_for_timeout(5000)
-        # 检测 1：URL 是否被重定向到 profile（无 create 弹窗 → 直接放弃）
-        if "/create/" not in page.url or page.url.endswith("/create/reel/") is False and "/create/reel" not in page.url:
-            print("[Instagram] ABORT: /create/reel/ didn't load — likely headless anti-automation")
+        # 1. 进入首页并点击左侧「新建」按钮（aria-label 可能随语言变化）
+        await page.goto("https://www.instagram.com/", wait_until="domcontentloaded")
+        await _dismiss_overlays(page)
+        await page.wait_for_timeout(3000)
+
+        new_post_clicked = await _click_visible(page, [
+            '[aria-label="新建"]', '[aria-label="New post"]', '[aria-label="新建帖子"]',
+            'a[href="/create/"]', 'svg[aria-label="新建"]',
+        ])
+        if not new_post_clicked:
+            print("[Instagram] 未能点击「新建」按钮，可能未登录或页面改版")
             return False
-        # 检测 2：页面是否出现 create 对话框（不是 profile 内容）
-        btns = page.locator('[role="button"]')
-        cnt = await btns.count()
-        has_reel_dialog = False
-        for i in range(min(cnt, 10)):
-            try:
-                text = await btns.nth(i).text_content(timeout=300)
-                if text.strip() in ("Next", "下一步", "Share", "分享"):
-                    has_reel_dialog = True
-                    break
-            except: pass
-        if not has_reel_dialog:
-            print("[Instagram] ABORT: create dialog not rendered (page shows profile feed instead)")
+
+        # 2. 等待文件选择框并写入视频
+        file_input = page.locator('input[type="file"]').first
+        try:
+            await file_input.wait_for(state="attached", timeout=15000)
+        except Exception:
+            print("[Instagram] 未出现文件选择框（可能被反自动化拦截）")
             return False
-        # 即使到了这里，IG 的上传管道在 headless 仍可能失败；
-        # 跑完整流程成本高但 99% 会失败，直接放弃以避免长时间空转。
-        print("[Instagram] ABORT: IG headless create flow is unstable. Manual upload recommended.")
-        return False
+        await file_input.set_input_files(video_path)
+        print("[Instagram] 已选择视频文件，等待上传处理...")
+        await page.wait_for_timeout(8000)
+
+        # 3. 点击「下一步 / Next」（可能出现两次：裁剪、封面）
+        for _ in range(2):
+            clicked = await _click_visible(page, [
+                'button:has-text("下一步")', 'button:has-text("Next")',
+                '[role="button"]:has-text("下一步")', '[role="button"]:has-text("Next")',
+            ])
+            if clicked:
+                await page.wait_for_timeout(3000)
+
+        # 4. 填写文案（标题 + 标签）
+        caption = f"{title or ''}"
+        if desc:
+            caption = f"{caption}\n{desc}"
+        if tags:
+            caption += "\n" + " ".join(f"#{t}" for t in tags[:10])
+        try:
+            editor = page.locator('textarea, div[contenteditable="true"]').first
+            if await editor.count():
+                await editor.click()
+                await editor.fill(caption)
+        except Exception:
+            pass
+
+        # 5. 点击「分享 / Share」
+        shared = await _click_visible(page, [
+            'button:has-text("分享")', 'button:has-text("Share")',
+            '[role="button"]:has-text("分享")', '[role="button"]:has-text("Share")',
+        ])
+        if not shared:
+            print("[Instagram] 未找到「分享」按钮，可能未到最终发布页")
+            return False
+
+        # 6. 验证：URL 跳转到 /p/ 或页面出现成功提示
+        try:
+            await page.wait_for_url("**/p/**", timeout=20000)
+            print("[Instagram] ✅ 视频已发布（跳转到帖子页）")
+            return True
+        except Exception:
+            page_text = await page.evaluate("() => document.body ? document.body.innerText : ''")
+            if "已发布" in page_text or "Your post" in page_text or "shared" in page_text.lower():
+                print("[Instagram] ✅ 视频已发布（检测到成功提示）")
+                return True
+            print("[Instagram] 分享后未确认成功（IG 反自动化可能拦截）")
+            return False
     except Exception as e:
-        print(f"[Instagram] ABORT: {repr(e)[:200]}")
+        print(f"[Instagram] upload error: {repr(e)[:200]}")
         return False
     finally:
         await browser.close()

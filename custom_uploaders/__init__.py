@@ -9,7 +9,8 @@ import sys
 from pathlib import Path
 
 # 让本包能直接 import sau 的 conf / utils
-SAU_ROOT = Path(__file__).resolve().parent.parent
+import os
+SAU_ROOT = Path(os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"))
 if str(SAU_ROOT) not in sys.path:
     sys.path.insert(0, str(SAU_ROOT))
 

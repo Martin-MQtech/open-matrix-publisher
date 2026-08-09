@@ -189,18 +189,27 @@ class RealPlatformUploader:
                 "facebook":"https://www.facebook.com/",
                 "tiktok":  "https://www.tiktok.com/",
             }
-            code = f"""
-import sys
-sys.path.insert(0, '{SAU_ROOT}')
-sys.path.insert(0, '{os.path.dirname(os.path.abspath(__file__))}')
-import custom_uploaders.{module_name} as uploader
-res = uploader.publish('{self.video_path}', '{self.title}', {self.tags}, '''{self.desc}''')
-print('CUSTOM_RESULT:', res)
-"""
+            # 通过环境变量传递参数，避免把 desc 直接拼进执行代码（注入/语法风险）
+            args_payload = json.dumps({
+                "video": self.video_path,
+                "title": self.title,
+                "tags": self.tags,
+                "desc": self.desc,
+            }, ensure_ascii=False)
+            code = (
+                "import sys, os, json\n"
+                f"sys.path.insert(0, {SAU_ROOT!r})\n"
+                f"sys.path.insert(0, {os.path.dirname(os.path.abspath(__file__))!r})\n"
+                "payload = json.loads(os.environ['OMP_PUBLISH_ARGS'])\n"
+                f"import custom_uploaders.{module_name} as uploader\n"
+                "res = uploader.publish(payload['video'], payload['title'], payload['tags'], payload['desc'])\n"
+                "print('CUSTOM_RESULT:', res)\n"
+            )
             cmd = [SAU_PYTHON, "-c", code]
             print(f"执行 custom_uploader: {self.platform_id}")
             env = os.environ.copy()
             env["PYTHONPATH"] = SAU_ROOT
+            env["OMP_PUBLISH_ARGS"] = args_payload
 
             try:
                 proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600, env=env, cwd=SAU_ROOT)

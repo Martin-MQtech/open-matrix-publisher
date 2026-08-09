@@ -3,9 +3,10 @@
 解决了视频未切片传完就虚报“发布成功”的缺陷
 """
 import os, sys, json, asyncio
-sys.path.insert(0, "/Users/martin/social-auto-upload")
+sys.path.insert(0, os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"))
 
-COOKIE_FILE = "/Users/martin/social-auto-upload/cookies/zhihu_default.json"
+SAU_COOKIES = os.path.join(os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"), "cookies")
+COOKIE_FILE = os.path.join(SAU_COOKIES, "zhihu_default.json")
 
 async def _upload_async(video_path, title, tags, desc=""):
     try:
@@ -18,7 +19,7 @@ async def _upload_async(video_path, title, tags, desc=""):
         return False
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
             storage_state=COOKIE_FILE,
             viewport={"width": 1280, "height": 900}

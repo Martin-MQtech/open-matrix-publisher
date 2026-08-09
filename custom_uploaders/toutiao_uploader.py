@@ -2,9 +2,10 @@
 今日头条视频上传器 — 严格上传完成校验版 v2.0
 """
 import os, sys, json, asyncio
-sys.path.insert(0, "/Users/martin/social-auto-upload")
+sys.path.insert(0, os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"))
 
-COOKIE_FILE = "/Users/martin/social-auto-upload/cookies/toutiao_default.json"
+SAU_COOKIES = os.path.join(os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"), "cookies")
+COOKIE_FILE = os.path.join(SAU_COOKIES, "toutiao_default.json")
 
 async def _upload_async(video_path, title, tags, desc=""):
     from patchright.async_api import async_playwright
@@ -14,7 +15,7 @@ async def _upload_async(video_path, title, tags, desc=""):
         return False
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
             storage_state=COOKIE_FILE,
             viewport={"width": 1280, "height": 900}
