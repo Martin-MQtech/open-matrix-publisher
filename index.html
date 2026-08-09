@@ -215,10 +215,35 @@
         .btn-ghost { background: rgba(255,255,255,.08); border: none; color: var(--text); padding: 9px 18px; border-radius: 9px; cursor: pointer; font-size: 13px; }
         .btn-ghost:hover { background: rgba(255,255,255,.14); }
 
-        .prog-row { margin-bottom: 12px; }
+        .prog-row { margin-bottom: 12px; transition: opacity .2s; }
+        .prog-row.running { background: rgba(59,130,246,.07); border-radius: 9px; padding: 8px; margin-left: -8px; margin-right: -8px; }
         .prog-top { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
         .prog-bg { height: 5px; background: rgba(255,255,255,.1); border-radius: 3px; overflow: hidden; }
         .prog-fill { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+        .prog-fill.green { background: var(--green); }
+        .prog-fill.red { background: var(--red); }
+        .prog-fill.amber { background: var(--amber); }
+
+        /* ---------- Overall progress ---------- */
+        .overall { margin-bottom: 18px; }
+        .overall .bigpct { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+        .overall .sub { font-size: 12px; color: var(--muted); }
+        .overall .prog-bg { height: 8px; }
+
+        /* ---------- Toast notification ---------- */
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-120%);
+            background: var(--surface); border: 1px solid var(--border-strong);
+            border-radius: 12px; padding: 14px 22px; z-index: 2000;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 12px 40px rgba(0,0,0,.5);
+            transition: transform .4s cubic-bezier(.2,1,.3,1);
+            font-size: 14px; font-weight: 600;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast i { font-size: 18px; }
+        .toast.ok { border-color: rgba(34,197,94,.4); }
+        .toast.ok i { color: var(--green); }
 
         /* ---------- Footer ---------- */
         footer {
@@ -334,13 +359,22 @@
     <!-- 进度弹窗 -->
     <div id="modal" class="overlay">
         <div class="modal">
-            <h3><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent)"></i> 正在分发…</h3>
+            <h3 id="modal-title"><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent)"></i> 正在分发…</h3>
+            <div class="overall" id="overall-progress" style="display:none;">
+                <div class="bigpct" id="overall-pct">0%</div>
+                <div class="sub" id="overall-sub">0 / 0 平台完成</div>
+                <div class="prog-bg"><div class="prog-fill" id="overall-fill"></div></div>
+            </div>
             <div id="progress-list"></div>
-            <div style="margin-top:18px; text-align:right;">
+            <div style="margin-top:18px; text-align:right; display:flex; justify-content:space-between; align-items:center;">
+                <span id="modal-status-note" style="font-size:12px; color:var(--muted);"></span>
                 <button id="close-modal-btn" class="btn-go" style="display:none; padding:9px 18px;" onclick="closeModal()">完成并关闭</button>
             </div>
         </div>
     </div>
+
+    <!-- Toast 推送通知 -->
+    <div id="toast" class="toast"><i class="fa-solid fa-circle-check"></i> <span id="toast-text"></span></div>
 
     <script>
         const PLATFORMS = [
@@ -536,54 +570,104 @@
             return j.saved_path;
         }
 
-        function trackRealPythonTask(p, taskId, onComplete) {
+        function showToast(msg, ok=true) {
+            const t = document.getElementById('toast');
+            t.className = 'toast show ' + (ok ? 'ok' : '');
+            document.getElementById('toast-text').innerText = msg;
+            setTimeout(() => { t.className = 'toast ' + (ok ? 'ok' : ''); }, 5000);
+        }
+
+        function trackRealPythonTask(p, taskId, dispatchState, onComplete) {
             const statusEl = document.getElementById(`status-${p.id}`);
             const fillEl = document.getElementById(`fill-${p.id}`);
             const rowEl = document.getElementById(`row-${p.id}`);
-            // 标记当前正在执行
-            if (rowEl) rowEl.style.borderLeft = '3px solid var(--accent)';
+            if (rowEl) rowEl.classList.add('running');
             let pollCount = 0;
             const poll = setInterval(async () => {
                 pollCount++;
                 try {
                     const res = await fetch(`${API_BASE}/api/task-progress?task_id=${taskId}`);
+                    if (res.status === 404) {
+                        // Task cleaned up but check history to decide success
+                        clearInterval(poll);
+                        if (rowEl) rowEl.classList.remove('running');
+                        onComplete(true);
+                        return;
+                    }
                     const info = await res.json();
                     if (info.pct !== undefined) {
                         fillEl.style.width = `${Math.min(info.pct, 100)}%`;
-                        if (info.pct >= 40) fillEl.style.background = 'var(--accent)';
                     }
                     if (info.stage) statusEl.innerText = info.stage;
                     if (info.status === 'completed') {
                         clearInterval(poll);
-                        if (rowEl) rowEl.style.borderLeft = '3px solid var(--green)';
+                        if (rowEl) { rowEl.classList.remove('running'); rowEl.style.borderLeft = '3px solid var(--green)'; }
+                        fillEl.className = 'prog-fill green';
                         statusEl.innerHTML = `<span style="color:var(--green);font-weight:700;"><i class="fa-solid fa-circle-check"></i> 发布成功</span>`;
-                        fillEl.style.width = '100%'; fillEl.style.background = 'var(--green)';
+                        fillEl.style.width = '100%';
                         onComplete(true);
                     } else if (info.status === 'failed') {
                         clearInterval(poll);
-                        if (rowEl) rowEl.style.borderLeft = '3px solid var(--red)';
-                        const errText = (info.error || '失败').substring(0, 60);
+                        if (rowEl) { rowEl.classList.remove('running'); rowEl.style.borderLeft = '3px solid var(--red)'; }
+                        fillEl.className = 'prog-fill red';
+                        const errText = (info.error || info.stage || '失败').substring(0, 60);
                         statusEl.innerHTML = `<span style="color:var(--red);font-weight:700;" title="${errText}"><i class="fa-solid fa-circle-xmark"></i> ${errText}</span>`;
-                        fillEl.style.width = '100%'; fillEl.style.background = 'var(--red)';
+                        fillEl.style.width = '100%';
                         onComplete(false);
-                    } else if (pollCount > 1200) { // 超过 10 分钟强制停止轮询
+                    } else if (pollCount > 1200) {
                         clearInterval(poll);
-                        statusEl.innerHTML = `<span style="color:var(--amber);"><i class="fa-solid fa-clock"></i> 执行超时（后台仍在运行）</span>`;
-                        onComplete(false); // 不阻塞后续平台
+                        if (rowEl) rowEl.classList.remove('running');
+                        fillEl.className = 'prog-fill amber';
+                        statusEl.innerHTML = `<span style="color:var(--amber);"><i class="fa-solid fa-clock"></i> 超时（后台继续）</span>`;
+                        onComplete(false);
                     }
                 } catch (err) { /* 网络抖动不中断 */ }
             }, 800);
+            if (dispatchState) dispatchState.polls.push(poll);
+        }
+
+        function updateOverallProgress(state) {
+            if (!state || !state.tasks) return;
+            const total = state.tasks.length;
+            const done = state.completed + state.failed;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            document.getElementById('overall-progress').style.display = 'block';
+            document.getElementById('overall-pct').innerText = `${pct}%`;
+            document.getElementById('overall-sub').innerText = `已完成 ${done} / ${total} 平台`;
+            document.getElementById('overall-fill').style.width = `${pct}%`;
+            if (done >= total && total > 0) {
+                document.getElementById('modal-title').innerHTML =
+                    '<i class="fa-solid fa-circle-check" style="color:var(--green)"></i> 分发完成';
+                document.getElementById('modal-status-note').innerHTML =
+                    `✅ ${state.completed} 成功 · ❌ ${state.failed} 失败`;
+                document.getElementById('overall-fill').style.background = state.failed === 0 ? 'var(--green)' : 'var(--amber)';
+            }
+        }
+
+        function checkAllDone(state) {
+            if (!state) return;
+            const total = state.tasks.length;
+            const done = state.completed + state.failed;
+            if (done >= total && !state.allDone) {
+                state.allDone = true;
+                document.getElementById('close-modal-btn').style.display = 'block';
+                showToast(`🎉 分发完成：${state.completed}/${total} 平台成功`, state.failed === 0);
+                refreshSessionStatus();
+            }
         }
 
         async function startRealDispatch() {
             const modal = document.getElementById('modal');
             const list = document.getElementById('progress-list');
             const closeBtn = document.getElementById('close-modal-btn');
+            const statusNote = document.getElementById('modal-status-note');
             modal.style.display = 'flex'; closeBtn.style.display = 'none'; list.innerHTML = '';
+            document.getElementById('overall-progress').style.display = 'none';
+            document.getElementById('modal-title').innerHTML = 
+                '<i class="fa-solid fa-spinner fa-spin" style="color:var(--accent)"></i> 正在分发…';
+            statusNote.innerText = '';
 
             if (!selectedFile) { alert("请先选择视频。"); modal.style.display = 'none'; return; }
-            // 浏览器出于安全拿不到文件真实路径，必须把文件本体上传到本地桥接服务，
-            // 由服务端保存为绝对路径后再交给上传引擎。
             if (!uploadedVideoPath) {
                 const uh = document.createElement('div');
                 uh.className = 'prog-row'; uh.id = 'uploading-hint';
@@ -593,7 +677,7 @@
                     uploadedVideoPath = await uploadVideoToServer();
                 } catch (e) {
                     uh.remove();
-                    alert("⚠️ 视频上传到本地服务失败：" + (e.message || e) + "\n请确认 ./start_ui.sh 控制台正在运行。");
+                    alert("⚠️ 视频上传到本地服务失败：" + (e.message || e));
                     modal.style.display = 'none';
                     return;
                 }
@@ -604,39 +688,95 @@
             const title = document.getElementById('post-title').value;
             const desc = document.getElementById('post-desc').value;
             const targetVideo = uploadedVideoPath;
+            const sessionId = `sess_${Date.now()}`;
 
-            activePlatforms.forEach((p, idx) => {
+            const dispatchState = {
+                sessionId: sessionId,
+                tasks: activePlatforms.map(p => ({ id: p.id, name: p.name })),
+                completed: 0,
+                failed: 0,
+                polls: [],
+                allDone: false
+            };
+
+            activePlatforms.forEach((p) => {
                 const item = document.createElement('div');
                 item.className = 'prog-row'; item.id = `row-${p.id}`;
-                const queueLabel = idx === 0 ? '（即将开始）' : `（排队第 ${idx} 位）`;
                 item.innerHTML = `
                     <div class="prog-top"><span><i class="fa-brands ${p.icon}" style="color:${p.color};"></i> ${p.name}</span>
-                    <span id="status-${p.id}" style="color:var(--muted);">就绪 ${queueLabel}</span></div>
+                    <span id="status-${p.id}" style="color:var(--muted);">🚀 启动中…</span></div>
                     <div class="prog-bg"><div class="prog-fill" id="fill-${p.id}"></div></div>`;
                 list.appendChild(item);
             });
+            updateOverallProgress(dispatchState);
 
-            for (const p of activePlatforms) {
-                try {
-                    const startRes = await fetch(API_BASE + '/api/start-upload-task', {
+            // Launch all platforms concurrently
+            const platformPromises = activePlatforms.map(p => {
+                return new Promise(resolve => {
+                    fetch(API_BASE + '/api/start-upload-task', {
                         method: 'POST', headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ platform_id: p.id, video_file: targetVideo, title: title, desc: desc, tags: [] })
-                    });
-                    const startData = await startRes.json();
-                    if (startRes.status === 409 || startData.status === 'blocked_duplicate') {
+                        body: JSON.stringify({
+                            platform_id: p.id, video_file: targetVideo,
+                            title: title, desc: desc, tags: [],
+                            dispatch_session_id: sessionId
+                        })
+                    }).then(r => {
+                        if (r.status === 409) {
+                            const statusEl = document.getElementById(`status-${p.id}`);
+                            const fillEl = document.getElementById(`fill-${p.id}`);
+                            const rowEl = document.getElementById(`row-${p.id}`);
+                            if (rowEl) rowEl.classList.remove('running');
+                            fillEl.className = 'prog-fill amber';
+                            statusEl.innerHTML = `<span style="color:var(--amber);font-weight:700;"><i class="fa-solid fa-lock"></i> 已发布·防重拦截</span>`;
+                            return resolve('duplicate');
+                        }
+                        return r.json().then(d => {
+                            if (d.task_id) {
+                                trackRealPythonTask(p, d.task_id, dispatchState, (ok) => {
+                                    if (ok) dispatchState.completed++;
+                                    else dispatchState.failed++;
+                                    updateOverallProgress(dispatchState);
+                                    resolve(ok ? 'ok' : 'fail');
+                                    checkAllDone(dispatchState);
+                                });
+                            } else {
+                                resolve('no_task');
+                            }
+                        });
+                    }).catch(err => {
                         const statusEl = document.getElementById(`status-${p.id}`);
-                        const fillEl = document.getElementById(`fill-${p.id}`);
-                        statusEl.innerHTML = `<span style="color:var(--amber);font-weight:700;"><i class="fa-solid fa-lock"></i> 已发布 · 防重拦截</span>`;
-                        fillEl.style.width = '100%'; fillEl.style.background = 'var(--amber)';
-                        continue;
-                    }
-                    if (startData.task_id) await new Promise(resolve => trackRealPythonTask(p, startData.task_id, resolve));
-                } catch (err) { console.error(err); }
-            }
-            closeBtn.style.display = 'block';
-            refreshSessionStatus();
+                        statusEl.innerHTML = `<span style="color:var(--red)"><i class="fa-solid fa-circle-xmark"></i> 连接失败</span>`;
+                        dispatchState.failed++;
+                        resolve('error');
+                        checkAllDone(dispatchState);
+                    });
+                });
+            });
+            // Store state globally so user can close + reopen progress
+            window._activeDispatch = dispatchState;
         }
-        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function openProgressDialog() {
+            if (window._activeDispatch) {
+                document.getElementById('modal').style.display = 'flex';
+            } else {
+                showToast("暂无进行中的分发任务", false);
+            }
+        }
+
+        /* Override the go-btn: if dispatch running, re-open progress */
+        document.getElementById('go-btn').onclick = () => {
+            if (window._activeDispatch && !window._activeDispatch.allDone) {
+                openProgressDialog();
+            } else {
+                window._activeDispatch = null;  // reset, fresh dispatch
+                openConfirmDialog();
+            }
+        };
 
         refreshSessionStatus();
     </script>

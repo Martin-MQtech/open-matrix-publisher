@@ -190,6 +190,23 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags,
              "total_bytes": total_bytes, **extra}
         save_task_progress(task_id, d)
 
+    # 实时进度回调：把上传引擎的日志行持久化 + 更新进度百分比
+    log_path = _task_progress_file(task_id).replace(".json", ".log")
+    def on_progress(pct, log_line):
+        if log_line:
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(log_line + "\n")
+            except Exception:
+                pass
+        with TASK_LOCK:
+            cur = ACTIVE_TASKS.get(task_id, {})
+            if cur:
+                cur["pct"] = max(cur.get("pct", 0), pct)
+                if log_line:
+                    cur["last_log"] = log_line
+                save_task_progress(task_id, cur)
+
     # Step 1: 初始化
     update(5, f"📋 [{pname}] 准备中…读取 Cookie 与环境")
 
@@ -208,11 +225,11 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags,
     update(25, f"🚀 [{pname}] 正在连接 {platform_id} 平台上传接口…")
     time.sleep(0.3)
 
-    # Step 2-3: 执行实际上传（耗时最长）
+    # Step 2-3: 执行实际上传（耗时最长，实时回传日志）
     update(40, f"⬆️  [{pname}] 正在上传视频（可能需 1-5 分钟）…")
 
     uploader = RealPlatformUploader(platform_id, video_file, title, desc, tags)
-    result = uploader.execute_upload()
+    result = uploader.execute_upload(on_progress=on_progress)
 
     # Step 4: 结果
     finish_time = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -313,6 +330,7 @@ def start_upload_task():
     desc = data.get("desc", "")
     tags = data.get("tags", [])
     force = data.get("force", False)  # Allow override for forced re-publish
+    dispatch_session_id = data.get("dispatch_session_id", "")  # Groups tasks from one click
 
     # ===== DUPLICATE PUBLISH GUARD =====
     if not force:
@@ -335,7 +353,7 @@ def start_upload_task():
 
     task_id = f"{platform_id}_task_{int(time.time()*1000)}"
     
-    t = threading.Thread(target=_run_real_upload_thread, args=(task_id, platform_id, video_file, title, desc, tags))
+    t = threading.Thread(target=_run_real_upload_thread, args=(task_id, platform_id, video_file, title, desc, tags, dispatch_session_id))
     t.daemon = True
     t.start()
 
@@ -375,6 +393,20 @@ def get_active_tasks():
     except Exception:
         pass
     return jsonify(result)
+
+@app.route("/api/task-log", methods=["GET"])
+def get_task_log():
+    """返回某任务的实时执行日志"""
+    task_id = request.args.get("task_id")
+    log_path = _task_progress_file(task_id).replace(".json", ".log")
+    if os.path.exists(log_path):
+        try:
+            with open(log_path, "r", encoding="utf-8") as f:
+                lines = f.read().splitlines()
+            return jsonify({"log": lines[-200:]})
+        except Exception:
+            return jsonify({"log": []})
+    return jsonify({"log": []})
 
 @app.route("/api/history", methods=["GET"])
 def get_history():
