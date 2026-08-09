@@ -293,6 +293,17 @@ async def login_platform(platform_key):
                                 json.dump(state, f, indent=2, ensure_ascii=False)
                             print(f"✅ Cookie 已安全持久化保存至: {target_path}")
 
+                    # 视频号特例：SAU 上传器实际读取 cookies/tencent_uploader/default，
+                    # 而默认 cookie_files 只写 tencent_default.json，故此处额外同步一份，
+                    # 否则登录成功但上传器仍报 cookie 失效。
+                    if platform_key == "tencent":
+                        tdir = os.path.join(SAU_ROOT, "cookies", "tencent_uploader")
+                        os.makedirs(tdir, exist_ok=True)
+                        tpath = os.path.join(tdir, "default")
+                        with open(tpath, "w", encoding="utf-8") as f:
+                            json.dump(state, f, indent=2, ensure_ascii=False)
+                        print(f"✅ 视频号 Cookie 已同步至上传器目录: {tpath}")
+
                     login_success = True
                     break
             except Exception as e:

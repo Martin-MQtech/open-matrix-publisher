@@ -549,7 +549,11 @@
                     body: JSON.stringify({ platform_id: platformId })
                 });
                 const data = await res.json();
-                alert(`🚀 ${data.msg}`);
+                if (platformId === 'tencent') {
+                    alert(`🚀 ${data.msg}\n\n⚠️ 视频号需弹出浏览器用微信扫码。若没有浏览器窗口弹出，说明服务不在本机桌面运行——请先在本机终端执行 ./start_ui.sh 启动服务，再刷新本页重试。`);
+                } else {
+                    alert(`🚀 ${data.msg}`);
+                }
                 refreshSessionStatus();
             } catch (err) { alert("⚠️ 无法连接本地服务 (localhost:5001)，请先运行 ./start_ui.sh"); }
         }
