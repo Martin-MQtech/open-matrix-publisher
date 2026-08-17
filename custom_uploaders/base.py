@@ -56,7 +56,9 @@ SESSION_COOKIES: dict[str, list[str]] = {
     "toutiao": ["LOGIN_A"],
     "bilibili": ["SESSDATA", "bili_jct"],
     "kuaishou": ["kuaishou.server.web_st"],
-    "tencent": ["sessionid", "wxuin"]
+    "tencent": ["sessionid", "wxuin"],
+    "baijiahao": ["BDUSS", "BAIDUID"],
+    "fanqie": ["sessionid", "sessionid_ss"]
 }
 
 

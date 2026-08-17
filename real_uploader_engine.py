@@ -141,7 +141,7 @@ class RealPlatformUploader:
 
         sau_platforms = ["douyin", "kuaishou", "xiaohongshu", "tencent", "bilibili", "youtube"]
         custom_platforms = ["x", "linkedin", "facebook", "tiktok", "instagram",
-                            "weibo", "zhihu", "toutiao"]
+                            "weibo", "zhihu", "toutiao", "baijiahao", "fanqie"]
 
         # Creator dashboard links per platform
         creator_links = {
@@ -258,12 +258,15 @@ class RealPlatformUploader:
                 "weibo":     "weibo_uploader",
                 "zhihu":     "zhihu_uploader",
                 "toutiao":   "toutiao_uploader",
+                "baijiahao": "baijiahao_uploader",
+                "fanqie":    "fanqie_uploader",
             }
-            module_name = module_map.get(self.platform_id, f"{self.platform_id}_uploader")
             custom_links = {
                 "weibo":   "https://weibo.com/u/",
                 "zhihu":   "https://www.zhihu.com/creator/",
                 "toutiao": "https://mp.toutiao.com/profile_v4/",
+                "baijiahao": "https://baijiahao.baidu.com/",
+                "fanqie":  "https://pugc.yueduwuxian.com/fqvideo/home/publish-video",
                 "x":       "https://twitter.com/",
                 "linkedin":"https://www.linkedin.com/feed/",
                 "facebook":"https://www.facebook.com/",

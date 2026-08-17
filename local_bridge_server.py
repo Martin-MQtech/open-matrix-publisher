@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 from real_uploader_engine import load_credentials, save_credentials, check_profile_logged_in, RealPlatformUploader
 from chat_ai_bridge import generate_copy_via_free_ai
+from url_downloader import download_remote_video, cleanup_temp_video, is_remote_url
 
 app = Flask(__name__)
 
@@ -171,7 +172,7 @@ def get_status():
 
     creds = load_credentials()
     session_status = {}
-    all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok"]
+    all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "baijiahao", "fanqie", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok"]
     
     for pid in all_platforms:
         is_logged, msg = check_profile_logged_in(pid)
@@ -506,6 +507,51 @@ def api_generate_free_ai():
             "title": f"【实测推荐】{topic} · 养护肩颈黑科技",
             "desc": f"关于【{topic}】：核心亮点与适用场景速览，欢迎在评论区交流讨论。"
         })
+
+@app.route("/api/publish", methods=["POST"])
+def api_publish_batch():
+    """
+    Standard REST Webhook Endpoint for external agents / workflows (Dify, n8n, OpenClaw).
+    Payload:
+    {
+        "platforms": ["tencent", "douyin", "youtube", "tiktok"],
+        "video_file": "/path/to/video.mp4" or "https://remote.com/video.mp4",
+        "title": "My Title",
+        "desc": "My Desc",
+        "tags": ["tag1", "tag2"]
+    }
+    """
+    data = request.json or {}
+    platforms = data.get("platforms", [])
+    video_file = data.get("video_file", "")
+    title = data.get("title", "")
+    desc = data.get("desc", "")
+    tags = data.get("tags", [])
+
+    if not platforms or not video_file or not title:
+        return jsonify({"error": "platforms, video_file, and title are required"}), 400
+
+    # If remote URL, download it first
+    try:
+        local_path, is_temp = download_remote_video(video_file)
+    except Exception as e:
+        return jsonify({"error": f"Failed to download remote video: {e}"}), 400
+
+    task_ids = []
+    session_id = f"api_dispatch_{int(time.time()*1000)}"
+    for pid in platforms:
+        t_id = f"{pid}_task_{int(time.time()*1000)}"
+        t = threading.Thread(target=_run_real_upload_thread, args=(t_id, pid, local_path, title, desc, tags, session_id))
+        t.daemon = True
+        t.start()
+        task_ids.append({"platform_id": pid, "task_id": t_id})
+
+    return jsonify({
+        "status": "started",
+        "dispatch_session_id": session_id,
+        "tasks": task_ids,
+        "video_file": os.path.basename(local_path)
+    })
 
 if __name__ == "__main__":
     print("🚀 启动 Open Matrix Publisher Web 控制台: http://localhost:5001")
