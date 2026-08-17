@@ -1,186 +1,92 @@
 # 🌐 Open Matrix Publisher (全域矩阵)
 
-> **An open-source, AI-native, cross-platform video distribution engine.**  
-> Dispatch a single video to 10+ platforms — silently, in the background, zero front-end interruption.
+> **专为传统国际贸易、跨境电商与出海品牌打造的 AI 原生全域社媒分发与营销中枢。**  
+> 一套资产，中英双语，全网 28 平台静默并发分发 · 🇨🇳 国内 10 大平台做深做透 · 🌏 国际 18 大主流平台收割全球红利。
 
 [![GitHub Stars](https://img.shields.io/github/stars/Martin-MQtech/open-matrix-publisher?style=social)](https://github.com/Martin-MQtech/open-matrix-publisher)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB)](https://python.org)
+[![MCP Ready](https://img.shields.io/badge/MCP-Protocol%20Ready-00e6ff)](https://modelcontextprotocol.io)
 
 ---
 
-## ✨ What It Does
+## 🎯 核心定位与服务人群 (Target Persona & Mission)
 
-| Platform Tier | Platforms |
-|---|---|
-| 🇨🇳 Domestic | 抖音 · 小红书 · 微博 · B站 · 视频号 · 今日头条 |
-| 🌏 Global | YouTube · TikTok · X (Twitter) · LinkedIn · Facebook · Instagram |
+Open Matrix Publisher 旨在打破国内外割裂的自媒体营销现状，为以下核心人群提供**零成本、高并发、中英双语、本地安全**的一站式全网营销中枢：
 
-**One command → simultaneous dispatch to all platforms. No manual copy-paste. No repeated logins.**
+1. **🏭 传统国际贸易企业 (B2B Exporters & OEM/ODM Factories)**：
+   - 痛点：拥有优质制造能力与发明专利，但缺乏海外社媒获客渠道。
+   - 赋能：一键将工厂实拍、生产车间、研发质检视频分发至 **LinkedIn、YouTube、X (Twitter)、微信视频号、知乎**，大宗外贸询盘直达。
+2. **🛍️ 跨境电商卖家与出海 DTC 品牌 (Cross-Border Sellers / Amazon / TikTok Shop / TEMU / Shopify)**：
+   - 痛点：多平台铺货与社媒种草成本高，海外工具（Buffer/Hootsuite）极其昂贵且不支持国内平台。
+   - 赋能：一键同步视频至 **TikTok、Instagram Reels、Pinterest (采购神器)、Snapchat、Facebook、抖音、小红书**，实现全网裂变种草。
+3. **🌍 全球化出海项目与多语种创作者 (Global Marketing Projects & Independent Creators)**：
+   - 痛点：中英双语内容流转繁琐，跨国平台风控与登录态管理困难。
+   - 赋能：零 API 成本免费 AI 网页连通器（豆包/Kimi）自动生成地道文案，Playwright 真实浏览器指纹隔离，安全防封。
 
 ---
 
-## 💡 Core Philosophy (产品核心设计理念)
+## 🌐 28 平台全球超级矩阵全景 (28-Platform Matrix)
+
+| 分区 | 平台数量 | 覆盖平台名单 | 核心商业获客场景 |
+| :--- | :--- | :--- | :--- |
+| **🇨🇳 国内阵列** | **10 大平台** | 微信视频号 · 抖音 · 哔哩哔哩 (B站) · 快手 · 小红书 · 微博 · 今日头条 · 知乎 · 百家号 · 番茄视频 | 搜索 SEO · 私域公域联动 · 内循环品牌沉淀 |
+| **🌏 海外阵列** | **18 大主流** | YouTube · TikTok · Instagram · Facebook · X (Twitter) · LinkedIn · **Pinterest · Snapchat · Threads · Reddit · Quora · VK (俄语区霸主) · LINE VOOM (日韩东南亚) · Vimeo · Rumble · Dailymotion · Telegram · WhatsApp** | 欧美主流 · 跨境电商选品 · 俄语区外贸 · 日韩东南亚 · 垂直极客社群 |
+
+---
+
+## 🤖 全球主流 AI 智能体编排生态 (Multi-Agent Harness Hub)
+
+本项目不仅提供现代化 Web 控制台，更作为 **AI 时代的基础设施**，原生深度适配全球主流自主智能体架构：
+
+- **Google Antigravity (AGY Jump)**：原生 Skill 规范支持（`skills/open-matrix-publisher/SKILL.md`），多 Agent 协同直接调度。
+- **DeepSeek Harness**：标准 Function Calling Tools Schema 驱动。
+- **Nous Hermes Agent**：`<!-- hermes-integrable argv-marker=cli -->` 标记，CLI 管道极速编排。
+- **Zed / Z-Code Harness**：Zed Context Servers 原生 MCP 扩展。
+- **Claude Code & Cursor**：内置标准 MCP Server（`mcp_server.py`），对话中一句话触发全网分发。
+- **Dify / n8n / 扣子 Coze**：开放标准 REST Webhook（`POST /api/publish`）。
+
+---
+
+## 💡 核心设计哲学 (Core Philosophy)
 
 1. **免费打底 (Zero-Cost & Free-First)**：
-   - 100% 开源免费 (MIT License)，绝不强制订阅，绝不强制购买大模型 API 密钥。
-   - 原生整合免费网页端 AI Chatbot（豆包、Kimi、通义千问、ChatGPT），提供 1 键唤醒与 1 键剪贴板自动识别解析，让所有创作者零门槛享用 AI 赋能。
-2. **极致便捷的聚合集成中枢 (Convenience Hub)**：
-   - 打造一站式聚合中心：视频点选 + 模板/AI 创作 + 账号 Cookie 持久化 + 全网 14 平台并发分发。
-3. **高阶智商弹性升级 (Elastic API Upgrade)**：
-   - 为有更高自动化需求的高阶用户与 AI Agent 提供 API 密钥插槽，支持 DeepSeek、OpenAI、Claude、Ollama 等模型的全自动无感调用。
+   - 100% 开源免费 (MIT License)，绝无隐藏订阅费。
+   - 原生整合免 API 费用的豆包与 Kimi 智能连通器，提示词净化清洗，剪贴板秒级提取。
+2. **极速全源输入 (Universal Video Pipeline)**：
+   - 同时支持**本地视频文件**与**远程 HTTP/HTTPS 直链（OSS/COS/CDN/云端剪辑）**，自动流式拉取、校验、上传并清理缓存。
+3. **真实指纹与防重锁安全 (Anti-Detection & History Ledger)**：
+   - Patchright 底层 CDP 去除自动化特征，真实 Cookie 存储，历史 Ledger 严防重复撞车发布。
 
 ---
 
-## 🌐 Online Web Live Demo (公网在线域名体验)
+## 🖥️ 访问与使用方式
 
-👉 **在线控制台访问地址**：[https://martin-mqtech.github.io/open-matrix-publisher/](https://martin-mqtech.github.io/open-matrix-publisher/)
+### 1. 线上产品官网 (Live Demo)
+👉 **官网地址**：[https://martin-mqtech.github.io/open-matrix-publisher/](https://martin-mqtech.github.io/open-matrix-publisher/)
 
-无需提前 Clone 仓库，全球任何用户只需点击上述 GitHub Pages 域名链接，即可直接在浏览器中打开全域矩阵 15 平台中英双语控制台！
-
----
-
-## 🖥️ Web Dashboard (GUI 可视化控制台)
-
-Open Matrix Publisher 支持 **GitHub Pages 线上部署** 与 **本地一键拉起** 两种模式：
-
-- **线上访问**：直接打开 [https://martin-mqtech.github.io/open-matrix-publisher/](https://martin-mqtech.github.io/open-matrix-publisher/)
-- **本地一键启动**：运行 `./start_ui.sh` 自动调起 `http://localhost:5001`
-- **核心功能**：中英双语模式选择、本地视频点选、15 平台网格状态实时校验、扫码登录弹窗与 🔒 防重历史 Ledger。
-
+### 2. 本地一键启动
 ```bash
-# 本地 1 秒一键启动 GUI
+# 启动本地可视化控制台与 API 服务
 ./start_ui.sh
+# 访问 http://localhost:5001
+```
+
+### 3. MCP 智能体模式配置 (Claude Desktop / Cursor)
+```json
+{
+  "mcpServers": {
+    "open-matrix-publisher": {
+      "command": "python3",
+      "args": ["/path/to/open-matrix-publisher/mcp_server.py"]
+    }
+  }
+}
 ```
 
 ---
 
-## 🚀 AI-Native QuickStart (Zero Learning Curve)
+## 📄 开源许可证
 
-> **If you're new to command-line tools or environment setup — skip all of it.**
-
-Copy the repo link below and hand it directly to any AI Agent you're already using:
-
-```
-https://github.com/Martin-MQtech/open-matrix-publisher.git
-```
-
-Then say:
-
-> **"Please clone this open-source project, install its dependencies, configure the environment, and help me distribute the video files in my folder to Douyin and Xiaohongshu."**
-
-Compatible AI Agents: **Codex · Claude Code · Google Antigravity · 腾讯 Workbuddy · Open Code · Mimo Code** — and any agent with filesystem + shell access.
-
-The agent will handle: cloning, `pip install`, cookie login, and background dispatch — automatically.
-
----
-
-## 🛠️ Manual Setup & Web UI Usage
-
-### 1. Clone
-```bash
-git clone https://github.com/Martin-MQtech/open-matrix-publisher.git
-cd open-matrix-publisher
-```
-
-### 2. Install Dependencies
-```bash
-pip install -r requirements.txt
-playwright install chromium
-```
-
-### 3. Option A: Launch Web GUI Dashboard
-```bash
-./start_ui.sh
-# Opens http://localhost:5001 automatically in your browser
-```
-
-### 4. Option B: CLI / Script Campaign
-Scan QR code for one-time cookie setup:
-```bash
-python3 qr_login_manager.py
-```
-Then run campaign via CLI or config file:
-```bash
-python3 dispatch.py --config /path/to/your/campaign.json
-```
-
----
-
-## 📁 Project Structure
-
-```
-open-matrix-publisher/
-├── index.html                   # Web GUI Dashboard frontend
-├── start_ui.sh                  # 1-Click launcher script for Web UI
-├── real_uploader_engine.py      # Core dispatch engine
-├── interactive_login.py         # Headed browser QR login assistant
-├── qr_login_manager.py          # One-time login & cookie saver
-├── cookie_extractor.py          # Chrome cookie import utility
-├── local_bridge_server.py       # Local HTTP bridge server (Port 5001)
-├── dispatch.py                  # CLI dispatcher entry point
-├── batch_dispatch_domestic.py   # Quick-run: CN platforms
-├── batch_dispatch_global.py     # Quick-run: Global platforms
-├── custom_uploaders/            # Per-platform upload adapters
-│   ├── toutiao_uploader.py
-│   ├── weibo_uploader.py
-│   ├── zhihu_uploader.py
-│   ├── facebook_uploader.py
-│   └── ...
-├── cookies/                     # Session storage (git-ignored)
-├── examples/
-│   └── campaign_template.json   # Template for your campaign
-├── docs/                        # Architecture & strategy docs
-├── requirements.txt
-└── .gitignore
-```
-
----
-
-## 🔒 Security & Privacy
-
-- **Cookies are stored locally** in the `cookies/` directory and **never committed to git** (enforced by `.gitignore`)
-- **No credentials in source code** — all sensitive data lives in `cookies/` or `.env`
-- **Headless background execution** — after initial QR login, all dispatch runs silently with no browser window
-- See [`docs/SECURITY_AND_PRIVACY_GUIDE.md`](docs/SECURITY_AND_PRIVACY_GUIDE.md) for the full security architecture
-
----
-
-## ⚙️ Architecture: Non-Intrusive Background Dispatch
-
-```
-[One-time setup]  QR Login → cookie saved to cookies/
-                      ↓
-[Every run]       Load cookie → headless browser → platform API/UI
-                      ↓
-                  Upload in background → log result → exit
-```
-
-The user's foreground browser and work are never interrupted after initial setup.  
-See [`docs/ADVANCED_AUTOMATION_ARCHITECTURE.md`](docs/ADVANCED_AUTOMATION_ARCHITECTURE.md) for the full four-tier hybrid driver architecture (Playwright → Patchright → CDP → Official API).
-
----
-
-## 🗺️ Roadmap
-
-- [x] Web dashboard (local UI) with 1-click launcher `./start_ui.sh`
-- [ ] Scheduled / recurring dispatch (cron)
-- [ ] OAuth official API integrations (YouTube, LinkedIn)
-- [ ] Plugin system for custom uploaders
-- [ ] Windows & Linux support
-
----
-
-## 🤝 Contributing
-
-This project is open-source under the MIT License. PRs, issues, and stars are all welcome.
-
-**Star the repo** if this saves you time. Share it with a creator friend.
-
----
-
-## 👤 Author
-
-**Martin · MQ Tech** | [@Martin-MQtech](https://github.com/Martin-MQtech)  
-Builder · Strategist · Cross-border Content Creator  
-[www.emuqi.com](https://www.emuqi.com)
+本项目遵循 [MIT License](LICENSE) 开源协议。
+源自 **木齐科技 (MQ Tech · [www.emuqi.com](https://www.emuqi.com))** 真实出海与企业营销实战孵化。
