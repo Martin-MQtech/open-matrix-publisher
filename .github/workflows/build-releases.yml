@@ -1,0 +1,76 @@
+name: Build & Release Desktop Apps
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller flask pywebview patchright playwright
+
+      - name: Build macOS App with PyInstaller
+        run: |
+          pyinstaller --noconfirm --onedir --windowed \
+            --name "OpenMatrixPublisher" \
+            --add-data "index.html:." \
+            --add-data "logo.png:." \
+            --add-data "showcase_banner.jpg:." \
+            --icon "logo.png" \
+            desktop_app.py
+          cd dist && zip -r "OpenMatrixPublisher-macOS.zip" "OpenMatrixPublisher.app"
+
+      - name: Upload macOS Release Asset
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/OpenMatrixPublisher-macOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller flask pywebview patchright playwright
+
+      - name: Build Windows Executable
+        run: |
+          pyinstaller --noconfirm --onefile --windowed `
+            --name "OpenMatrixPublisher-Setup" `
+            --add-data "index.html;." `
+            --add-data "logo.png;." `
+            --add-data "showcase_banner.jpg;." `
+            desktop_app.py
+
+      - name: Upload Windows Release Asset
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/OpenMatrixPublisher-Setup.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
