@@ -68,12 +68,12 @@ Open Matrix Publisher 旨在打破国内外割裂的自媒体营销现状，为�
 | :--- | :--- | :--- | :--- |
 | YouTube | SAU 引擎 | Google 账号 | ✅ 已接入 |
 | Facebook | 自定义适配器 | 账号密码 | ✅ 已接入 |
-| TikTok | 自定义适配器 | 扫码 / Google / Apple | ⚠️ 会话已接入 · 发布 UI 反自动化受限 ¹ |
+| TikTok | 自定义适配器 | 扫码 / Google / Apple | ✅ E2E 实测发布成功 |
 | Instagram | 自定义适配器 | 账号密码 | ⚠️ 会话已接入 · 发布 UI 反自动化受限 ¹ |
 | X (Twitter) | 自定义适配器 | 账号密码 / Google | ✅ E2E 实测发布成功 |
 | LinkedIn | 自定义适配器 | 账号密码 | ⚠️ 会话已接入 · 发布 UI 反自动化受限 ¹ |
 
-> ¹ 2026-08-18 实测：X 端到端发布成功；TikTok / Instagram / LinkedIn 的登录会话已可从本机 Chrome 一键提取（`scripts/extract_chrome_cookies.py`），但其网页发布流程会拦截自动化操作（文件选择/发帖交互不响应），需在有头真实浏览器或平台 API 方向继续攻关。
+> ¹ 2026-08-18 实测：X / TikTok / Facebook 端到端发布成功；Instagram / LinkedIn 的登录会话已可从本机 Chrome 一键提取（`scripts/extract_chrome_cookies.py`），但其网页发布流程仍拦截自动化操作（文件选择/发帖交互不响应），需在有头真实浏览器或平台 API 方向继续攻关。
 
 
 ---
