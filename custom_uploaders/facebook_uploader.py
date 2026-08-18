@@ -51,7 +51,8 @@ async def upload(video_path: str, title: str, tags: list[str] | None = None,
     page = await context.new_page()
     try:
         await page.goto(COMPOSE_URL, wait_until="domcontentloaded")
-        await page.wait_for_load_state("networkidle", timeout=30000)
+        # Facebook 页面长连接不断，networkidle 永不触发 → 固定等待让页面 JS 就绪
+        await page.wait_for_timeout(12000)
         await page.wait_for_timeout(2000)
         # 先关可能的弹窗/遮罩
         for sel in ['button:has-text("允许")', 'button:has-text("Allow")',
