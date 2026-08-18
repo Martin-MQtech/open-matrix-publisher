@@ -39,11 +39,13 @@ def _try_upload_via_instagrapi(video_path: str, caption: str, cookie_path: str, 
             return False
 
         with open(cookie_path, "r", encoding="utf-8") as f:
-            cookies = json.load(f)
+            data = json.load(f)
+        # storage_state 文件结构是 {"cookies": [...], "origins": [...]}，兼容两种形态
+        cookies = data.get("cookies", data) if isinstance(data, dict) else data
 
         sessionid = None
         for c in cookies:
-            if c.get("name") == "sessionid":
+            if isinstance(c, dict) and c.get("name") == "sessionid":
                 sessionid = c.get("value")
                 break
 
