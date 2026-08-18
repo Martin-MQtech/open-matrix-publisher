@@ -10,7 +10,7 @@ from pathlib import Path
 
 # 让本包能直接 import sau 的 conf / utils
 import os
-SAU_ROOT = Path(os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"))
+SAU_ROOT = Path(os.environ.get("SAU_ROOT", "~/social-auto-upload")).expanduser()
 if str(SAU_ROOT) not in sys.path:
     sys.path.insert(0, str(SAU_ROOT))
 

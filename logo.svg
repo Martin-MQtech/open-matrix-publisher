@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="og" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffc36e"/>
+      <stop offset="50%" stop-color="#f68f2e"/>
+      <stop offset="100%" stop-color="#d96f1f"/>
+    </linearGradient>
+  </defs>
+  <!-- 炭黑圆角底 -->
+  <rect x="1" y="1" width="62" height="62" rx="15" fill="#1c1a15"/>
+  <!-- 外圈（细环框架） -->
+  <circle cx="32" cy="32" r="27" fill="none" stroke="#7a7466" stroke-width="2"/>
+  <!-- 大 M 背景（Matrix / MUQI 首字母）：V 形双臂清晰可见 -->
+  <g stroke="#f2eee6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M19 16 V48"/>
+    <path d="M45 16 V48"/>
+    <path d="M19 16 L32 39"/>
+    <path d="M45 16 L32 39"/>
+  </g>
+  <!-- 中心 O（Open · 橙黄渐变）：加大圆洞，把 M 与 O 相交的 V 形完整套出 -->
+  <circle cx="32" cy="32" r="12" fill="none" stroke="url(#og)" stroke-width="6"/>
+</svg>

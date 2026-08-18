@@ -46,7 +46,7 @@
 - 选定全球时间周三零点，在 Product Hunt 提交上线。通过种子用户投票争取 Product of the Day（当日最佳产品），获得极高曝光。
 
 ### 5. 15 秒极速直观 Demonstration (GIF Demo)
-- 在 GitHub `README.md` 与帖文第一屏，放置一个 15 秒的动图 GIF，直接展示“输入一条视频 ➔ 后台静默无感发布到 7 大平台”的直观画面。
+- 在 GitHub `README.md` 与帖文第一屏，放置一个 15 秒的动图 GIF，直接展示“输入一条视频 ➔ 一键发布到 16 个平台（国内 10 + 海外 6）”的直观画面。（已落地：`media/demo-flow.gif` 已置于 README 第一屏。）
 
 ### 6. 社区 Feedback 反馈闭环 (Issue Management)
 - 对每一个提 Issue、报 Bug 的开发者第一时间回复、致谢并修复。把早期使用者变成项目的忠实布道者 (Evangelists)。

@@ -23,9 +23,23 @@ platform_credentials.json
 *.jpeg
 *.png
 *.gif
+# README 演示动图（其余 gif 仍屏蔽）
+!media/demo-flow.gif
+# Logo 资产（其余 png 仍屏蔽）
+!logo.png
+!logo-mono-white.png
+!logo-mono-black.png
+!logo-mono-orange.png
 temp_/
 uploads/
 covers/
+
+# === 内部工具状态（不入库）===
+.workbuddy/
+.freebuff/
+.venv/
+.idea/
+.vscode/
 
 # === OS ===
 .DS_Store

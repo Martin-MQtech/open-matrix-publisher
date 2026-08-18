@@ -3,9 +3,9 @@
 自动识别“上传完成”与 Woo-button 状态
 """
 import os, sys, json, asyncio, time
-sys.path.insert(0, os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"))
+sys.path.insert(0, os.path.expanduser(os.environ.get("SAU_ROOT", "~/social-auto-upload")))
 
-SAU_COOKIES = os.path.join(os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"), "cookies")
+SAU_COOKIES = os.path.join(os.path.expanduser(os.environ.get("SAU_ROOT", "~/social-auto-upload")), "cookies")
 COOKIE_FILE = os.path.join(SAU_COOKIES, "weibo_default.json")
 
 async def _upload_async(video_path, title, tags, desc=""):

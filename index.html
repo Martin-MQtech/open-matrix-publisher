@@ -3,1589 +3,1028 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Open Matrix Publisher (全域矩阵) · 新一代 AI 原生 16 平台全域视频分发引擎</title>
-    <meta name="description" content="Open Matrix Publisher (全域矩阵)：开源全域视频矩阵分发工具。支持国内10大平台（视频号/抖音/B站/快手/小红书/微博/头条/知乎/百家号/番茄）与海外6大平台（YouTube/TikTok/Facebook/X/LinkedIn/Instagram），提供 Web GUI、MCP Server、HTTP API 与免费 AI 文案连通器。">
-    <!-- Google Fonts & FontAwesome -->
+    <title>Open Matrix Publisher · 全域视频分发</title>
+    <meta name="description" content="Open Matrix Publisher：开源全域视频矩阵分发工具。选视频、写文案、勾选平台，一键并发分发到国内 10 大平台与海外 6 大平台。100% 本地运行。">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64 128x128 256x256">
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
     <style>
         :root {
-            --bg-dark: #060911;
-            --bg-card: rgba(13, 20, 36, 0.82);
-            --border-glow: rgba(0, 230, 255, 0.2);
-            --accent-gold: #ffd700;
-            --accent-orange: #f58220;
-            --accent-cyan: #00e6ff;
-            --accent-teal: #00ffc8;
-            --accent-purple: #8b5cf6;
-            --accent-pink: #ec4899;
-            --accent-red: #ff4757;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            /* 黑 · 灰 · 橙黄 */
+            --bg: #15130f;            /* 暖黑 */
+            --surface: #1c1a15;        /* 炭黑 */
+            --surface-2: #23201a;      /* 灰 */
+            --surface-3: #2a2721;
+            --ink: #f2eee6;            /* 暖白 */
+            --ink-2: #cfc9bd;
+            --muted: #9a9384;          /* 灰 */
+            --faint: #6f695c;
+            --line: rgba(242, 238, 230, 0.08);
+            --line-2: rgba(242, 238, 230, 0.16);
+
+            --accent: #e8892e;         /* 橙 */
+            --accent-2: #f3b25a;       /* 黄 */
+            --accent-deep: #c96f1e;
+            --accent-ink: #1c1308;
+            --accent-soft: rgba(232, 137, 46, 0.12);
+            --accent-line: rgba(232, 137, 46, 0.34);
+            --accent-grad: linear-gradient(135deg, #f5b25a 0%, #e8892e 55%, #d6762a 100%);
+
+            --success: #9cc08f;
+            --success-soft: rgba(156, 192, 143, 0.14);
+            --danger: #d07b6c;
+            --warn: #d8a24a;
+
+            /* 兼容旧引用 */
+            --bg-dark: var(--bg);
+            --bg-card: var(--surface);
+            --border-glow: var(--line);
+            --accent-cyan: var(--accent);
+            --accent-teal: var(--success);
+            --accent-gold: var(--accent-2);
+            --accent-orange: var(--accent-2);
+            --accent-purple: #b7a58f;
+            --accent-red: var(--danger);
+            --text-main: var(--ink);
+            --text-muted: var(--muted);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            background-image: 
-                radial-gradient(circle at 10% 10%, rgba(0, 230, 255, 0.09) 0%, transparent 45%),
-                radial-gradient(circle at 90% 15%, rgba(139, 92, 246, 0.1) 0%, transparent 45%),
-                radial-gradient(circle at 50% 65%, rgba(0, 255, 200, 0.07) 0%, transparent 55%);
+            font-family: 'Inter', 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg);
+            color: var(--ink);
             min-height: 100vh;
-            overflow-x: hidden;
-            line-height: 1.6;
+            line-height: 1.65;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
         }
 
-        .glass-panel {
-            background: var(--bg-card);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--border-glow);
-            border-radius: 20px;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
-        }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { color: var(--accent-2); }
 
-        /* 顶部主导航栏 */
-        header.site-nav {
+        /* ── 顶栏 ── */
+        .topbar {
             position: sticky;
-            top: 16px;
-            z-index: 999;
-            margin: 0 24px;
+            top: 0;
+            z-index: 100;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 14px 28px;
-            border-radius: 18px;
+            padding: 12px 28px;
+            background: rgba(21, 19, 15, 0.9);
+            border-bottom: 1px solid var(--line);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand img { width: 32px; height: 32px; border-radius: 9px; }
+        .brand .name { font-size: 15px; font-weight: 700; letter-spacing: 0.2px; }
+        .brand .tag { font-size: 12px; color: var(--faint); }
+        .topbar-right { display: flex; align-items: center; gap: 18px; font-size: 12.5px; }
+        .topbar-right .link { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+        .topbar-right .link:hover { color: var(--ink); }
+        .engine-dot { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); }
+        .engine-dot::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+        .engine-dot.on { color: var(--success); }
+        .engine-dot.on::before { background: var(--success); }
+        .engine-dot.off { color: var(--warn); }
+        .engine-dot.off::before { background: var(--warn); }
 
-        .brand-box {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            text-decoration: none;
-        }
+        /* ── 布局 ── */
+        .shell { max-width: 1060px; margin: 0 auto; padding: 32px 24px 60px; }
 
-        .brand-logo-img {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0, 230, 255, 0.5);
-            border: 1px solid rgba(0, 230, 255, 0.4);
-            transition: transform 0.3s ease;
-        }
-
-        .brand-logo-img:hover {
-            transform: scale(1.08) rotate(4deg);
-        }
-
-        .title-area h1 {
-            font-size: 19px;
-            font-weight: 900;
-            background: linear-gradient(90deg, #ffffff, var(--accent-cyan), var(--accent-teal));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 0.5px;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 13px;
+        .page-head { margin-bottom: 28px; }
+        .page-head h1 {
+            font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', serif;
+            font-size: 30px;
             font-weight: 600;
-            transition: color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .nav-links a:hover, .nav-links a.active {
-            color: var(--accent-cyan);
-        }
-
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .btn-glow {
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-teal));
-            color: #000;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 13px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 18px rgba(0, 230, 255, 0.35);
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .btn-glow:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 28px rgba(0, 230, 255, 0.6);
-        }
-
-        /* Hero 品牌首屏 */
-        .hero-section {
-            max-width: 1280px;
-            margin: 40px auto 30px auto;
-            padding: 0 24px;
-            text-align: center;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(0, 230, 255, 0.1);
-            border: 1px solid rgba(0, 230, 255, 0.3);
-            color: var(--accent-cyan);
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            box-shadow: 0 0 25px rgba(0, 230, 255, 0.15);
-        }
-
-        .hero-title {
-            font-size: 46px;
-            font-weight: 900;
-            line-height: 1.25;
-            margin-bottom: 18px;
-            background: linear-gradient(135deg, #ffffff 20%, #bbf7d0 50%, var(--accent-cyan) 80%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
-        }
-
-        .hero-subtitle {
-            font-size: 16px;
-            color: var(--text-muted);
-            max-width: 820px;
-            margin: 0 auto 28px auto;
-            line-height: 1.7;
-        }
-
-        .metric-cards-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            max-width: 1040px;
-            margin: 0 auto 36px auto;
-        }
-
-        .metric-pill {
-            background: rgba(13, 20, 36, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 16px 12px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .metric-pill:hover {
-            border-color: var(--accent-cyan);
-            transform: translateY(-2px);
-        }
-
-        .metric-pill h4 {
-            font-size: 22px;
-            font-weight: 800;
-            color: #fff;
-            margin-bottom: 2px;
-        }
-
-        .metric-pill p {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        /* 16 大全平台矩阵生态区 */
-        .section-container {
-            max-width: 1280px;
-            margin: 40px auto;
-            padding: 0 24px;
-        }
-
-        .section-header-title {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-
-        .section-header-title h2 {
-            font-size: 26px;
-            font-weight: 800;
-            color: #fff;
+            letter-spacing: -0.01em;
             margin-bottom: 8px;
         }
+        .page-head p { color: var(--muted); font-size: 13.5px; }
 
-        .section-header-title p {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
+        .workspace { display: grid; grid-template-columns: 1fr 400px; gap: 20px; align-items: start; }
+        @media (max-width: 940px) { .workspace { grid-template-columns: 1fr; } }
 
-        .platform-category-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            margin-bottom: 14px;
-        }
-
-        .platform-showcase-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 12px;
-        }
-
-        @media (max-width: 1000px) {
-            .platform-showcase-grid { grid-template-columns: repeat(3, 1fr); }
-            .metric-cards-bar { grid-template-columns: repeat(2, 1fr); }
-            .hero-title { font-size: 32px; }
-        }
-
-        .platform-show-card {
-            background: rgba(6, 9, 17, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
             border-radius: 14px;
-            padding: 14px 16px;
+            padding: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 12px 32px rgba(0,0,0,0.14);
+        }
+        .col-main { display: flex; flex-direction: column; gap: 20px; }
+
+        .step-head {
             display: flex;
             align-items: center;
-            gap: 12px;
-            transition: all 0.2s ease;
-        }
-
-        .platform-show-card:hover {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 230, 255, 0.06);
-            transform: translateY(-2px);
-        }
-
-        .plat-icon-box {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-
-        .plat-text-box h5 {
-            font-size: 13px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .plat-text-box p {
-            font-size: 10px;
-            color: var(--text-muted);
-        }
-
-        /* 4 大核心技术支柱 */
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 18px;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 900px) {
-            .feature-grid { grid-template-columns: 1fr 1fr; }
-        }
-
-        .feature-card {
-            background: rgba(13, 20, 36, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 24px 20px;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .feature-card:hover {
-            border-color: var(--accent-purple);
-            transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(139, 92, 246, 0.18);
-        }
-
-        .feature-icon-wrapper {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            background: rgba(139, 92, 246, 0.15);
-            color: var(--accent-purple);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            margin-bottom: 16px;
-        }
-
-        .feature-card h3 {
-            font-size: 16px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 8px;
-        }
-
-        .feature-card p {
-            font-size: 12px;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-
-        /* 分发工作室内嵌区域 */
-        .studio-container {
-            max-width: 1280px;
-            margin: 40px auto;
-            padding: 0 24px;
-        }
-
-        .main-layout {
-            display: grid;
-            grid-template-columns: 1fr 440px;
-            gap: 20px;
-        }
-
-        @media (max-width: 1100px) {
-            .main-layout { grid-template-columns: 1fr; }
-        }
-
-        .video-stage {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
-
-        .section-header {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--accent-cyan);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(0, 230, 255, 0.15);
-        }
-
-        .file-select-banner {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(0, 230, 255, 0.05);
-            border: 1px dashed var(--accent-cyan);
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 14px;
-        }
-
-        .btn-file-browse {
-            background: rgba(0, 230, 255, 0.15);
-            color: var(--accent-cyan);
-            border: 1px solid var(--accent-cyan);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-file-browse:hover {
-            background: var(--accent-cyan);
-            color: #000;
-        }
-
-        .large-video-box {
-            background: #000;
-            border-radius: 14px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            position: relative;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-        }
-
-        .large-video-box video {
-            width: 100%;
-            height: 350px;
-            object-fit: contain;
-            display: block;
-            background: #000;
-        }
-
-        .video-meta-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(13, 20, 36, 0.9);
-            padding: 10px 16px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .copy-mode-tab-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(6, 9, 17, 0.7);
-            border: 1px solid var(--border-glow);
-            border-radius: 12px;
-            padding: 4px;
-            margin-top: 20px;
-            margin-bottom: 14px;
-        }
-
-        .copy-tab-btn {
-            flex: 1;
-            padding: 9px 14px;
-            border: none;
-            border-radius: 8px;
-            background: none;
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .copy-tab-btn.active {
-            background: rgba(0, 230, 255, 0.15);
-            color: #fff;
-            border: 1px solid rgba(0, 230, 255, 0.3);
-            box-shadow: 0 2px 10px rgba(0, 230, 255, 0.2);
-        }
-
-        .template-chips-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-
-        .chip-btn {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: var(--text-main);
-            font-size: 11px;
-            padding: 5px 11px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .chip-btn:hover {
-            border-color: var(--accent-cyan);
-            color: var(--accent-cyan);
-            background: rgba(0, 230, 255, 0.08);
-        }
-
-        .ai-portal-grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 12px;
-            margin-bottom: 12px;
-        }
-
-        .portal-card-box {
-            background: rgba(6, 9, 17, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 12px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
-
-        .form-control {
-            width: 100%;
-            background: rgba(6, 9, 17, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 10px;
-            padding: 12px 16px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-            transition: border 0.3s;
-        }
-
-        .form-control:focus {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 12px rgba(0, 230, 255, 0.2);
-        }
-
-        textarea.form-control {
-            resize: vertical;
-            min-height: 110px;
-            line-height: 1.6;
-        }
-
-        .compact-platform-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
             gap: 10px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            font-weight: 600;
         }
-
-        .platform-mini-card {
-            background: rgba(6, 9, 17, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 10px 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            opacity: 0.65;
-        }
-
-        .platform-mini-card:hover {
-            border-color: rgba(0, 230, 255, 0.5);
-            opacity: 0.9;
-        }
-
-        .platform-mini-card.selected {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 230, 255, 0.1);
-            opacity: 1;
-            box-shadow: 0 4px 15px rgba(0, 230, 255, 0.15);
-        }
-
-        .mini-card-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 6px;
-        }
-
-        .mini-platform-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .mini-icon {
-            width: 26px;
-            height: 26px;
-            border-radius: 8px;
-            display: flex;
+        .step-num {
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 13px;
-        }
-
-        .mini-name {
+            width: 22px;
+            height: 22px;
+            border-radius: 7px;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent-line);
+            color: var(--accent);
             font-size: 12px;
             font-weight: 700;
-            color: #fff;
         }
+        .step-hint { margin-left: auto; font-size: 11.5px; font-weight: 400; color: var(--faint); }
 
-        .checkbox-mini {
-            width: 16px;
-            height: 16px;
-            border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        /* ── 视频 ── */
+        .dropzone {
+            position: relative;
+            border: 1px dashed var(--line-2);
+            border-radius: 12px;
+            background: var(--surface-2);
+            min-height: 200px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
-            color: transparent;
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
         }
-
-        .platform-mini-card.selected .checkbox-mini {
-            background: var(--accent-cyan);
-            border-color: var(--accent-cyan);
-            color: #000;
+        .dropzone:hover, .dropzone.drag { border-color: var(--accent-line); background: var(--surface-3); }
+        .dropzone video { width: 100%; max-height: 320px; object-fit: contain; background: #000; display: block; }
+        .drop-empty { text-align: center; color: var(--muted); pointer-events: none; }
+        .drop-empty i { font-size: 30px; color: var(--accent); display: block; margin-bottom: 10px; }
+        .drop-empty .strong { color: var(--ink); font-weight: 600; }
+        .url-row { display: flex; gap: 8px; margin-top: 12px; }
+        .url-row input {
+            flex: 1;
+            background: var(--surface-2);
+            border: 1px solid var(--line-2);
+            border-radius: 9px;
+            padding: 10px 12px;
+            color: var(--ink);
+            font-size: 13px;
+            outline: none;
+            font-family: inherit;
         }
+        .url-row input:focus { border-color: var(--accent-line); }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border-radius: 9px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--line-2);
+            background: var(--surface-2);
+            color: var(--ink-2);
+            transition: border-color 0.2s, color 0.2s, background 0.2s, transform 0.15s;
+            white-space: nowrap;
+        }
+        .btn:hover { border-color: var(--accent-line); color: var(--accent); }
+        .btn.primary {
+            background: var(--accent-grad);
+            border: none;
+            color: var(--accent-ink);
+        }
+        .btn.primary:hover { transform: translateY(-1px); color: var(--accent-ink); filter: brightness(1.05); }
+        .btn.block { width: 100%; justify-content: center; padding: 13px 16px; font-size: 14.5px; }
+        .icon-btn {
+            background: var(--surface-2);
+            border: 1px solid var(--line-2);
+            color: var(--muted);
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-btn:hover { color: var(--ink); }
+        .pr-cancel { background: none; border: none; color: var(--faint); font-size: 11px; cursor: pointer; padding: 2px 4px; }
+        .pr-cancel:hover { color: var(--danger); }
+        .video-meta { margin-top: 10px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+        .video-meta .ok { color: var(--success); }
 
-        .mini-card-bottom {
+        /* ── 文案 ── */
+        .field { margin-bottom: 14px; }
+        .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+        .field input, .field textarea {
+            width: 100%;
+            background: var(--surface-2);
+            border: 1px solid var(--line-2);
+            border-radius: 9px;
+            padding: 11px 13px;
+            color: var(--ink);
+            font-size: 13.5px;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .field input:focus, .field textarea:focus { border-color: var(--accent-line); }
+        .field textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+
+        .ai-helper { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+        .ai-helper summary {
+            padding: 11px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink-2);
+            user-select: none;
+        }
+        .ai-helper summary:hover { color: var(--accent); }
+        .ai-body { padding: 2px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+        .ai-body .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .ai-body .hint { font-size: 11.5px; color: var(--faint); }
+
+        /* ── 平台 ── */
+        .platform-group {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 10px;
-            margin-top: 4px;
-        }
-
-        .btn-qr-mini {
-            background: none;
-            border: none;
-            color: var(--accent-cyan);
-            font-size: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .summary-bar {
-            background: rgba(255, 215, 0, 0.08);
-            border: 1px solid var(--accent-gold);
-            border-radius: 12px;
-            padding: 12px 14px;
             font-size: 12px;
-            color: var(--text-main);
+            font-weight: 600;
+            color: var(--ink-2);
+            margin: 6px 0 10px;
+        }
+        .platform-group .toggle { font-size: 11.5px; color: var(--accent); cursor: pointer; font-weight: 500; }
+        .platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .pcard {
             display: flex;
             align-items: center;
             justify-content: space-between;
-        }
-
-        /* 开发者生态代码展示区 */
-        .code-box {
-            background: #000;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding: 16px;
-            font-family: monospace;
-            font-size: 12px;
-            color: var(--accent-teal);
-            overflow-x: auto;
-            position: relative;
-        }
-
-        .btn-copy-code {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
+            gap: 8px;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 9px 10px;
             cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            opacity: 0.75;
         }
+        .pcard:hover { border-color: var(--line-2); opacity: 1; }
+        .pcard.selected { border-color: var(--accent-line); background: var(--accent-soft); opacity: 1; }
+        .pcard .left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .picon {
+            width: 22px; height: 22px; flex: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .pname { font-size: 12px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pstatus { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--faint); }
+        .pstatus.logged { color: var(--success); }
+        .pstatus.need { color: var(--warn); }
+        .qr-btn {
+            background: none; border: none; color: var(--accent);
+            font-size: 11px; cursor: pointer; padding: 3px 5px;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .qr-btn:hover { color: var(--accent-2); }
+        .beta-tag {
+            font-size: 9px; color: var(--muted);
+            border: 1px solid var(--line-2); border-radius: 4px; padding: 0 4px; margin-left: 4px;
+        }
+        .checkbox {
+            width: 15px; height: 15px; border-radius: 4px; flex: none;
+            border: 1px solid var(--line-2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; color: transparent;
+        }
+        .pcard.selected .checkbox { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+        /* ── 发布 ── */
+        .publish-box { margin-top: 20px; }
+        .publish-box .note { font-size: 11px; color: var(--faint); margin-top: 10px; text-align: center; }
 
         footer {
-            margin-top: 60px;
-            padding: 30px 24px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            margin-top: 20px;
+            padding: 24px;
+            border-top: 1px solid var(--line);
             text-align: center;
             font-size: 12px;
-            color: var(--text-muted);
+            color: var(--faint);
         }
+        footer .sep { margin: 0 8px; }
 
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(12px);
-            z-index: 1000;
-            display: none;
+        .warn-banner {
+            display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 10px 14px;
+            border: 1px solid rgba(216, 162, 74, 0.35);
+            background: rgba(216, 162, 74, 0.10);
+            color: var(--warn);
+            border-radius: 10px;
+            font-size: 12.5px;
         }
 
-        .modal-content {
-            width: 620px;
-            max-width: 90vw;
-            padding: 28px;
-            border-radius: 20px;
-        }
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .history-item { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+        .history-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+        .history-title { font-weight: 600; font-size: 13px; color: var(--ink); }
+        .history-time { font-size: 11px; color: var(--faint); flex: none; }
+        .history-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip { font-size: 11px; padding: 2px 9px; border-radius: 20px; border: 1px solid var(--line-2); color: var(--ink-2); display: inline-flex; align-items: center; gap: 5px; }
+        .chip.ok { color: var(--success); border-color: rgba(156, 192, 143, 0.3); background: var(--success-soft); }
+        .chip a { color: inherit; }
+        .history-empty { color: var(--faint); font-size: 12.5px; text-align: center; padding: 14px 0; }
 
-        .progress-row { margin-bottom: 14px; }
-        .progress-fill-bg {
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 6px;
+        /* ── 弹窗 ── */
+        .overlay {
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            z-index: 200;
+            display: none;
+            align-items: center; justify-content: center;
         }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-teal));
-            transition: width 0.3s ease;
+        .overlay.show { display: flex; }
+        .modal {
+            width: 560px; max-width: 92vw;
+            background: var(--surface);
+            border: 1px solid var(--line-2);
+            border-radius: 14px;
+            padding: 26px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
+        .modal h3 { font-size: 16px; margin-bottom: 14px; }
+        .modal .box { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 12.5px; }
+        .modal .actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .progress-row { margin-bottom: 12px; }
+        .progress-row .pr-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+        .progress-track { height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--accent-grad); transition: width 0.3s ease; }
     </style>
 </head>
 <body>
 
-    <!-- 顶部主导航栏 -->
-    <header class="site-nav glass-panel">
-        <a href="#" class="brand-box">
-            <img src="logo.png" alt="Open Matrix Logo" class="brand-logo-img">
-            <div class="title-area">
-                <h1>Open Matrix Publisher</h1>
+    <header class="topbar">
+        <div class="brand">
+            <img src="logo.svg" alt="logo">
+            <div>
+                <div class="name">Open Matrix Publisher</div>
+                <div class="tag">全域视频分发 · 本地运行</div>
             </div>
-        </a>
-        <ul class="nav-links">
-            <li><a href="#features"><i class="fa-solid fa-sparkles"></i> 核心特性</a></li>
-            <li><a href="#platforms"><i class="fa-solid fa-globe"></i> 16 全域平台</a></li>
-            <li><a href="#mcp-ecosystem"><i class="fa-solid fa-robot"></i> MCP 智能体</a></li>
-            <li><a href="#studio" class="active"><i class="fa-solid fa-clapperboard"></i> 分发工作室</a></li>
-        </ul>
-        <div class="nav-actions">
-            <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank" style="color:var(--text-muted); text-decoration:none; font-size:13px; display:flex; align-items:center; gap:6px;">
-                <i class="fa-brands fa-github"></i> GitHub (MIT)
-            </a>
-            <a href="#studio" class="btn-glow">
-                <i class="fa-solid fa-paper-plane"></i> 立即使用
-            </a>
+        </div>
+        <div class="topbar-right">
+            <span class="engine-dot" id="engine-status">检测引擎中…</span>
+            <a class="link" href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
+            <a class="link" href="https://www.emuqi.com" target="_blank"><i class="fa-solid fa-flask"></i> 木齐科技</a>
         </div>
     </header>
 
-    <!-- Hero 品牌首屏 -->
-    <section class="hero-section">
-        <div class="hero-badge">
-            <i class="fa-solid fa-bolt"></i> AI 原生 · 28 平台中英全域视频矩阵分发引擎 · 100% 本地开源
-        </div>
-        <h1 class="hero-title">新一代 AI 原生全域视频分发引擎</h1>
-        <p class="hero-subtitle">
-            源自企业级真实营销与出海宣发实战 · 28 平台中英全球并发静默发布。<br>
-            🇨🇳 国内 10 大平台做深做透 · 🌏 国际 18 大主流平台收割外贸出海、跨境电商与多语种红利。<br>
-            深度适配 <strong>Google Antigravity、DeepSeek Harness、Hermes Agent、Zed (Z-Code)、Claude Code、Cursor</strong> 等全球主流智能体。
-        </p>
-
-        <div class="metric-cards-bar">
-            <div class="metric-pill">
-                <h4>28 个</h4>
-                <p>🇨🇳 国内 10 + 🌏 海外 18 矩阵</p>
-            </div>
-            <div class="metric-pill">
-                <h4>全主流 Agent</h4>
-                <p>Antigravity / DeepSeek / Hermes / Zed</p>
-            </div>
-            <div class="metric-pill">
-                <h4>MCP 原生</h4>
-                <p>Cursor / Claude 一句话调用</p>
-            </div>
-            <div class="metric-pill">
-                <h4>¥ 0 成本</h4>
-                <p>豆包 / Kimi 免费网页深度连通</p>
-            </div>
+    <main class="shell">
+        <div class="warn-banner" id="env-warning" style="display:none;"></div>
+        <div class="page-head">
+            <h1>一条视频，一次发到 16 个平台</h1>
+            <p>选视频 → 写文案 → 勾选平台 → 一键发布。数据与 Cookie 均留在本机。</p>
         </div>
 
-        <!-- 官方项目大画幅视觉 Showcase Banner -->
-        <div style="max-width: 1040px; margin: 0 auto 40px auto; border-radius: 20px; overflow: hidden; border: 1px solid rgba(0, 230, 255, 0.3); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);">
-            <img src="showcase_banner.jpg" alt="Open Matrix Publisher Showcase" style="width: 100%; height: auto; display: block;">
-        </div>
-
-        <!-- 三大核心服务人群战略赋能区 -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 1040px; margin: 0 auto 30px auto; text-align: left;">
-            <div class="glass-panel" style="padding: 20px;">
-                <div style="font-size: 14px; font-weight: 800; color: var(--accent-orange); margin-bottom: 6px;">
-                    <i class="fa-solid fa-industry"></i> 传统国际贸易 (B2B 工厂/外贸)
-                </div>
-                <div style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
-                    自主研发、车间实拍、质检专利一键直发 <strong>LinkedIn + YouTube + 微信视频号 + X</strong>，大宗外贸询盘直达。
-                </div>
-            </div>
-
-            <div class="glass-panel" style="padding: 20px;">
-                <div style="font-size: 14px; font-weight: 800; color: var(--accent-cyan); margin-bottom: 6px;">
-                    <i class="fa-solid fa-cart-shopping"></i> 跨境电商与 DTC 出海品牌
-                </div>
-                <div style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
-                    亚马逊、TikTok Shop、TEMU、Shopify 卖家视频一键同步 <strong>TikTok + Instagram + Pinterest + 抖音 + 小红书</strong>，引爆全球流量。
-                </div>
-            </div>
-
-            <div class="glass-panel" style="padding: 20px;">
-                <div style="font-size: 14px; font-weight: 800; color: var(--accent-purple); margin-bottom: 6px;">
-                    <i class="fa-solid fa-earth-americas"></i> 出海项目与全球化创作者
-                </div>
-                <div style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
-                    中英双语 0 成本 AI 网页连通，Playwright 真实浏览器指纹隔离，一次创作全网 28 平台静默分发。
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 28 大全域平台矩阵生态 -->
-    <section id="platforms" class="section-container">
-        <div class="section-header-title">
-            <h2>🌐 28 平台全球超级全域矩阵生态全景</h2>
-            <p>做深国内搜索与信息流流量池，无缝覆盖全球 18 大主流外贸、跨境电商、俄语区、东南亚与垂直社群</p>
-        </div>
-
-        <div class="glass-panel" style="padding: 24px; margin-bottom: 20px;">
-            <div class="platform-category-badge" style="background:rgba(245,130,32,0.12); color:var(--accent-orange); border:1px solid rgba(245,130,32,0.3);">
-                <i class="fa-solid fa-flag"></i> 🇨🇳 国内 10 大主流平台矩阵（做深做透 · 搜索与社交全覆盖）
-            </div>
-            <div class="platform-showcase-grid">
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#07c16022; color:#07c160;"><i class="fa-brands fa-weixin"></i></div><div class="plat-text-box"><h5>微信视频号</h5><p>私域与公域双向破圈</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#00000033; color:#fff;"><i class="fa-brands fa-tiktok"></i></div><div class="plat-text-box"><h5>抖音 (Douyin)</h5><p>国民级短视频流量池</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#00a1d622; color:#00a1d6;"><i class="fa-solid fa-play"></i></div><div class="plat-text-box"><h5>哔哩哔哩 (B站)</h5><p>极客与中长视频主场</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#ff500022; color:#ff5000;"><i class="fa-solid fa-video"></i></div><div class="plat-text-box"><h5>快手 (Kuaishou)</h5><p>高黏性老铁社区</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#ff244222; color:#ff2442;"><i class="fa-solid fa-book-bookmark"></i></div><div class="plat-text-box"><h5>小红书 (RED)</h5><p>年轻生活方式种草</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#e6162d22; color:#e6162d;"><i class="fa-brands fa-weibo"></i></div><div class="plat-text-box"><h5>微博 (Weibo)</h5><p>全网热搜发酵阵地</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#f0414222; color:#f04142;"><i class="fa-solid fa-newspaper"></i></div><div class="plat-text-box"><h5>今日头条</h5><p>信息流与算法推荐</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#0066ff22; color:#0066ff;"><i class="fa-solid fa-brain"></i></div><div class="plat-text-box"><h5>知乎 (Zhihu)</h5><p>专业硬核深度问答</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#2932e122; color:#2932e1;"><i class="fa-solid fa-magnifying-glass"></i></div><div class="plat-text-box"><h5>百家号 (Baidu)</h5><p>百度搜索高权重权重</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#ff6b0022; color:#ff6b00;"><i class="fa-solid fa-film"></i></div><div class="plat-text-box"><h5>番茄视频 (PUGc)</h5><p>字节中长视频流量池</p></div></div>
-            </div>
-        </div>
-
-        <div class="glass-panel" style="padding: 24px;">
-            <div class="platform-category-badge" style="background:rgba(0,230,255,0.12); color:var(--accent-cyan); border:1px solid rgba(0,230,255,0.3);">
-                <i class="fa-solid fa-globe"></i> 🌏 海外 18 大主流平台矩阵（欧美 · 中东 · 俄语区 · 东南亚 · 跨境电商与社群）
-            </div>
-            <div class="platform-showcase-grid" style="grid-template-columns: repeat(6, 1fr);">
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#ff000022; color:#ff0000;"><i class="fa-brands fa-youtube"></i></div><div class="plat-text-box"><h5>YouTube</h5><p>全球长短视频巨头</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#00f2fe22; color:#00f2fe;"><i class="fa-brands fa-tiktok"></i></div><div class="plat-text-box"><h5>TikTok</h5><p>全球短视频引擎</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#e4405f22; color:#e4405f;"><i class="fa-brands fa-instagram"></i></div><div class="plat-text-box"><h5>Instagram</h5><p>欧美视觉消费种草</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#1877f222; color:#1877f2;"><i class="fa-brands fa-facebook"></i></div><div class="plat-text-box"><h5>Facebook</h5><p>全球社群与主页</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#00000033; color:#fff;"><i class="fa-brands fa-x-twitter"></i></div><div class="plat-text-box"><h5>X (Twitter)</h5><p>全球科技商业舆论</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#0a66c222; color:#0a66c2;"><i class="fa-brands fa-linkedin"></i></div><div class="plat-text-box"><h5>LinkedIn</h5><p>外贸 B2B 第一平台</p></div></div>
-
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#bd081c22; color:#bd081c;"><i class="fa-brands fa-pinterest"></i></div><div class="plat-text-box"><h5>Pinterest</h5><p>跨境电商采购神器</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#fffc0022; color:#e5c200;"><i class="fa-brands fa-snapchat"></i></div><div class="plat-text-box"><h5>Snapchat</h5><p>北美中东 Z世代</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#00000033; color:#fff;"><i class="fa-brands fa-threads"></i></div><div class="plat-text-box"><h5>Threads</h5><p>Meta 2亿月活新星</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#ff450022; color:#ff4500;"><i class="fa-brands fa-reddit-alien"></i></div><div class="plat-text-box"><h5>Reddit</h5><p>全球极客与高权社区</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#a8240022; color:#a82400;"><i class="fa-brands fa-quora"></i></div><div class="plat-text-box"><h5>Quora</h5><p>权威问答与搜索SEO</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#4a76a822; color:#4a76a8;"><i class="fa-brands fa-vk"></i></div><div class="plat-text-box"><h5>VKontakte</h5><p>俄语区第一大霸主</p></div></div>
-
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#06c75522; color:#06c755;"><i class="fa-brands fa-line"></i></div><div class="plat-text-box"><h5>LINE VOOM</h5><p>日韩东南亚短视频</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#1ab7ea22; color:#1ab7ea;"><i class="fa-brands fa-vimeo-v"></i></div><div class="plat-text-box"><h5>Vimeo</h5><p>4K高清品牌展示</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#85c74222; color:#85c742;"><i class="fa-solid fa-play"></i></div><div class="plat-text-box"><h5>Rumble</h5><p>北美高增长视频生态</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#0066dc22; color:#0066dc;"><i class="fa-brands fa-dailymotion"></i></div><div class="plat-text-box"><h5>Dailymotion</h5><p>欧洲主流视频阵地</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#229ed922; color:#229ed9;"><i class="fa-brands fa-telegram"></i></div><div class="plat-text-box"><h5>Telegram</h5><p>全球外贸私域频道</p></div></div>
-                <div class="platform-show-card"><div class="plat-icon-box" style="background:#25d36622; color:#25d366;"><i class="fa-brands fa-whatsapp"></i></div><div class="plat-text-box"><h5>WhatsApp</h5><p>全球即时通讯广播</p></div></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 四大核心技术支柱 -->
-    <section id="features" class="section-container">
-        <div class="section-header-title">
-            <h2>💡 四大核心架构技术支柱</h2>
-            <p>拒绝低效造轮子，融合最前沿工程实践，打造最丝滑的发布体验</p>
-        </div>
-
-        <div class="feature-grid">
-            <div class="feature-card">
-                <div class="feature-icon-wrapper" style="color:var(--accent-cyan); background:rgba(0,230,255,0.15);">
-                    <i class="fa-solid fa-microchip"></i>
-                </div>
-                <h3>Playwright 静默底座</h3>
-                <p>采用 Patchright CDP 指纹绕过与真实浏览器 Session 持久化，后台静默无感上传，彻底规避平台风控。</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon-wrapper" style="color:var(--accent-purple); background:rgba(139,92,246,0.15);">
-                    <i class="fa-solid fa-network-wired"></i>
-                </div>
-                <h3>原生 MCP 智能体协议</h3>
-                <p>内置标准 Model Context Protocol Server，支持 Claude Desktop、Cursor、Cline、OpenClaw 一句话编排分发。</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon-wrapper" style="color:var(--accent-teal); background:rgba(0,255,200,0.15);">
-                    <i class="fa-solid fa-comments"></i>
-                </div>
-                <h3>零成本免费 AI 连通器</h3>
-                <p>深度整合豆包与 Kimi 免费网页端，提示词自动净化清洗，剪贴板 1 键识别标题与描述，把选择权留给用户。</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon-wrapper" style="color:var(--accent-gold); background:rgba(255,215,0,0.15);">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <h3>全源输入与防重锁</h3>
-                <p>支持本地文件与 HTTP/HTTPS 远程视频直链（自动下载与清理），内置历史 Ledger 阻断重复分发。</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- 内嵌分发工作室 Web Console -->
-    <section id="studio" class="studio-container">
-        <div class="section-header-title">
-            <h2>⚡ 在线分发工作室 (Web Studio)</h2>
-            <p>点选视频、自选平台、文案调优，一键开启全网矩阵并发推送</p>
-        </div>
-
-        <div class="main-layout">
-            <!-- 左侧：大画幅视频舞台 -->
-            <div class="video-stage">
-                <div class="glass-panel" style="padding: 24px;">
-                    <div class="section-header">
-                        <span><i class="fa-solid fa-clapperboard" style="margin-right:8px;"></i> 待分发视频资产选择与编辑</span>
-                        <span style="font-size:11px; color:var(--accent-teal);"><i class="fa-solid fa-circle-check"></i> 支持本地文件与远程 URL 视频</span>
+        <div class="workspace">
+            <!-- 左列 -->
+            <div class="col-main">
+                <section class="panel">
+                    <div class="step-head">
+                        <span class="step-num">1</span> 选择视频
+                        <span class="step-hint">本地文件或远程直链</span>
                     </div>
 
-                    <!-- 本地视频选择与浏览条 -->
-                    <div class="file-select-banner">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <i class="fa-solid fa-file-video" style="font-size:20px; color:var(--accent-cyan);"></i>
-                            <div>
-                                <div style="font-size:13px; font-weight:700; color:#fff;" id="selected-video-filename">富氢热灸贴_中文宣传片_电影级_v2_成片.mp4</div>
-                                <div style="font-size:11px; color:var(--text-muted);" id="selected-video-filepath">路径: /Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4</div>
+                    <div class="dropzone" id="dropzone">
+                        <video id="video-preview" style="display:none;" controls></video>
+                        <div class="drop-empty" id="drop-empty">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span class="strong">拖入视频文件</span> 或
+                            <span class="strong">点击浏览</span>
+                        </div>
+                    </div>
+                    <input type="file" id="file-input" accept="video/*" style="display:none;">
+
+                    <div class="url-row">
+                        <input type="text" id="video-url" placeholder="或粘贴远程视频直链 (https://…)">
+                        <button class="btn" id="btn-fetch-url"><i class="fa-solid fa-arrow-down"></i> 拉取</button>
+                    </div>
+                    <div class="video-meta" id="video-meta" style="display:none;"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="step-head">
+                        <span class="step-num">2</span> 文案
+                        <span class="step-hint">标题 + 描述 + 标签</span>
+                    </div>
+
+                    <div class="field">
+                        <label>标题</label>
+                        <input type="text" id="post-title" placeholder="一句话说清楚这条视频讲什么">
+                    </div>
+                    <div class="field">
+                        <label>描述</label>
+                        <textarea id="post-desc" placeholder="补充背景、亮点、行动引导…"></textarea>
+                    </div>
+                    <div class="field">
+                        <label>标签（用逗号分隔，可选）</label>
+                        <input type="text" id="post-tags" placeholder="如：氢健康, 新材料, 出海">
+                    </div>
+
+                    <details class="ai-helper">
+                        <summary><i class="fa-solid fa-wand-magic-sparkles"></i> AI 文案助手（豆包 / Kimi · 免费）</summary>
+                        <div class="ai-body">
+                            <div class="hint">一键复制主题并打开网页助手，生成后复制结果，点右侧按钮回填。</div>
+                            <div class="row">
+                                <button class="btn" onclick="openAiWebPage('doubao')"><i class="fa-solid fa-arrow-up-right-from-square"></i> 打开豆包</button>
+                                <button class="btn" onclick="openAiWebPage('kimi')"><i class="fa-solid fa-arrow-up-right-from-square"></i> 打开 Kimi</button>
+                                <button class="btn" onclick="parseFromClipboard()"><i class="fa-solid fa-paste"></i> 粘贴我复制的文案</button>
                             </div>
                         </div>
-                        <button class="btn-file-browse" onclick="document.getElementById('local-file-input').click()">
-                            <i class="fa-solid fa-folder-open"></i> 浏览更换本地视频
-                        </button>
-                        <input type="file" id="local-file-input" accept="video/*" style="display:none;" onchange="handleLocalFileSelect(this)">
-                    </div>
-
-                    <!-- 16:9 大画幅视频预览框 -->
-                    <div class="large-video-box">
-                        <video id="main-video" controls src="/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4"></video>
-                        <div class="video-meta-bar">
-                            <span><i class="fa-solid fa-film" style="margin-right:6px;"></i> 实时视频流预览</span>
-                            <span><i class="fa-solid fa-hard-drive" style="margin-right:6px;"></i> 大小: 42.9 MB</span>
-                        </div>
-                    </div>
-
-                    <!-- 文案创作模式切换栏 -->
-                    <div class="copy-mode-tab-bar">
-                        <button class="copy-tab-btn active" id="tab-manual" onclick="setCopyMode('manual')">
-                            <i class="fa-solid fa-pen-to-square"></i> 模式一：自主撰写 / 模板套用
-                        </button>
-                        <button class="copy-tab-btn" id="tab-ai" onclick="setCopyMode('ai')">
-                            <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-purple)"></i> 模式二：豆包 / Kimi 免费 AI 网页助手
-                        </button>
-                    </div>
-
-                    <!-- 模式一快捷模板芯片 -->
-                    <div id="manual-template-bar" class="template-chips-bar">
-                        <span style="font-size:11px; color:var(--text-muted); align-self:center;">快速套用：</span>
-                        <button class="chip-btn" onclick="applyTemplate('moxibustion')"><i class="fa-solid fa-fire"></i> 实战案例模板 (富氢热灸贴)</button>
-                        <button class="chip-btn" onclick="applyTemplate('viral')"><i class="fa-solid fa-bolt"></i> 爆款种草短视频模板</button>
-                        <button class="chip-btn" onclick="applyTemplate('global')"><i class="fa-solid fa-earth-americas"></i> 跨境英文 Global 模板</button>
-                        <button class="chip-btn" style="color:var(--accent-red);" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> 清空文本</button>
-                    </div>
-
-                    <!-- 模式二 专精 豆包 与 Kimi 免费 AI 网页端 -->
-                    <div id="ai-generator-box" class="ai-generator-panel" style="display:none; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.3); border-radius:14px; padding:14px; margin-bottom:14px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:13px; font-weight:700; color:#d8b4fe;"><i class="fa-solid fa-comments"></i> 豆包 & Kimi 免费 AI 网页助手</span>
-                            <span style="font-size:11px; color:var(--accent-teal);">复制网页方案 · 一键智能解析</span>
-                        </div>
-
-                        <div class="ai-portal-grid-2">
-                            <div class="portal-card-box">
-                                <div style="font-size:12px; font-weight:700; color:#fff;">🫘 豆包 (Doubao)</div>
-                                <div style="font-size:11px; color:var(--text-muted);">短视频口播与社交种草</div>
-                                <button class="btn-action-small" style="margin-top:4px;" onclick="openAiWebPage('doubao')">
-                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> 1键复制主题并打开豆包
-                                </button>
-                            </div>
-                            <div class="portal-card-box">
-                                <div style="font-size:12px; font-weight:700; color:#fff;">🌙 Kimi 智能助手</div>
-                                <div style="font-size:11px; color:var(--text-muted);">长文本分析与高客单亮点</div>
-                                <button class="btn-action-small" style="margin-top:4px;" onclick="openAiWebPage('kimi')">
-                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> 1键复制主题并打开 Kimi
-                                </button>
-                            </div>
-                        </div>
-
-                        <div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:11px; color:var(--text-main);">
-                                <i class="fa-solid fa-hand-pointer" style="color:var(--accent-gold); margin-right:4px;"></i>
-                                复制豆包/Kimi网页中选中的文案后，点击右侧认领 ➔
-                            </span>
-                            <button onclick="parseFromClipboard()" style="background:linear-gradient(135deg, var(--accent-purple), #6366f1); border:none; color:#fff; padding:6px 14px; border-radius:8px; font-weight:700; font-size:11px; cursor:pointer;">
-                                <i class="fa-solid fa-paste"></i> 📋 填入我复制的文案
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 视频标题与描述编辑框 -->
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-heading" style="color:var(--accent-cyan); margin-right:6px;"></i> 视频分发标题 (Title)</label>
-                        <input type="text" id="post-title" class="form-control" value="久坐一天，肩颈又石化了？富氢热灸贴温氢双护">
-                    </div>
-
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-align-left" style="color:var(--accent-teal); margin-right:6px;"></i> 视频正文描述 (Description)</label>
-                        <textarea id="post-desc" class="form-control">久坐一天，肩颈又石化了？
-不是暖贴不够热，是只给皮肤烤了个表面。
-这次用的是富氢热灸贴——道地艾草 × 固态氢材料，热的时候氢分子同步工作，80×205mm 的大贴幅服帖整个肩颈和腰背。
-不燥不闷，一觉可以贴着睡。
-体感这个东西，说再多不如试一次。
-木齐科技 自研固态氢 | www.emuqi.com</textarea>
-                    </div>
-                </div>
+                    </details>
+                </section>
             </div>
 
-            <!-- 右侧：紧凑型 16 矩阵平台选择侧栏 -->
-            <div class="right-sidebar">
-                <div class="summary-bar">
-                    <div>
-                        <strong style="color:var(--accent-gold);"><i class="fa-solid fa-check-double"></i> 选单概览：</strong>
-                        <span id="selected-summary-text">已勾选 0 / 16 个平台</span>
+            <!-- 右列 -->
+            <div>
+                <section class="panel">
+                    <div class="step-head">
+                        <span class="step-num">3</span> 选择平台
+                        <span class="step-hint"><span id="sel-count">已选 0 个</span> · <span id="login-count">已登录 -/16</span></span>
                     </div>
-                    <button onclick="clearAllSelections()" style="background:none; border:none; color:var(--accent-red); font-size:11px; cursor:pointer;">重置选单</button>
-                </div>
 
-                <!-- 国内平台阵列 (10平台) -->
-                <div class="glass-panel" style="padding: 16px; margin-top:14px;">
-                    <div class="section-header" style="margin-bottom:10px;">
-                        <span style="font-size:13px; color:#fff;"><i class="fa-solid fa-flag" style="color:var(--accent-orange); margin-right:6px;"></i> 🇨🇳 国内 10 大平台</span>
-                        <span style="font-size:11px; color:var(--accent-cyan); cursor:pointer;" onclick="toggleCategory('cn')">全选/取消</span>
+                    <div class="platform-group">
+                        <span><i class="fa-solid fa-flag" style="color:var(--accent-2);"></i> 国内 · 10</span>
+                        <span class="toggle" onclick="toggleCategory('cn')">全选 / 清空</span>
                     </div>
-                    <div class="compact-platform-grid" id="cn-mini-grid"></div>
-                </div>
+                    <div class="platform-grid" id="cn-grid"></div>
 
-                <!-- 国际平台阵列 (6平台) -->
-                <div class="glass-panel" style="padding: 16px; margin-top:14px;">
-                    <div class="section-header" style="margin-bottom:10px;">
-                        <span style="font-size:13px; color:#fff;"><i class="fa-solid fa-globe" style="color:var(--accent-cyan); margin-right:6px;"></i> 🌏 国际 6 大平台</span>
-                        <span style="font-size:11px; color:var(--accent-cyan); cursor:pointer;" onclick="toggleCategory('global')">全选/取消</span>
+                    <div class="platform-group">
+                        <span><i class="fa-solid fa-globe" style="color:var(--accent-2);"></i> 海外 · 6</span>
+                        <span class="toggle" onclick="toggleCategory('global')">全选 / 清空</span>
                     </div>
-                    <div class="compact-platform-grid" id="global-mini-grid"></div>
-                </div>
+                    <div class="platform-grid" id="global-grid"></div>
+                </section>
 
-                <div style="margin-top: 14px;">
-                    <button class="btn-glow" style="width:100%; justify-content:center; padding:14px; font-size:15px;" onclick="openConfirmDialog()">
-                        <i class="fa-solid fa-paper-plane"></i> 确认并启动 16 全域分发
-                    </button>
+                <div class="publish-box">
+                    <button class="btn primary block" id="btn-publish"><i class="fa-solid fa-paper-plane"></i> <span id="btn-publish-text">发布</span></button>
+                    <p class="note">发布后请到各平台创作者后台人工确认审核状态</p>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- 开发者与 AI 智能体生态接入中心 -->
-    <section id="mcp-ecosystem" class="section-container">
-        <div class="section-header-title">
-            <h2>🤖 全球主流 AI 智能体编排生态原生适配 (Multi-Agent Harness Hub)</h2>
-            <p>完美接入 Google Antigravity、DeepSeek Harness、Hermes Agent、Zed (Z-Code)、Claude Code 与 Cursor，一句话全网并发分发</p>
-        </div>
-
-        <div class="glass-panel" style="padding: 28px;">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
-                <!-- 1. Google Antigravity Harness -->
-                <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(0,230,255,0.25); border-radius:12px; padding:16px;">
-                    <div style="font-size:13px; font-weight:800; color:var(--accent-cyan); margin-bottom:8px;">
-                        <i class="fa-brands fa-google"></i> Google Antigravity Harness / AGY Skill
-                    </div>
-                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">
-                        放入 <code>skills/open-matrix-publisher/SKILL.md</code>，智能体原生调用发布。
-                    </div>
-                    <div class="code-box" style="padding:10px; font-size:11px;">
-                        <pre>name: open-matrix-publisher
-description: 28 平台中英全域视频矩阵分发工具
-command: python3 mcp_server.py</pre>
-                    </div>
-                </div>
-
-                <!-- 2. DeepSeek Harness -->
-                <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(139,92,246,0.25); border-radius:12px; padding:16px;">
-                    <div style="font-size:13px; font-weight:800; color:var(--accent-purple); margin-bottom:8px;">
-                        <i class="fa-solid fa-brain"></i> DeepSeek Harness / Tools Schema
-                    </div>
-                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">
-                        兼容 DeepSeek V3 / R1 Function Calling 标准工具定义。
-                    </div>
-                    <div class="code-box" style="padding:10px; font-size:11px;">
-                        <pre>{"type": "function", "function": {
-  "name": "publish_video",
-  "description": "28 平台并发视频分发",
-  "parameters": {"type": "object", ...}
-}}</pre>
-                    </div>
-                </div>
-
-                <!-- 3. Nous Hermes Agent -->
-                <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,215,0,0.25); border-radius:12px; padding:16px;">
-                    <div style="font-size:13px; font-weight:800; color:var(--accent-gold); margin-bottom:8px;">
-                        <i class="fa-solid fa-feather"></i> Nous Hermes Agent (CLI Marker)
-                    </div>
-                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">
-                        支持 Hermes 智能体通过 CLI 外部命令与 JSON stdout 无缝编排。
-                    </div>
-                    <div class="code-box" style="padding:10px; font-size:11px;">
-                        <pre>&lt;!-- hermes-integrable argv-marker=cli --&gt;
-python3 mcp_server.py --json</pre>
-                    </div>
-                </div>
-
-                <!-- 4. Zed / Z-Code Harness -->
-                <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(0,255,200,0.25); border-radius:12px; padding:16px;">
-                    <div style="font-size:13px; font-weight:800; color:var(--accent-teal); margin-bottom:8px;">
-                        <i class="fa-solid fa-bolt"></i> Zed / Z-Code Harness
-                    </div>
-                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">
-                        Zed 高性能轻量化开发环境 MCP 扩展标准配置。
-                    </div>
-                    <div class="code-box" style="padding:10px; font-size:11px;">
-                        <pre>"context_servers": {
-  "open-matrix": { "command": "python3", "args": ["mcp_server.py"] }
-}</pre>
-                    </div>
-                </div>
+        <section class="panel" id="history-panel" style="margin-top:20px;">
+            <div class="step-head">
+                <span class="step-num"><i class="fa-solid fa-clock-rotate-left"></i></span> 分发记录
+                <span class="step-hint" style="cursor:pointer;" onclick="loadHistory()"><i class="fa-solid fa-rotate"></i> 刷新</span>
             </div>
-
-            <!-- Claude Desktop & Cursor -->
-            <h3 style="font-size: 14px; color: var(--accent-cyan); margin-bottom: 8px;"><i class="fa-solid fa-cube"></i> Claude Desktop / Cursor MCP 配置 (`claude_desktop_config.json` 或 `.cursor/mcp.json`)</h3>
-            <div class="code-box">
-                <button class="btn-copy-code" onclick="copyMcpConfig()"><i class="fa-solid fa-copy"></i> 复制配置</button>
-                <pre id="mcp-config-text">{
-  "mcpServers": {
-    "open-matrix-publisher": {
-      "command": "python3",
-      "args": ["/Users/martin/Documents/2026 BUSINESS MTRIX /20260807 OpenMatrixpublister/mcp_server.py"]
-    }
-  }
-}</pre>
+            <div class="history-list" id="history-list">
+                <div class="history-empty">加载中…</div>
             </div>
-
-            <!-- HTTP REST API -->
-            <h3 style="font-size: 14px; color: var(--accent-teal); margin-top: 20px; margin-bottom: 8px;"><i class="fa-solid fa-network-wired"></i> 标准 HTTP REST Webhook API (Dify / n8n / 扣子 Coze / 快捷指令)</h3>
-            <div class="code-box">
-                <button class="btn-copy-code" onclick="copyApiExample()"><i class="fa-solid fa-copy"></i> 复制命令</button>
-                <pre id="api-example-text">curl -X POST http://localhost:5001/api/publish \
-  -H "Content-Type: application/json" \
-  -d '{
-    "platforms": ["tencent", "douyin", "youtube", "tiktok", "pinterest", "linkedin"],
-    "video_file": "https://example.com/videos/promo_video.mp4",
-    "title": "富氢热灸贴温氢双护 · 解锁肩颈新活力",
-    "desc": "自研固态氢材料与道地艾草结合，热能与氢分子协同作用！",
-    "tags": ["富氢热灸贴", "木齐科技", "出海推荐"]
-  }'</pre>
-            </div>
-        </div>
-    </section>
-
-    <!-- 确认二次弹窗 Modal -->
-    <div id="confirm-modal" class="modal-overlay">
-        <div class="modal-content glass-panel">
-            <h3 style="font-size: 17px; color: #fff; margin-bottom: 12px;"><i class="fa-solid fa-paper-plane" style="color:var(--accent-cyan)"></i> 确认分发以下视频</h3>
-            <div style="background:rgba(0,0,0,0.4); border-radius:10px; padding:12px; margin-bottom:16px; font-size:12px;">
-                <div style="color:var(--accent-gold); font-weight:700; margin-bottom:4px;" id="confirm-video-name">富氢热灸贴_中文宣传片_电影级_v2_成片.mp4</div>
-                <div style="color:var(--text-muted);">目标平台数：<span id="confirm-count" style="color:var(--accent-cyan); font-weight:800;">0</span> 个</div>
-            </div>
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button onclick="closeConfirmDialog()" style="background: rgba(255,255,255,0.1); border:none; padding: 8px 18px; border-radius: 8px; color:#fff; cursor:pointer; font-size:13px;">取消</button>
-                <button onclick="confirmAndDispatch()" class="btn-glow" style="padding:8px 20px; font-size:13px;">确认并开始发送</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 推送进度监控 Modal -->
-    <div id="modal" class="modal-overlay">
-        <div class="modal-content glass-panel">
-            <h3 style="font-size: 17px; color: #fff; margin-bottom: 14px;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent-cyan)"></i> 正在并发分发资产...</h3>
-            <div id="progress-list"></div>
-            <div style="margin-top: 20px; text-align: right;">
-                <button id="close-modal-btn" onclick="closeModal()" class="btn-glow" style="display:none; margin-left:auto; font-size:13px; padding:8px 18px;">完成并关闭</button>
-            </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <footer>
-        <p><strong>Open Matrix Publisher (全域矩阵)</strong> · 遵循 MIT 开源协议 · <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank" style="color:var(--accent-cyan); text-decoration:none;">GitHub 源码仓库</a></p>
-        <p style="margin-top:6px; font-size:11px; color:#64748b;">源自木齐科技 (MQ Tech) 企业营销与出海实战孵化 · 赋能全球创作者与品牌营销 · <a href="https://www.emuqi.com" target="_blank" style="color:var(--accent-teal); text-decoration:none;">www.emuqi.com</a></p>
+        Open Matrix Publisher · <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank">MIT 开源</a><span class="sep">·</span>由 <a href="https://www.emuqi.com" target="_blank">木齐科技 (MUQI Tech)</a> 孵化<span class="sep">·</span>Cookie 与视频均留在本机
     </footer>
 
-    <script>
-        const PLATFORMS = [
-            { id: "tencent", name: "微信视频号", cat: "cn", color: "#07c160", icon: "fa-weixin" },
-            { id: "douyin", name: "抖音", cat: "cn", color: "#ffffff", icon: "fa-tiktok" },
-            { id: "bilibili", name: "B站", cat: "cn", color: "#00a1d6", icon: "fa-play" },
-            { id: "kuaishou", name: "快手", cat: "cn", color: "#ff5000", icon: "fa-video" },
-            { id: "weibo", name: "微博", cat: "cn", color: "#e6162d", icon: "fa-weibo" },
-            { id: "toutiao", name: "今日头条", cat: "cn", color: "#f04142", icon: "fa-newspaper" },
-            { id: "zhihu", name: "知乎", cat: "cn", color: "#0066ff", icon: "fa-brain" },
-            { id: "xiaohongshu", name: "小红书", cat: "cn", color: "#ff2442", icon: "fa-book-bookmark" },
-            { id: "baijiahao", name: "百家号", cat: "cn", color: "#2932e1", icon: "fa-magnifying-glass" },
-            { id: "fanqie", name: "番茄视频", cat: "cn", color: "#ff6b00", icon: "fa-film" },
+    <!-- 确认弹窗 -->
+    <div class="overlay" id="confirm-overlay">
+        <div class="modal">
+            <h3>确认发布</h3>
+            <div class="box">
+                <div style="margin-bottom:6px;"><strong id="confirm-name"></strong></div>
+                <div style="color:var(--muted);">将发布到 <strong id="confirm-count" style="color:var(--accent);">0</strong> 个平台</div>
+            </div>
+            <div class="actions">
+                <button class="btn" onclick="hideConfirm()">取消</button>
+                <button class="btn primary" onclick="confirmDispatch()">确认并开始</button>
+            </div>
+        </div>
+    </div>
 
-            { id: "youtube", name: "YouTube", cat: "global", color: "#ff0000", icon: "fa-youtube" },
-            { id: "facebook", name: "Facebook", cat: "global", color: "#1877f2", icon: "fa-facebook" },
-            { id: "x", name: "X (Twitter)", cat: "global", color: "#ffffff", icon: "fa-x-twitter" },
-            { id: "linkedin", name: "LinkedIn", cat: "global", color: "#0a66c2", icon: "fa-linkedin" },
-            { id: "instagram", name: "Instagram", cat: "global", color: "#e4405f", icon: "fa-instagram" },
-            { id: "tiktok", name: "TikTok", cat: "global", color: "#00f2fe", icon: "fa-tiktok" }
+    <!-- 进度弹窗 -->
+    <div class="overlay" id="progress-overlay">
+        <div class="modal">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h3 style="margin:0;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent);"></i> 正在分发…</h3>
+                <button class="icon-btn" onclick="hideProgress()" title="关闭（任务在后台继续）"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="progress-list"></div>
+            <p class="note" style="text-align:left; margin-top:12px;">已开始上传的平台无法安全撤回；关闭窗口后任务会在后台继续，可在“分发记录”中查看。</p>
+            <div class="actions" style="margin-top:14px;">
+                <button class="btn" onclick="cancelAll()" id="btn-cancel-all"><i class="fa-solid fa-stop"></i> 取消剩余</button>
+                <button class="btn" onclick="hideProgress()"><i class="fa-solid fa-eye-slash"></i> 后台继续</button>
+                <button class="btn primary" id="close-progress" style="display:none;" onclick="hideProgress()">完成并关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:5001';
+
+        const PLATFORMS = [
+            { id: "tencent",    name: "视频号",  cat: "cn",     color: "#07c160", mono: "视" },
+            { id: "douyin",     name: "抖音",    cat: "cn",     color: "#ffffff", mono: "抖" },
+            { id: "bilibili",   name: "B站",     cat: "cn",     color: "#00a1d6" },
+            { id: "kuaishou",   name: "快手",    cat: "cn",     color: "#ff5000" },
+            { id: "xiaohongshu",name: "小红书",  cat: "cn",     color: "#ff2442" },
+            { id: "weibo",      name: "微博",    cat: "cn",     color: "#e6162d", mono: "微" },
+            { id: "toutiao",    name: "头条",    cat: "cn",     color: "#f04142", mono: "头" },
+            { id: "zhihu",      name: "知乎",    cat: "cn",     color: "#0084ff" },
+            { id: "baijiahao",  name: "百家号",  cat: "cn",     color: "#2932e1", mono: "百" },
+            { id: "fanqie",     name: "番茄视频", cat: "cn",    color: "#ff6b00", mono: "番" },
+
+            { id: "youtube",    name: "YouTube", cat: "global", color: "#ff0000" },
+            { id: "tiktok",     name: "TikTok",  cat: "global", color: "#ffffff", beta: true },
+            { id: "x",          name: "X",       cat: "global", color: "#ffffff", beta: true },
+            { id: "linkedin",   name: "LinkedIn",cat: "global", color: "#0a66c2", beta: true },
+            { id: "instagram",  name: "Instagram",cat: "global",color: "#e4405f", beta: true },
+            { id: "facebook",   name: "Facebook",cat: "global", color: "#1877f2" },
         ];
+
+        // Simple Icons（官方平面单色 SVG 路径，内联离线可用）
+        const ICONS = {
+            youtube: "M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z",
+            tiktok: "M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z",
+            x: "M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z",
+            linkedin: "M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z",
+            instagram: "M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077",
+            facebook: "M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z",
+            bilibili: "M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773zM8 11.107c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c0-.373.129-.689.386-.947.258-.257.574-.386.947-.386zm8 0c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373Z",
+            kuaishou: "M18.315 12.264c2.33 0 4.218 1.88 4.218 4.2V19.8c0 2.32-1.888 4.2-4.218 4.2h-6.202a4.218 4.218 0 0 1-4.023-2.938l-3.676 1.833a2.04 2.04 0 0 1-2.731-.903 2.015 2.015 0 0 1-.216-.907v-5.94a2.03 2.03 0 0 1 2.035-2.024 2.044 2.044 0 0 1 .919.218l3.673 1.85a4.218 4.218 0 0 1 4.02-2.925zm-.062 2.162h-6.078c-1.153 0-2.09.921-2.108 2.065v3.247c0 1.148.925 2.081 2.073 2.1h6.113c1.153 0 2.09-.922 2.109-2.065v-3.247a2.104 2.104 0 0 0-2.074-2.1zM4.18 15.72a.554.554 0 0 0-.555.542v3.734a.556.556 0 0 0 .798.496l.01-.004 3.463-1.756V17.51l-3.467-1.73a.557.557 0 0 0-.249-.06zM9.28 0a5.667 5.667 0 0 1 4.98 2.965 4.921 4.921 0 0 1 3.36-1.317c2.714 0 4.913 2.177 4.913 4.863 0 2.686-2.2 4.863-4.912 4.863a4.921 4.921 0 0 1-3.996-2.034 5.651 5.651 0 0 1-4.345 2.034c-3.131 0-5.67-2.546-5.67-5.687C3.61 2.546 6.149 0 9.28 0Zm8.34 3.926c-1.441 0-2.61 1.157-2.61 2.585s1.169 2.585 2.61 2.585c1.443 0 2.612-1.157 2.612-2.585s-1.169-2.585-2.611-2.585zM9.28 2.287a3.395 3.395 0 0 0-3.39 3.4c0 1.877 1.518 3.4 3.39 3.4a3.395 3.395 0 0 0 3.39-3.4c0-1.878-1.518-3.4-3.39-3.4z",
+            xiaohongshu: "M22.405 9.879c.002.016.01.02.07.019h.725a.797.797 0 0 0 .78-.972.794.794 0 0 0-.884-.618.795.795 0 0 0-.692.794c0 .101-.002.666.001.777zm-11.509 4.808c-.203.001-1.353.004-1.685.003a2.528 2.528 0 0 1-.766-.126.025.025 0 0 0-.03.014L7.7 16.127a.025.025 0 0 0 .01.032c.111.06.336.124.495.124.66.01 1.32.002 1.981 0 .01 0 .02-.006.023-.015l.712-1.545a.025.025 0 0 0-.024-.036zM.477 9.91c-.071 0-.076.002-.076.01a.834.834 0 0 0-.01.08c-.027.397-.038.495-.234 3.06-.012.24-.034.389-.135.607-.026.057-.033.042.003.112.046.092.681 1.523.787 1.74.008.015.011.02.017.02.008 0 .033-.026.047-.044.147-.187.268-.391.371-.606.306-.635.44-1.325.486-1.706.014-.11.021-.22.03-.33l.204-2.616.022-.293c.003-.029 0-.033-.03-.034zm7.203 3.757a1.427 1.427 0 0 1-.135-.607c-.004-.084-.031-.39-.235-3.06a.443.443 0 0 0-.01-.082c-.004-.011-.052-.008-.076-.008h-1.48c-.03.001-.034.005-.03.034l.021.293c.076.982.153 1.964.233 2.946.05.4.186 1.085.487 1.706.103.215.223.419.37.606.015.018.037.051.048.049.02-.003.742-1.642.804-1.765.036-.07.03-.055.003-.112zm3.861-.913h-.872a.126.126 0 0 1-.116-.178l1.178-2.625a.025.025 0 0 0-.023-.035l-1.318-.003a.148.148 0 0 1-.135-.21l.876-1.954a.025.025 0 0 0-.023-.035h-1.56c-.01 0-.02.006-.024.015l-.926 2.068c-.085.169-.314.634-.399.938a.534.534 0 0 0-.02.191.46.46 0 0 0 .23.378.981.981 0 0 0 .46.119h.59c.041 0-.688 1.482-.834 1.972a.53.53 0 0 0-.023.172.465.465 0 0 0 .23.398c.15.092.342.12.475.12l1.66-.001c.01 0 .02-.006.023-.015l.575-1.28a.025.025 0 0 0-.024-.035zm-6.93-4.937H3.1a.032.032 0 0 0-.034.033c0 1.048-.01 2.795-.01 6.829 0 .288-.269.262-.28.262h-.74c-.04.001-.044.004-.04.047.001.037.465 1.064.555 1.263.01.02.03.033.051.033.157.003.767.009.938-.014.153-.02.3-.06.438-.132.3-.156.49-.419.595-.765.052-.172.075-.353.075-.533.002-2.33 0-4.66-.007-6.991a.032.032 0 0 0-.032-.032zm11.784 6.896c0-.014-.01-.021-.024-.022h-1.465c-.048-.001-.049-.002-.05-.049v-4.66c0-.072-.005-.07.07-.07h.863c.08 0 .075.004.075-.074V8.393c0-.082.006-.076-.08-.076h-3.5c-.064 0-.075-.006-.075.073v1.445c0 .083-.006.077.08.077h.854c.075 0 .07-.004.07.07v4.624c0 .095.008.084-.085.084-.37 0-1.11-.002-1.304 0-.048.001-.06.03-.06.03l-.697 1.519s-.014.025-.008.036c.006.01.013.008.058.008 1.748.003 3.495.002 5.243.002.03-.001.034-.006.035-.033v-1.539zm4.177-3.43c0 .013-.007.023-.02.024-.346.006-.692.004-1.037.004-.014-.002-.022-.01-.022-.024-.005-.434-.007-.869-.01-1.303 0-.072-.006-.071.07-.07l.733-.003c.041 0 .081.002.12.015.093.025.16.107.165.204.006.431.002 1.153.001 1.153zm2.67.244a1.953 1.953 0 0 0-.883-.222h-.18c-.04-.001-.04-.003-.042-.04V10.21c0-.132-.007-.263-.025-.394a1.823 1.823 0 0 0-.153-.53 1.533 1.533 0 0 0-.677-.71 2.167 2.167 0 0 0-1-.258c-.153-.003-.567 0-.72 0-.07 0-.068.004-.068-.065V7.76c0-.031-.01-.041-.046-.039H17.93s-.016 0-.023.007c-.006.006-.008.012-.008.023v.546c-.008.036-.057.015-.082.022h-.95c-.022.002-.028.008-.03.032v1.481c0 .09-.004.082.082.082h.913c.082 0 .072.128.072.128V11.19s.003.117-.06.117h-1.482c-.068 0-.06.082-.06.082v1.445s-.01.068.064.068h1.457c.082 0 .076-.006.076.079v3.225c0 .088-.007.081.082.081h1.43c.09 0 .082.007.082-.08v-3.27c0-.029.006-.035.033-.035l2.323-.003c.098 0 .191.02.28.061a.46.46 0 0 1 .274.407c.008.395.003.79.003 1.185 0 .259-.107.367-.33.367h-1.218c-.023.002-.029.008-.028.033.184.437.374.871.57 1.303a.045.045 0 0 0 .04.026c.17.005.34.002.51.003.15-.002.517.004.666-.01a2.03 2.03 0 0 0 .408-.075c.59-.18.975-.698.976-1.313v-1.981c0-.128-.01-.254-.034-.38 0 .078-.029-.641-.724-.998z",
+            zhihu: "M5.721 0C2.251 0 0 2.25 0 5.719V18.28C0 21.751 2.252 24 5.721 24h12.56C21.751 24 24 21.75 24 18.281V5.72C24 2.249 21.75 0 18.281 0zm1.964 4.078c-.271.73-.5 1.434-.68 2.11h4.587c.545-.006.445 1.168.445 1.171H9.384a58.104 58.104 0 01-.112 3.797h2.712c.388.023.393 1.251.393 1.266H9.183a9.223 9.223 0 01-.408 2.102l.757-.604c.452.456 1.512 1.712 1.906 2.177.473.681.063 2.081.063 2.081l-2.794-3.382c-.653 2.518-1.845 3.607-1.845 3.607-.523.468-1.58.82-2.64.516 2.218-1.73 3.44-3.917 3.667-6.497H4.491c0-.015.197-1.243.806-1.266h2.71c.024-.32.086-3.254.086-3.797H6.598c-.136.406-.158.447-.268.753-.594 1.095-1.603 1.122-1.907 1.155.906-1.821 1.416-3.6 1.591-4.064.425-1.124 1.671-1.125 1.671-1.125zM13.078 6h6.377v11.33h-2.573l-2.184 1.373-.401-1.373h-1.219zm1.313 1.219v8.86h.623l.263.937 1.455-.938h1.456v-8.86z"
+        };
+
+        function platformIcon(p, size) {
+            const s = size || 20;
+            if (ICONS[p.id]) {
+                return '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="' + p.color + '" aria-hidden="true"><path d="' + ICONS[p.id] + '"/></svg>';
+            }
+            const ch = p.mono || (p.name || '').charAt(0);
+            return '<span style="font-size:' + Math.round(s * 0.6) + 'px;font-weight:700;color:' + p.color + ';line-height:1;letter-spacing:-0.02em;">' + ch + '</span>';
+        }
 
         const AI_PORTALS = {
             "doubao": "https://www.doubao.com/chat/",
             "kimi": "https://kimi.moonshot.cn/"
         };
 
-        let currentSelectedVideoPath = "/Users/martin/Desktop/Codex视频处理/20260806 富氢热灸贴双语视频/富氢热灸贴_中文宣传片_电影级_v2_成片.mp4";
+        let currentVideo = null; // { path, name, size }
+        let dispatchCtl = { cancelled: false, taskIds: {} };
 
-        function copyMcpConfig() {
-            const text = document.getElementById('mcp-config-text').innerText;
-            navigator.clipboard.writeText(text).then(() => alert("📋 MCP 配置文件代码已复制到剪贴板！"));
+        function el(id) { return document.getElementById(id); }
+        function formatBytes(n) {
+            if (n == null) return '';
+            const mb = n / 1048576;
+            return mb >= 1 ? mb.toFixed(1) + ' MB' : (n / 1024).toFixed(0) + ' KB';
         }
 
-        function copyApiExample() {
-            const text = document.getElementById('api-example-text').innerText;
-            navigator.clipboard.writeText(text).then(() => alert("📋 HTTP API cURL 示例已复制到剪贴板！"));
-        }
-
-        function getCleanTopic() {
-            let fn = document.getElementById('selected-video-filename').innerText;
-            fn = fn.replace(/\.(mp4|mov|avi|mkv)$/i, '');
-            fn = fn.replace(/_(中文|英文|宣传片|电影级|成片|v\d+)/g, '');
-            return fn.trim() || "富氢热灸贴";
-        }
-
-        function openAiWebPage(key) {
-            const cleanTopic = getCleanTopic();
-            const promptText = `请帮我为【${cleanTopic}】写一段短视频爆款发布文案：\n标题：（控制在 28 字以内，吸引眼球）\n正文：（突出核心痛点与特点）`;
-            
-            navigator.clipboard.writeText(promptText).then(() => {
-                alert(`📋 清洗后的主题词【${cleanTopic}】及提示词已复制到剪贴板！\n即将在浏览器打开 ${key.toUpperCase()} 网页，按 Cmd+V / Ctrl+V 即可粘贴发送！`);
-                window.open(AI_PORTALS[key], '_blank');
-            }).catch(() => {
-                window.open(AI_PORTALS[key], '_blank');
-            });
-        }
-
-        async function parseFromClipboard() {
+        /* ── 引擎连接状态 ── */
+        async function checkEngine() {
+            const dot = el('engine-status');
             try {
-                const text = await navigator.clipboard.readText();
-                if (!text || text.trim().length === 0) {
-                    alert("⚠️ 剪贴板为空，请先在豆包或 Kimi 对话框中复制您选中的满意的文案！");
+                const res = await fetch(API + '/api/health', { cache: 'no-store' });
+                const data = await res.json();
+                if (data && data.status === 'ok') {
+                    dot.className = 'engine-dot on';
+                    dot.textContent = '引擎已连接';
+                    const warn = el('env-warning');
+                    if (data.sau_available === false) {
+                        if (warn) { warn.style.display = 'flex'; warn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> 未检测到 social-auto-upload 引擎（' + (data.sau_root || '') + '），发布将失败。请安装 SAU 或用 SAU_ROOT 指向正确路径。'; }
+                    } else if (warn) {
+                        warn.style.display = 'none';
+                    }
+                    refreshSessionStatus();
+                    loadHistory();
                     return;
                 }
-                
-                const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                if (lines.length > 0) {
-                    let firstLine = lines[0].replace(/^标题[：:]\s*/, '').replace(/^[#【\s]*/, '');
-                    document.getElementById('post-title').value = firstLine.slice(0, 80);
-                    
-                    if (lines.length > 1) {
-                        let remaining = lines.slice(1).join('\n').replace(/^正文[：:]\s*/, '');
-                        document.getElementById('post-desc').value = remaining;
-                    }
-                    alert("🎉 成功领用您复制的满意文案！已填入下表！");
-                }
-            } catch (err) {
-                alert("⚠️ 请允许浏览器读取剪贴板权限，或者直接手动粘贴！");
-            }
+            } catch (e) { /* fallthrough */ }
+            dot.className = 'engine-dot off';
+            dot.textContent = '引擎未连接 · 请本地运行 start_ui.sh';
         }
 
-        function setCopyMode(mode) {
-            document.querySelectorAll('.copy-tab-btn').forEach(b => b.classList.remove('active'));
-            if (mode === 'manual') {
-                document.getElementById('tab-manual').classList.add('active');
-                document.getElementById('manual-template-bar').style.display = 'flex';
-                document.getElementById('ai-generator-box').style.display = 'none';
-            } else {
-                document.getElementById('tab-ai').classList.add('active');
-                document.getElementById('manual-template-bar').style.display = 'none';
-                document.getElementById('ai-generator-box').style.display = 'block';
-            }
-        }
-
-        function applyTemplate(tplKey) {
-            if (tplKey === 'moxibustion') {
-                document.getElementById('post-title').value = "久坐一天，肩颈又石化了？富氢热灸贴温氢双护";
-                document.getElementById('post-desc').value = "久坐一天，肩颈又石化了？\n不是暖贴不够热，是只给皮肤烤了个表面。\n这次用的是富氢热灸贴——道地艾草 × 固态氢材料，热的时候氢分子同步工作，80×205mm 的大贴幅服帖整个肩颈和腰背。\n不燥不闷，一觉可以贴着睡。\n体感这个东西，说再多不如试一次。\n木齐科技 自研固态氢 | www.emuqi.com";
-            } else if (tplKey === 'viral') {
-                document.getElementById('post-title').value = "【实测体验】现代打工人的肩颈救星来了！";
-                document.getElementById('post-desc').value = "每天对电脑10小时，肩颈硬得像石头？\n今天给大家分享这款黑科技——富氢热灸贴！\n深层发热，温氢滋养，贴上就像做了一场SPA！\n感兴趣的朋友赶紧试试吧~ #打工人必备 #黑科技体验";
-            } else if (tplKey === 'global') {
-                document.getElementById('post-title').value = "Hydrogen Moxibustion Patch: Warmth & Hydrogen Dual Protection";
-                document.getElementById('post-desc').value = "Sitting all day leaving your shoulders stiff?\nDiscover the Hydrogen Moxibustion Patch — combining natural mugwort & solid hydrogen material. Hydrogen molecules work in sync with deep thermal relief across a large 80×205mm surface.\nMUQI TECH | Solid Hydrogen R&D | www.emuqi.com";
-            }
-        }
-
-        function clearForm() {
-            document.getElementById('post-title').value = "";
-            document.getElementById('post-desc').value = "";
-        }
-
-        function handleLocalFileSelect(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                document.getElementById('selected-video-filename').innerText = file.name;
-                document.getElementById('selected-video-filepath').innerText = `已选择本地文件: ${file.name}`;
-                currentSelectedVideoPath = file.name;
-                const objectUrl = URL.createObjectURL(file);
-                document.getElementById('main-video').src = objectUrl;
-            }
-        }
-
-        function renderMiniGrids() {
-            const cnGrid = document.getElementById('cn-mini-grid');
-            const globalGrid = document.getElementById('global-mini-grid');
-
+        /* ── 平台 ── */
+        function renderPlatforms() {
+            const cn = el('cn-grid'), gl = el('global-grid');
+            cn.innerHTML = ''; gl.innerHTML = '';
             PLATFORMS.forEach(p => {
                 const card = document.createElement('div');
-                card.className = 'platform-mini-card';
-                card.id = `card-${p.id}`;
-                card.setAttribute('data-platform-id', p.id);
-                card.onclick = () => {
-                    card.classList.toggle('selected');
-                    updateSelectedSummary();
-                };
-
+                card.className = 'pcard';
+                card.id = 'card-' + p.id;
+                card.onclick = () => { card.classList.toggle('selected'); updateCount(); };
                 card.innerHTML = `
-                    <div class="mini-card-top">
-                        <div class="mini-platform-info">
-                            <div class="mini-icon" style="background: ${p.color}22; color: ${p.color};">
-                                <i class="fa-brands ${p.icon}"></i>
-                            </div>
-                            <span class="mini-name">${p.name}</span>
-                        </div>
-                        <div class="checkbox-mini"><i class="fa-solid fa-check"></i></div>
+                    <div class="left">
+                        <div class="picon">${platformIcon(p)}</div>
+                        <span class="pname">${p.name}${p.beta ? '<span class="beta-tag">测试中</span>' : ''}</span>
                     </div>
-                    <div class="mini-card-bottom">
-                        <span id="status-pill-${p.id}" style="color:var(--text-muted); font-weight:600;">⏳ 校验中...</span>
-                        <button class="btn-qr-mini" onclick="launchQrLogin('${p.id}', event)"><i class="fa-solid fa-qrcode"></i> 扫码</button>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span class="pstatus" id="status-${p.id}">…</span>
+                        <button class="qr-btn" onclick="launchQrLogin('${p.id}', event)" title="扫码登录 / 刷新"><i class="fa-solid fa-qrcode"></i></button>
+                        <span class="checkbox"><i class="fa-solid fa-check"></i></span>
                     </div>
                 `;
-
-                if (p.cat === 'cn') cnGrid.appendChild(card);
-                else globalGrid.appendChild(card);
+                (p.cat === 'cn' ? cn : gl).appendChild(card);
             });
-            updateSelectedSummary();
+            updateCount();
         }
 
-        renderMiniGrids();
-
-        function updateSelectedSummary() {
-            const selected = document.querySelectorAll('.platform-mini-card.selected');
-            document.getElementById('selected-summary-text').innerText = `已勾选 ${selected.length} / 16 个平台`;
-        }
-
-        function clearAllSelections() {
-            document.querySelectorAll('.platform-mini-card').forEach(c => c.classList.remove('selected'));
-            updateSelectedSummary();
+        function updateCount() {
+            const n = document.querySelectorAll('.pcard.selected').length;
+            el('sel-count').textContent = '已选 ' + n + ' 个';
+            el('btn-publish-text').textContent = n > 0 ? ('发布到 ' + n + ' 个平台') : '发布';
         }
 
         function toggleCategory(cat) {
             const list = PLATFORMS.filter(p => p.cat === cat);
-            const allSelected = list.every(p => document.getElementById(`card-${p.id}`).classList.contains('selected'));
-            list.forEach(p => {
-                const card = document.getElementById(`card-${p.id}`);
-                if (allSelected) card.classList.remove('selected');
-                else card.classList.add('selected');
-            });
-            updateSelectedSummary();
+            const all = list.every(p => el('card-' + p.id).classList.contains('selected'));
+            list.forEach(p => el('card-' + p.id).classList.toggle('selected', !all));
+            updateCount();
         }
 
         async function refreshSessionStatus() {
             try {
-                const res = await fetch('http://localhost:5001/api/status');
+                const res = await fetch(API + '/api/status');
                 const data = await res.json();
-
-                const currentVideo = document.getElementById('selected-video-filename').innerText;
-                const pubMap = data.published_map || {};
-                const currentPubs = pubMap[currentVideo] || {};
                 const sessions = data.sessions || {};
-
+                let logged = 0;
                 PLATFORMS.forEach(p => {
-                    const card = document.getElementById(`card-${p.id}`);
-                    const pill = document.getElementById(`status-pill-${p.id}`);
-                    const pubInfo = currentPubs[p.id];
-                    const sess = sessions[p.id] || {};
-
-                    if (sess.logged_in) {
-                        if (pill) {
-                            pill.style.color = "var(--accent-teal)";
-                            pill.innerHTML = `✅ 已登录`;
-                        }
-                    } else {
-                        if (pill) {
-                            pill.style.color = "var(--accent-orange)";
-                            pill.innerHTML = `🔑 需扫码`;
-                        }
-                    }
-
-                    if (pubInfo && card) {
-                        card.style.borderColor = 'var(--accent-gold)';
-                        let existingPill = card.querySelector('.pub-lock-tag');
-                        if (!existingPill) {
-                            const tag = document.createElement('div');
-                            tag.className = 'pub-lock-tag';
-                            tag.style.cssText = 'margin-top:4px;padding:2px 6px;border-radius:4px;background:rgba(255,215,0,0.15);color:var(--accent-gold);font-size:10px;font-weight:700;text-align:center;';
-                            tag.innerText = `🔒 已发布 (锁定)`;
-                            card.appendChild(tag);
-                        }
-                    }
+                    const pill = el('status-' + p.id);
+                    if (!pill) return;
+                    const s = sessions[p.id] || {};
+                    if (s.logged_in) { pill.className = 'pstatus logged'; pill.textContent = '已登录'; logged++; }
+                    else { pill.className = 'pstatus need'; pill.textContent = '需扫码'; }
                 });
-            } catch (err) {
-                console.log("Status sync warning:", err);
-            }
+                const lc = el('login-count');
+                if (lc) lc.textContent = '已登录 ' + logged + '/16';
+            } catch (e) { /* 引擎离线时静默 */ }
         }
 
         async function launchQrLogin(platformId, event) {
             if (event) event.stopPropagation();
             try {
-                const res = await fetch('http://localhost:5001/api/launch-login', {
+                const res = await fetch(API + '/api/launch-login', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ platform_id: platformId })
                 });
                 const data = await res.json();
-                alert(`🚀 ${data.msg}`);
+                alert('已在桌面打开登录窗口，请扫码登录。\n' + (data.msg || ''));
                 refreshSessionStatus();
-            } catch (err) {
-                alert("⚠️ 无法连接本地 Python API 服务 (http://localhost:5001)！");
+            } catch (e) {
+                alert('无法连接本地引擎，请先运行 start_ui.sh。');
             }
         }
 
-        function openConfirmDialog() {
-            const selected = document.querySelectorAll('.platform-mini-card.selected');
-            if (selected.length === 0) {
-                alert("⚠️ 请至少手动勾选 1 个要推送的目标平台！");
-                return;
+        /* ── 分发记录 ── */
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+        }
+
+        async function loadHistory() {
+            const list = el('history-list');
+            try {
+                const res = await fetch(API + '/api/history');
+                const data = await res.json();
+                const records = data.records || [];
+                const active = Object.values(data._active_tasks || {}).filter(t => t.status === 'running');
+
+                if (!records.length && !active.length) {
+                    list.innerHTML = '<div class="history-empty">暂无发布记录</div>';
+                    return;
+                }
+                list.innerHTML = '';
+
+                active.forEach(t => {
+                    const name = (PLATFORMS.find(p => p.id === t.platform_id) || { name: t.platform_id }).name;
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerHTML = '<div class="history-head">' +
+                        '<span class="history-title"><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent);"></i> 进行中 · ' + escapeHtml(name) + '</span>' +
+                        '<span class="history-time">' + escapeHtml(t.stage || '') + '</span>' +
+                        '</div><div class="progress-track"><div class="progress-fill" style="width:' + (t.pct || 0) + '%;"></div></div>';
+                    list.appendChild(item);
+                });
+
+                records.slice().reverse().forEach(r => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    const plats = Object.entries(r.platforms || {});
+                    const chips = plats.length
+                        ? plats.map(([pid, info]) => {
+                            const name = (PLATFORMS.find(p => p.id === pid) || { name: pid }).name;
+                            const ok = info.status === 'success' && info.real;
+                            const link = (ok && info.link) ? ' <a href="' + escapeHtml(info.link) + '" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>' : '';
+                            return '<span class="chip' + (ok ? ' ok' : '') + '">' + name + link + '</span>';
+                        }).join('')
+                        : '<span class="chip">待发布</span>';
+                    item.innerHTML = '<div class="history-head">' +
+                        '<span class="history-title">' + escapeHtml(r.title || r.video_file || '') + '</span>' +
+                        '<span class="history-time">' + escapeHtml(r.timestamp || '') + '</span>' +
+                        '</div><div class="history-chips">' + chips + '</div>';
+                    list.appendChild(item);
+                });
+
+                if (active.length) setTimeout(loadHistory, 2000);
+            } catch (e) {
+                list.innerHTML = '<div class="history-empty">无法连接引擎</div>';
             }
-            document.getElementById('confirm-video-name').innerText = document.getElementById('selected-video-filename').innerText;
-            document.getElementById('confirm-count').innerText = selected.length;
-            document.getElementById('confirm-modal').style.display = 'flex';
         }
 
-        function closeConfirmDialog() {
-            document.getElementById('confirm-modal').style.display = 'none';
+        /* ── 视频 ── */
+        const dropzone = el('dropzone');
+        const fileInput = el('file-input');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => selectVideoFile(fileInput.files[0]));
+
+        ['dragover', 'dragenter'].forEach(ev => dropzone.addEventListener(ev, e => {
+            e.preventDefault(); dropzone.classList.add('drag');
+        }));
+        ['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, e => {
+            e.preventDefault(); dropzone.classList.remove('drag');
+        }));
+        dropzone.addEventListener('drop', e => {
+            const f = e.dataTransfer.files && e.dataTransfer.files[0];
+            if (f) selectVideoFile(f);
+        });
+
+        el('btn-fetch-url').addEventListener('click', fetchRemoteUrl);
+        el('video-url').addEventListener('keydown', e => { if (e.key === 'Enter') fetchRemoteUrl(); });
+
+        function setPreview(src, name, size) {
+            const v = el('video-preview');
+            const empty = el('drop-empty');
+            if (src) {
+                v.src = src; v.style.display = 'block'; empty.style.display = 'none';
+            } else {
+                v.removeAttribute('src'); v.style.display = 'none'; empty.style.display = 'block';
+            }
+            const meta = el('video-meta');
+            if (name) {
+                meta.style.display = 'flex';
+                meta.innerHTML = `<i class="fa-solid fa-film"></i> <span>${name}</span>` +
+                    (size != null ? `<span style="color:var(--faint);">${formatBytes(size)}</span>` : '') +
+                    `<span class="ok"><i class="fa-solid fa-circle-check"></i> 已就绪</span>`;
+            } else {
+                meta.style.display = 'none';
+            }
         }
 
-        function confirmAndDispatch() {
-            closeConfirmDialog();
-            startRealDispatch();
+        async function selectVideoFile(file) {
+            if (!file) return;
+            setPreview(URL.createObjectURL(file), file.name, file.size);
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                const res = await fetch(API + '/api/upload-video', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!res.ok || !data.saved_path) throw new Error(data.error || '上传失败');
+                currentVideo = { path: data.saved_path, name: file.name, size: data.size };
+                updateVideoMetaOk();
+            } catch (e) {
+                alert('视频上传到本地引擎失败：' + (e.message || e) + '\n请确认已运行 start_ui.sh。');
+            }
         }
 
-        function trackRealPythonTask(p, taskId, onComplete) {
-            const statusEl = document.getElementById(`status-${p.id}`);
-            const fillEl = document.getElementById(`fill-${p.id}`);
+        async function fetchRemoteUrl() {
+            const url = el('video-url').value.trim();
+            if (!url) return;
+            if (!/^https?:\/\//i.test(url)) { alert('请输入 http/https 开头的视频直链'); return; }
+            const name = url.split('/').pop().split('?')[0] || '远程视频';
+            setPreview(url, name, null);
+            try {
+                const res = await fetch(API + '/api/download-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.saved_path) throw new Error(data.error || '拉取失败');
+                currentVideo = { path: data.saved_path, name, size: data.size };
+                updateVideoMetaOk();
+            } catch (e) {
+                alert('远程视频拉取失败：' + (e.message || e));
+            }
+        }
 
-            const pollInterval = setInterval(async () => {
+        function updateVideoMetaOk() {
+            const meta = el('video-meta');
+            if (!currentVideo) return;
+            meta.style.display = 'flex';
+            meta.innerHTML = `<i class="fa-solid fa-film"></i> <span>${currentVideo.name}</span>` +
+                (currentVideo.size != null ? `<span style="color:var(--faint);">${formatBytes(currentVideo.size)}</span>` : '') +
+                `<span class="ok"><i class="fa-solid fa-circle-check"></i> 已就绪</span>`;
+        }
+
+        /* ── AI 文案 ── */
+        function cleanTopic() {
+            const t = el('post-title').value.trim();
+            if (t) return t.slice(0, 30);
+            const v = currentVideo ? currentVideo.name : '';
+            return v.replace(/\.(mp4|mov|avi|mkv)$/i, '').replace(/[_-]+/g, ' ').trim() || '我的视频';
+        }
+
+        function openAiWebPage(key) {
+            const topic = cleanTopic();
+            const prompt = `请为【${topic}】写一段短视频发布文案：\n标题：（28 字以内）\n正文：（突出核心亮点与行动引导）`;
+            navigator.clipboard.writeText(prompt).then(() => {
+                alert('主题与提示词已复制，即将打开 ' + key.toUpperCase() + '，粘贴即可。');
+                window.open(AI_PORTALS[key], '_blank');
+            }).catch(() => window.open(AI_PORTALS[key], '_blank'));
+        }
+
+        async function parseFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (!text || !text.trim()) { alert('剪贴板为空，请先复制 AI 生成的文案'); return; }
+                const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+                if (lines.length) {
+                    el('post-title').value = lines[0].replace(/^标题[：:]\s*/, '').replace(/^[#【\s]+/, '').slice(0, 80);
+                    if (lines.length > 1) el('post-desc').value = lines.slice(1).join('\n').replace(/^正文[：:]\s*/, '');
+                }
+                alert('已回填文案。');
+            } catch (e) {
+                alert('无法读取剪贴板，请手动粘贴。');
+            }
+        }
+
+        /* ── 发布 ── */
+        function getSelected() {
+            return PLATFORMS.filter(p => el('card-' + p.id).classList.contains('selected'));
+        }
+
+        function publish() {
+            if (!currentVideo) { alert('请先选择或拖入一个视频'); return; }
+            const sel = getSelected();
+            if (!sel.length) { alert('请至少勾选一个平台'); return; }
+            el('confirm-name').textContent = currentVideo.name;
+            el('confirm-count').textContent = sel.length;
+            el('confirm-overlay').classList.add('show');
+        }
+        function hideConfirm() { el('confirm-overlay').classList.remove('show'); }
+        function hideProgress() { el('progress-overlay').classList.remove('show'); }
+
+        function confirmDispatch() {
+            hideConfirm();
+            startDispatch();
+        }
+
+        function parseTags() {
+            return el('post-tags').value.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+        }
+
+        async function startDispatch() {
+            const overlay = el('progress-overlay');
+            const list = el('progress-list');
+            const closeBtn = el('close-progress');
+            const cancelAllBtn = el('btn-cancel-all');
+            dispatchCtl = { cancelled: false, taskIds: {} };
+            overlay.classList.add('show');
+            closeBtn.style.display = 'none';
+            cancelAllBtn.style.display = 'inline-flex';
+            list.innerHTML = '';
+
+            const sel = getSelected();
+            const title = el('post-title').value.trim() || currentVideo.name;
+            const desc = el('post-desc').value.trim();
+            const tags = parseTags();
+
+            sel.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'progress-row';
+                row.id = 'row-' + p.id;
+                row.innerHTML = `
+                    <div class="pr-top">
+                        <span style="display:inline-flex;align-items:center;gap:6px;">${platformIcon(p, 14)} ${p.name}</span>
+                        <span style="display:flex; align-items:center; gap:8px;">
+                            <span id="status-${p.id}-p" style="color:var(--muted);">等待中…</span>
+                            <button class="pr-cancel" onclick="cancelTask('${p.id}')" title="取消该平台">取消</button>
+                        </span>
+                    </div>
+                    <div class="progress-track"><div class="progress-fill" id="fill-${p.id}"></div></div>
+                `;
+                list.appendChild(row);
+            });
+
+            for (const p of sel) {
+                if (dispatchCtl.cancelled) {
+                    const st = el('status-' + p.id + '-p');
+                    if (st) st.innerHTML = '<span style="color:var(--faint);">已跳过</span>';
+                    continue;
+                }
                 try {
-                    const res = await fetch(`http://localhost:5001/api/task-progress?task_id=${taskId}`);
-                    const info = await res.json();
+                    const res = await fetch(API + '/api/start-upload-task', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            platform_id: p.id,
+                            video_file: currentVideo.path,
+                            title, desc, tags
+                        })
+                    });
+                    const data = await res.json();
+                    const st = el('status-' + p.id + '-p');
+                    const fill = el('fill-' + p.id);
 
-                    if (info.pct !== undefined) fillEl.style.width = `${info.pct}%`;
-                    if (info.stage) statusEl.innerText = info.stage;
+                    if (res.status === 409 || data.status === 'blocked_duplicate') {
+                        st.innerHTML = '<span style="color:var(--accent-2);">已发布过 · 防重拦截</span>';
+                        fill.style.width = '100%';
+                        continue;
+                    }
+                    if (data.task_id) {
+                        dispatchCtl.taskIds[p.id] = data.task_id;
+                        await new Promise(r => trackTask(p, data.task_id, r));
+                    } else {
+                        st.innerHTML = '<span style="color:var(--danger);">' + (data.msg || data.error || '启动失败') + '</span>';
+                    }
+                } catch (e) {
+                    const st = el('status-' + p.id + '-p');
+                    if (st) st.innerHTML = '<span style="color:var(--danger);">请求失败</span>';
+                }
+            }
+
+            cancelAllBtn.style.display = 'none';
+            closeBtn.style.display = 'inline-flex';
+            refreshSessionStatus();
+            loadHistory();
+        }
+
+        async function cancelTask(platformId) {
+            const tid = dispatchCtl.taskIds[platformId];
+            if (!tid) return;
+            try {
+                await fetch(API + '/api/cancel-task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task_id: tid })
+                });
+            } catch (e) { /* 忽略 */ }
+        }
+
+        async function cancelAll() {
+            dispatchCtl.cancelled = true;
+            const ids = Object.values(dispatchCtl.taskIds);
+            for (const tid of ids) {
+                try {
+                    await fetch(API + '/api/cancel-task', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ task_id: tid })
+                    });
+                } catch (e) { /* 忽略 */ }
+            }
+            const btn = el('btn-cancel-all');
+            if (btn) btn.style.display = 'none';
+        }
+
+        function trackTask(p, taskId, done) {
+            const st = el('status-' + p.id + '-p');
+            const fill = el('fill-' + p.id);
+            const timer = setInterval(async () => {
+                try {
+                    const res = await fetch(API + '/api/task-progress?task_id=' + taskId);
+                    const info = await res.json();
+                    if (info.pct !== undefined) fill.style.width = info.pct + '%';
+                    if (info.stage) st.textContent = info.stage;
 
                     if (info.status === 'completed') {
-                        clearInterval(pollInterval);
-                        statusEl.innerHTML = `<span style="color: var(--accent-teal); font-weight:700;"><i class="fa-solid fa-circle-check"></i> ${info.stage}</span>`;
-                        fillEl.style.width = '100%';
-                        fillEl.style.background = 'var(--accent-teal)';
-                        onComplete(true);
+                        clearInterval(timer);
+                        st.innerHTML = '<span style="color:var(--success);">' + info.stage + '</span>';
+                        fill.style.width = '100%';
+                        done();
+                    } else if (info.status === 'cancelled') {
+                        clearInterval(timer);
+                        st.innerHTML = '<span style="color:var(--faint);">已取消</span>';
+                        fill.style.width = '100%';
+                        fill.style.background = 'var(--faint)';
+                        done();
                     } else if (info.status === 'failed') {
-                        clearInterval(pollInterval);
-                        statusEl.innerHTML = `<span style="color: var(--accent-red); font-weight:700;"><i class="fa-solid fa-circle-xmark"></i> ${info.error || '失败'}</span>`;
-                        fillEl.style.width = '100%';
-                        fillEl.style.background = 'var(--accent-red)';
-                        onComplete(false);
+                        clearInterval(timer);
+                        st.innerHTML = '<span style="color:var(--danger);">' + (info.error || info.stage || '失败') + '</span>';
+                        fill.style.width = '100%';
+                        done();
                     }
-                } catch (err) {
-                    clearInterval(pollInterval);
-                    onComplete(false);
+                } catch (e) {
+                    clearInterval(timer);
+                    done();
                 }
             }, 500);
         }
 
-        async function startRealDispatch() {
-            const modal = document.getElementById('modal');
-            const list = document.getElementById('progress-list');
-            const closeBtn = document.getElementById('close-modal-btn');
-            
-            modal.style.display = 'flex';
-            closeBtn.style.display = 'none';
-            list.innerHTML = '';
+        el('btn-publish').addEventListener('click', publish);
 
-            const selected = document.querySelectorAll('.platform-mini-card.selected');
-            const activePlatforms = Array.from(selected).map(c => {
-                const id = c.id.replace('card-', '');
-                return PLATFORMS.find(p => p.id === id);
-            });
-
-            const title = document.getElementById('post-title').value;
-            const desc = document.getElementById('post-desc').value;
-            const targetVideo = currentSelectedVideoPath;
-
-            activePlatforms.forEach(p => {
-                const item = document.createElement('div');
-                item.className = 'progress-row';
-                item.id = `row-${p.id}`;
-                item.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600;">
-                        <span><i class="fa-brands ${p.icon}" style="color: ${p.color};"></i> ${p.name}</span>
-                        <span id="status-${p.id}" style="color: var(--text-muted);">等待分配后端任务...</span>
-                    </div>
-                    <div class="progress-fill-bg">
-                        <div class="progress-fill" id="fill-${p.id}" style="width: 0%;"></div>
-                    </div>
-                `;
-                list.appendChild(item);
-            });
-
-            for (const p of activePlatforms) {
-                try {
-                    const startRes = await fetch('http://localhost:5001/api/start-upload-task', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            platform_id: p.id,
-                            video_file: targetVideo,
-                            title: title,
-                            desc: desc,
-                            tags: ["富氢热灸贴", "木齐科技", "温氢双护"]
-                        })
-                    });
-                    const startData = await startRes.json();
-
-                    if (startRes.status === 409 || startData.status === 'blocked_duplicate') {
-                        const statusEl = document.getElementById(`status-${p.id}`);
-                        const fillEl = document.getElementById(`fill-${p.id}`);
-                        statusEl.innerHTML = `<span style="color:var(--accent-gold); font-weight:700;">🔒 已成功发布 · 防重锁拦截</span>`;
-                        fillEl.style.width = '100%';
-                        fillEl.style.background = 'var(--accent-gold)';
-                        continue;
-                    }
-
-                    if (startData.task_id) {
-                        await new Promise(resolve => trackRealPythonTask(p, startData.task_id, resolve));
-                    }
-                } catch (err) {
-                    console.error(err);
-                }
-            }
-
-            closeBtn.style.display = 'block';
-            refreshSessionStatus();
-        }
-
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
-
-        refreshSessionStatus();
+        /* ── 启动 ── */
+        renderPlatforms();
+        loadHistory();
+        checkEngine();
     </script>
 </body>
 </html>

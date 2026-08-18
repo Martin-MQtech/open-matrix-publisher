@@ -12,7 +12,7 @@
 因此，我秉承纯粹的开源精神，正式推出了 **【全域矩阵】 (Open Matrix Publisher)**！
 
 ✨ **为什么它与众不同？**
-1. 🔓 **100% 真正免费开源**：零收费门槛，原生支持抖音、快手、小红书、B站、视频号、知乎、微博、YouTube Shorts、TikTok 等 14+ 国内外平台。
+1. 🔓 **100% 真正免费开源**：零收费门槛，原生支持抖音、快手、小红书、B站、视频号、知乎、微博、头条、百家号、番茄、YouTube、TikTok、X、LinkedIn、Instagram、Facebook 共 16 个国内外平台（国内 10 + 海外 6）。
 2. ⚡ **原生 DOM Setter 注入引擎**：从底层解决 React/Vue 受控组件导致的发布按钮死锁问题。
 3. 🛡️ **前台零干扰 (Non-Intrusive Engine)**：凭借凭证金库 (Cookie Vault)，一次登录自动写盘，后台无感分发，绝不抢占前台焦点。
 4. 🤖 **AI Agent 动态文案适配**：按各平台字数限制与话题格式自动无损重构标题。
@@ -33,7 +33,7 @@ As an entrepreneur exploring AIGC, hydrogen health, and medical technology, I've
 In the true spirit of open-source, I am excited to announce **Open Matrix Publisher (全域矩阵)**!
 
 ✨ **Why is it different?**
-1. 🔓 **100% Free & Unlimited**: Supports 14+ domestic & international platforms out of the box (Douyin, Xiaohongshu, Bilibili, WeChat Channels, YouTube Shorts, TikTok, X, LinkedIn, etc.).
+1. 🔓 **100% Free & Unlimited**: Supports 16 domestic & international platforms out of the box (Douyin, Kuaishou, Xiaohongshu, Bilibili, WeChat Channels, Zhihu, Weibo, Toutiao, Baijiahao, Fanqie, YouTube, TikTok, X, LinkedIn, Instagram, Facebook).
 2. ⚡ **Reactive JS DOM Setter Engine**: Solves React/Vue controlled form button deadlocks at the DOM level.
 3. 🛡️ **Non-Intrusive Background Execution**: Features a Cookie Vault with state persistence—login once, and all uploads run silently in the background without stealing screen focus.
 4. 🤖 **AI-Driven Copy Adaptor**: Automatically restructures titles and hashtags for platform-specific character limits.
@@ -54,7 +54,7 @@ The project is now fully open-sourced on GitHub. I invite all creators, develope
 🚀 告别收费陷阱与发布死锁！我正式开源了 **【全域矩阵】 (Open Matrix Publisher)**！
 
 一个基于 AI Agent + CDP 底层引擎的全平台视频一键分发工具：
-✅ 100% 免费开源，支持 14+ 国内外平台 (抖音/快手/小红书/B站/视频号/知乎/微博/YouTube Shorts/TikTok等)
+✅ 100% 免费开源，支持 16 个国内外平台 (抖音/快手/小红书/B站/视频号/头条/知乎/微博/百家号/番茄/YouTube/TikTok/X/LinkedIn/Instagram/Facebook)
 ✅ 解决 React/Vue 发布按钮死锁
 ✅ 后台静默无感分发，不抢焦点
 ✅ AI 自动匹配平台字数限制
@@ -70,7 +70,7 @@ The project is now fully open-sourced on GitHub. I invite all creators, develope
 🚀 Tired of overpriced social media schedulers and constant upload timeouts? I just open-sourced **Open Matrix Publisher (全域矩阵)**!
 
 An AI Agent & Hybrid CDP-powered video auto-publisher:
-✅ 100% Free & Unlimited across 14+ domestic & global platforms
+✅ 100% Free & Unlimited across 16 domestic & global platforms
 ✅ Native JS Event Setter to fix React/Vue form button deadlocks
 ✅ Non-intrusive background upload engine
 ✅ AI dynamic title & hashtag adaptor

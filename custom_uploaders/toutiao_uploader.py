@@ -2,9 +2,9 @@
 今日头条视频上传器 — 严格上传完成校验版 v2.0
 """
 import os, sys, json, asyncio
-sys.path.insert(0, os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"))
+sys.path.insert(0, os.path.expanduser(os.environ.get("SAU_ROOT", "~/social-auto-upload")))
 
-SAU_COOKIES = os.path.join(os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"), "cookies")
+SAU_COOKIES = os.path.join(os.path.expanduser(os.environ.get("SAU_ROOT", "~/social-auto-upload")), "cookies")
 COOKIE_FILE = os.path.join(SAU_COOKIES, "toutiao_default.json")
 
 async def _upload_async(video_path, title, tags, desc=""):

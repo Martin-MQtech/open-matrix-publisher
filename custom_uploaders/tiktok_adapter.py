@@ -12,7 +12,7 @@ import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload"))
+sys.path.insert(0, os.path.expanduser(os.environ.get("SAU_ROOT", "~/social-auto-upload")))
 
 from custom_uploaders.base import account_file, login_flow  # noqa: E402
 from uploader.tk_uploader.main_chrome import TiktokVideo  # noqa: E402

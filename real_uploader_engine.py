@@ -2,17 +2,34 @@ import os, sys, json, time, subprocess, glob
 from datetime import datetime
 
 # SAU (social-auto-upload) 安装路径：优先读环境变量 SAU_ROOT，
-# 回退到本机历史路径。这样工具在其它机器/用户环境下也能开箱即用，无需硬编码。
-SAU_ROOT = os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload")
-SAU_VENV_BIN = f"{SAU_ROOT}/.venv/bin"
-SAU_CLI = f"{SAU_VENV_BIN}/sau"
-SAU_PYTHON = f"{SAU_VENV_BIN}/python"
+# 默认 ~/social-auto-upload（自动展开用户主目录），任意机器/用户均可开箱即用。
+# 跨平台路径（Windows 的 .venv/Scripts vs POSIX 的 .venv/bin）统一由 omp_paths 解析。
+from omp_paths import sau_root, sau_cli, sau_python  # noqa: E402
 
-def _run_with_progress(cmd, env, cwd, timeout, on_progress=None):
+SAU_ROOT = sau_root()
+SAU_CLI = sau_cli()
+SAU_PYTHON = sau_python()
+
+# 正在运行的子进程注册表：供 /api/cancel-task 取消上传使用
+_RUNNING_PROCS = {}
+
+def cancel_running_task(task_id):
+    """尽力终止指定任务正在运行的子进程，返回是否真的 kill 成功。"""
+    proc = _RUNNING_PROCS.get(task_id)
+    if proc and proc.poll() is None:
+        try:
+            proc.kill()
+            return True
+        except Exception:
+            return False
+    return False
+
+def _run_with_progress(cmd, env, cwd, timeout, on_progress=None, task_id=None):
     """运行子进程并实时回传进度与日志行。
     on_progress(pct, log_line) —— pct 为推断进度(0-90)，log_line 为最新一行日志(可为None)。
     返回 (returncode, combined_output)。
-    Windows 兼容: 使用 universal_newlines=True (text=True) 统一换行符处理。"""
+    Windows 兼容: 使用 universal_newlines=True (text=True) 统一换行符处理。
+    task_id: 传入后会把子进程注册到 _RUNNING_PROCS，供取消接口 kill。"""
     import subprocess as sp, time, sys
     try:
         proc = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.STDOUT, text=True,
@@ -21,6 +38,8 @@ def _run_with_progress(cmd, env, cwd, timeout, on_progress=None):
                         **({"creationflags": sp.CREATE_NO_WINDOW} if sys.platform == "win32" else {}))
     except Exception as e:
         return -1, f"启动进程失败: {e}"
+    if task_id:
+        _RUNNING_PROCS[task_id] = proc
     logs = []
     pct = 40
     last_tick = time.time()
@@ -58,9 +77,11 @@ def _run_with_progress(cmd, env, cwd, timeout, on_progress=None):
                 proc.wait(timeout=5)
             except Exception:
                 pass
+            _RUNNING_PROCS.pop(task_id, None)
             logs.append(f"[BRIDGE TIMEOUT] 进程 {timeout}s 后被终止")
             return -1, "\n".join(logs[-800:])
     rc = proc.wait()
+    _RUNNING_PROCS.pop(task_id, None)
     return rc, "\n".join(logs[-800:])
 
 CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), "platform_credentials.json")
@@ -123,9 +144,10 @@ class RealPlatformUploader:
         # 不再写入任何具体产品/品牌词，避免污染通用工具。
         self.tags = tags or []
 
-    def execute_upload(self, on_progress=None, log_file=None):
+    def execute_upload(self, on_progress=None, log_file=None, task_id=None):
         """执行上传。on_progress(pct, log_line) 用于实时进度回传；
-        log_file 若提供，引擎每一步的关键事件也会写入该文件以便排错。"""
+        log_file 若提供，引擎每一步的关键事件也会写入该文件以便排错。
+        task_id 传入后，引擎会把正在运行的子进程注册到取消注册表。"""
         def log(msg):
             line = f"[{datetime.now().strftime('%H:%M:%S')}] {msg}"
             print(line)  # 仍输出到控制台
@@ -180,7 +202,7 @@ class RealPlatformUploader:
                     # Windows: 无 script 命令，直接运行
                     log("执行 B站 (Windows 直连模式)")
                     try:
-                        rc, output = _run_with_progress(cmd, env, SAU_ROOT, 600, on_progress)
+                        rc, output = _run_with_progress(cmd, env, SAU_ROOT, 600, on_progress, task_id=task_id)
                     except Exception as e:
                         return {"success": False, "error": f"B站 执行异常: {str(e)}"}
                 else:
@@ -190,7 +212,7 @@ class RealPlatformUploader:
                                   f"export PYTHONPATH={SAU_ROOT}; {inner_cmd}"]
                     log("执行 B站 (pseudo-TTY) 指令")
                     try:
-                        rc, output = _run_with_progress(script_cmd, env, SAU_ROOT, 600, on_progress)
+                        rc, output = _run_with_progress(script_cmd, env, SAU_ROOT, 600, on_progress, task_id=task_id)
                     except Exception as e:
                         return {"success": False, "error": f"B站 pseudo-TTY 异常: {str(e)}"}
                 tail = output[-400:]
@@ -208,7 +230,7 @@ class RealPlatformUploader:
                     cmd_try = cmd + [mode]
                     log(f"执行 视频号 ({mode}) 指令")
                     try:
-                        rc, output = _run_with_progress(cmd_try, env, SAU_ROOT, 600, on_progress)
+                        rc, output = _run_with_progress(cmd_try, env, SAU_ROOT, 600, on_progress, task_id=task_id)
                         tail = output[-400:]
                         log(f"sau tencent ({mode}) 输出: {tail[-200:]}")
                         cookie_expired = "cookie 已失效" in output or "重新登录" in output or "login" in output.lower()
@@ -229,7 +251,7 @@ class RealPlatformUploader:
                 cmd += ["--headless"]
                 log(f"执行 sau {self.platform_id} (headless)")
                 try:
-                    rc, output = _run_with_progress(cmd, env, SAU_ROOT, 600, on_progress)
+                    rc, output = _run_with_progress(cmd, env, SAU_ROOT, 600, on_progress, task_id=task_id)
                     tail = output[-400:]
                     log(f"sau {self.platform_id} 输出: {tail}")
                     if rc == 0:
@@ -295,7 +317,7 @@ class RealPlatformUploader:
             env["OMP_PUBLISH_ARGS"] = args_payload
 
             try:
-                rc, output = _run_with_progress(cmd, env, SAU_ROOT, 600, on_progress)
+                rc, output = _run_with_progress(cmd, env, SAU_ROOT, 600, on_progress, task_id=task_id)
                 log(f"custom {self.platform_id} 输出: {output[-300:]}")
 
                 if "CUSTOM_RESULT: True" in output:

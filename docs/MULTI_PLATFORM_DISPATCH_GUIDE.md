@@ -55,6 +55,6 @@
 ## 四、 故障诊断排查路线
 
 1. **查重**: 先看 `dispatch_history.json`，确保不重复发。
-2. **看 Cookie**: 检查 `/Users/martin/social-auto-upload/cookies/<platform>_default.json` 的修改时间和字节数。
+2. **看 Cookie**: 检查 `$SAU_ROOT/cookies/<platform>_default.json`（默认 `~/social-auto-upload/cookies/`）的修改时间和字节数。
 3. **试连通**: 运行单平台测试逻辑，实时打印页面 `title` 与 `url`。
 4. **报表落盘**: 无论成功失败，全部更新至 `dispatch_history.json` 和日志，保证数据透明可追溯。

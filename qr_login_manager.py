@@ -8,10 +8,12 @@
 import os, sys, json, time, subprocess, threading, base64, asyncio, tempfile
 from pathlib import Path
 
-SAU_ROOT = os.environ.get("SAU_ROOT", "/Users/martin/social-auto-upload")
-SAU_VENV_BIN = f"{SAU_ROOT}/.venv/bin"
-SAU_CLI = f"{SAU_VENV_BIN}/sau"
-SAU_PYTHON = f"{SAU_VENV_BIN}/python"
+from omp_paths import sau_root, sau_cli, sau_python, venv_bin, biliup  # noqa: E402
+
+SAU_ROOT = sau_root()
+SAU_VENV_BIN = venv_bin()
+SAU_CLI = sau_cli()
+SAU_PYTHON = sau_python()
 COOKIES_DIR = f"{SAU_ROOT}/cookies"
 
 # 各平台 Cookie 文件
@@ -98,7 +100,7 @@ class HeadlessQRLogin:
         if pid == "bilibili":
             # B站用 biliup login，会输出二维码到终端（ASCII），我们截获
             self._emit("B站需要扫码登录，正在生成二维码...", 20)
-            cmd = [f"{SAU_VENV_BIN}/biliup", "login"]
+            cmd = [biliup(), "login"]
             try:
                 proc = subprocess.Popen(
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,

@@ -32,12 +32,12 @@ def main():
         import webview
         print("🖥️ 正在创建原生应用视窗 (PyWebView Engine)...")
         window = webview.create_window(
-            title="Open Matrix Publisher (全域矩阵) · 28 平台 AI 原生全域分发中枢",
+            title="Open Matrix Publisher (全域矩阵) · 16 平台 AI 原生全域分发中枢",
             url=app_url,
             width=1380,
             height=900,
             min_size=(1024, 700),
-            background_color="#060911",
+            background_color="#131110",
             text_select=True
         )
         webview.start(debug=False)

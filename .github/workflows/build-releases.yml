@@ -30,7 +30,7 @@ jobs:
             --add-data "index.html:." \
             --add-data "logo.png:." \
             --add-data "showcase_banner.jpg:." \
-            --icon "logo.png" \
+            --icon "icon.icns" \
             desktop_app.py
           cd dist && zip -r "OpenMatrixPublisher-macOS.zip" "OpenMatrixPublisher.app"
 
@@ -65,6 +65,7 @@ jobs:
             --add-data "index.html;." `
             --add-data "logo.png;." `
             --add-data "showcase_banner.jpg;." `
+            --icon "icon.ico" `
             desktop_app.py
 
       - name: Upload Windows Release Asset

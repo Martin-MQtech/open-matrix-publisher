@@ -1,7 +1,8 @@
 import os, sys, json, time, subprocess, threading, asyncio
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
-from real_uploader_engine import load_credentials, save_credentials, check_profile_logged_in, RealPlatformUploader
+from real_uploader_engine import load_credentials, save_credentials, check_profile_logged_in, RealPlatformUploader, SAU_ROOT, cancel_running_task
+from omp_paths import sau_cli
 from chat_ai_bridge import generate_copy_via_free_ai
 from url_downloader import download_remote_video, cleanup_temp_video, is_remote_url
 
@@ -25,7 +26,10 @@ except Exception:
 
 # Active background upload tasks store & History Store
 ACTIVE_TASKS = {}
-TASK_LOCK = threading.Lock()
+# 使用可重入锁：_run_real_upload_thread 的 on_progress / 收尾阶段会在已持有锁时
+# 再调用 save_task_progress()（其内部也会加锁），普通 Lock 会在此死锁，
+# 导致 /api/history、/api/task-progress 等接口永久挂起。
+TASK_LOCK = threading.RLock()
 HISTORY_FILE_LOCK = threading.Lock()          # dedicated lock for load-modify-write of history json
 HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dispatch_history.json")
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
@@ -154,6 +158,54 @@ def is_already_published(video_file, platform_id):
 def index():
     from flask import send_from_directory
     return send_from_directory(os.path.dirname(__file__), "index.html")
+
+@app.route("/api/health", methods=["GET"])
+def health():
+    """轻量健康检查：前端用于判断本地分发引擎是否在线，并返回 SAU 环境自检结果。"""
+    sau_available = os.path.exists(sau_cli())
+    sau_cookies = os.path.join(SAU_ROOT, "cookies")
+    cookie_count = 0
+    if os.path.isdir(sau_cookies):
+        cookie_count = len([f for f in os.listdir(sau_cookies) if f.endswith(".json")])
+    return jsonify({
+        "status": "ok",
+        "service": "open-matrix-publisher",
+        "sau_available": sau_available,
+        "sau_root": SAU_ROOT,
+        "cookie_count": cookie_count,
+    })
+
+@app.route("/api/download-video", methods=["POST"])
+def download_video():
+    """将远程 HTTP/HTTPS 视频直链下载到本地临时目录，返回服务端绝对路径供分发引擎使用。"""
+    data = request.json or {}
+    url = (data.get("url") or "").strip()
+    if not is_remote_url(url):
+        return jsonify({"error": "请提供有效的 HTTP/HTTPS 视频直链"}), 400
+    try:
+        local_path, _is_temp = download_remote_video(url)
+        size = os.path.getsize(local_path) if os.path.exists(local_path) else 0
+        return jsonify({"saved_path": os.path.abspath(local_path), "size": size})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route("/api/cancel-task", methods=["POST"])
+def cancel_task():
+    """尽力取消一个正在运行的上传任务：kill 其子进程并写入 cancelled 状态。
+    注意：已提交到平台的上传无法撤回，取消只对尚未完成的进程生效。"""
+    data = request.json or {}
+    task_id = data.get("task_id")
+    if not task_id:
+        return jsonify({"error": "task_id required"}), 400
+    killed = cancel_running_task(task_id)
+    save_task_progress(task_id, {
+        "status": "cancelled",
+        "stage": "⏹ 已取消",
+        "pct": 100,
+        "error": "用户取消",
+        "finish_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+    })
+    return jsonify({"status": "cancelled", "killed": killed})
 
 @app.after_request
 def after_request(response):
@@ -295,7 +347,7 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags,
 
         try:
             uploader = RealPlatformUploader(platform_id, video_file, title, desc, tags, cover_file=cover_file)
-            result = uploader.execute_upload(on_progress=on_progress, log_file=log_path)
+            result = uploader.execute_upload(on_progress=on_progress, log_file=log_path, task_id=task_id)
         except Exception as e:
             result = {"success": False, "error": f"引擎异常: {str(e)}"}
 
@@ -552,6 +604,16 @@ def api_publish_batch():
         "tasks": task_ids,
         "video_file": os.path.basename(local_path)
     })
+
+@app.route("/<path:filename>")
+def serve_static(filename):
+    """静态资源路由：logo / favicon / 图片 / css / js 等前端资产。
+    必须放在所有 /api/* 路由之后（Flask 按注册顺序匹配，API 优先），
+    且仅放行安全扩展名，避免把源码/配置当静态文件吐出。"""
+    from flask import send_from_directory, abort
+    if filename.lower().endswith((".svg", ".png", ".ico", ".jpg", ".jpeg", ".gif", ".webp", ".css", ".js")):
+        return send_from_directory(os.path.dirname(__file__), filename)
+    abort(404)
 
 if __name__ == "__main__":
     print("🚀 启动 Open Matrix Publisher Web 控制台: http://localhost:5001")
