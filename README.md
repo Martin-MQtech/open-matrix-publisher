@@ -86,6 +86,8 @@ Open Matrix Publisher 旨在打破国内外割裂的自媒体营销现状，为�
 | **TikTok** | Patchright 适配器 | 扫码 / Google / Apple | ✅ 实测发布成功 (Verified) |
 | **Instagram Reels** | instagrapi 移动 API | 账号密码 / SessionID | ✅ 实测发布成功 (Verified) |
 | **X (Twitter)** | 自定义适配器 | 账号密码 / Google | ✅ 实测发布成功 (Verified) |
+| **Dev.to** | 免费官方 API | API Key（控制台配置） | ✅ 免费 API 已接入 (Free API, Verified) |
+| **WordPress** | 免费官方 API | 应用密码（控制台配置） | ✅ 免费 API 已接入 (Free API, Verified) |
 | **LinkedIn** | Profile 隔离引擎 | 账号密码 | ⚠️ 暂挂 (Parked for Profile Isolation) |
 | **Google Blogger** | Patchright / API | Google 账号 | 🌟 候选扩充 (SEO Candidate) |
 | **Substack** | Patchright / Session | 邮箱凭证 | 🌟 候选扩充 (Newsletter Candidate) |
