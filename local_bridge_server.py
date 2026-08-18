@@ -227,7 +227,7 @@ def get_status():
 
     creds = load_credentials()
     session_status = {}
-    all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "baijiahao", "fanqie", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok"]
+    all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "baijiahao", "fanqie", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok", "devto", "wordpress"]
     
     for pid in all_platforms:
         is_logged, msg = check_profile_logged_in(pid)
@@ -309,9 +309,10 @@ def configure_key():
     os.makedirs(cookies_dir, exist_ok=True)
     # 同时写 SAU cookies 目录（引擎 account_file 优先读 SAU 侧）
     from omp_paths import sau_root
+    sau = sau_root() if callable(sau_root) else sau_root
     targets = [os.path.join(cookies_dir, f"{platform_id}_default.json")]
-    if sau_root:
-        targets.append(os.path.join(sau_root, "cookies", f"{platform_id}_default.json"))
+    if sau:
+        targets.append(os.path.join(sau, "cookies", f"{platform_id}_default.json"))
     for t in targets:
         try:
             os.makedirs(os.path.dirname(t), exist_ok=True)

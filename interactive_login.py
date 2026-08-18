@@ -103,7 +103,25 @@ PLATFORMS = {
         "exclude_keywords": ["login"]
     },
 
-
+    # ── API-key 平台（免费官方 API，无浏览器登录，前端走「配置 Key」）──
+    "devto": {
+        "name": "Dev.to",
+        "url": "https://dev.to/settings/account",
+        "api_key": True,
+        "cookie_files": ["devto_default.json"],
+        "auth_cookies": [],
+        "success_domains": ["dev.to"],
+        "exclude_keywords": []
+    },
+    "wordpress": {
+        "name": "WordPress",
+        "url": "https://wordpress.com/me/security",
+        "api_key": True,
+        "cookie_files": ["wordpress_default.json"],
+        "auth_cookies": [],
+        "success_domains": ["wordpress.com", "wp-admin"],
+        "exclude_keywords": []
+    },
 
     # ── 国际平台 ──────────────────────────────────────────────────────────
     "tiktok": {

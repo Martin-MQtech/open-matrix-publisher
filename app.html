@@ -550,7 +550,9 @@
             { id: "x",          name: "X",       cat: "global", color: "#ffffff", beta: true },
             { id: "linkedin",   name: "LinkedIn",cat: "global", color: "#0a66c2", disabled: true },
             { id: "instagram",  name: "Instagram",cat: "global",color: "#e4405f", beta: true },
-            { id: "facebook",   name: "Facebook",cat: "global", color: "#1877f2" }
+            { id: "facebook",   name: "Facebook",cat: "global", color: "#1877f2" },
+            { id: "devto",      name: "Dev.to",  cat: "global", color: "#0a0a0a", api: true, mono: "D" },
+            { id: "wordpress",  name: "WordPress",cat: "global",color: "#21759b", api: true, mono: "W" }
         ];
 
         // Simple Icons（官方平面单色 SVG 路径，内联离线可用）
@@ -690,10 +692,45 @@
                     body: JSON.stringify({ platform_id: platformId })
                 });
                 const data = await res.json();
+                if (data.status === 'api_key') {
+                    await configureApiKey(platformId);
+                    return;
+                }
                 alert('已在桌面打开登录窗口，请扫码登录。\n' + (data.msg || ''));
                 refreshSessionStatus();
             } catch (e) {
                 alert('无法连接本地引擎，请先运行 start_ui.sh。');
+            }
+        }
+
+        async function configureApiKey(platformId) {
+            let payload = {};
+            if (platformId === 'devto') {
+                const key = prompt('Dev.to API Key（获取：dev.to/settings/account → API Keys）：');
+                if (!key) return;
+                payload = { platform_id: 'devto', api_key: key.trim() };
+            } else if (platformId === 'wordpress') {
+                const site = prompt('WordPress 站点地址（如 https://yourblog.com）：');
+                if (!site) return;
+                const user = prompt('用户名：');
+                if (!user) return;
+                const pass = prompt('应用密码（站点 → 用户 → 应用程序密码，不是登录密码）：');
+                if (!pass) return;
+                payload = { platform_id: 'wordpress', site_url: site.trim(), username: user.trim(), app_password: pass.trim() };
+            } else {
+                return;
+            }
+            try {
+                const res = await fetch(API + '/api/configure-key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                alert(data.msg || '配置完成');
+                refreshSessionStatus();
+            } catch (e) {
+                alert('配置保存失败：' + e.message);
             }
         }
 

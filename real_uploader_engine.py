@@ -107,17 +107,21 @@ def check_profile_logged_in(platform_id):
     elif platform_id in ["x", "twitter"]:
         possible_files = ["x_default.json", "twitter_default.json"]
 
+    # API-key 平台凭据文件很小（几十字节），放宽大小阈值
+    min_size = 10 if platform_id in ("devto", "wordpress") else 50
     found_file = None
     for d in [sau_cookies_dir, local_cookies_dir]:
         for pf in possible_files:
             target = os.path.join(d, pf)
-            if os.path.exists(target) and os.path.getsize(target) >= 50:
+            if os.path.exists(target) and os.path.getsize(target) >= min_size:
                 found_file = target
                 break
         if found_file:
             break
 
     if not found_file:
+        if platform_id in ("devto", "wordpress"):
+            return False, "🔑 需配置 API Key"
         return False, "🔑 需扫码登录"
 
     # API-key 平台（Dev.to / WordPress）：凭据文件含 api_key/app_password 即已配置
@@ -177,7 +181,8 @@ class RealPlatformUploader:
 
         sau_platforms = ["douyin", "kuaishou", "xiaohongshu", "tencent", "bilibili", "youtube"]
         custom_platforms = ["x", "linkedin", "facebook", "tiktok", "instagram",
-                            "weibo", "zhihu", "toutiao", "baijiahao", "fanqie"]
+                            "weibo", "zhihu", "toutiao", "baijiahao", "fanqie",
+                            "devto", "wordpress"]
 
         # Creator dashboard links per platform
         creator_links = {
@@ -292,8 +297,6 @@ class RealPlatformUploader:
                 "facebook":  "facebook_uploader",
                 "tiktok":    "tiktok_uploader",
                 "tk":        "tiktok_uploader",
-                "devto":     "devto_uploader",
-                "wordpress": "wordpress_uploader",
                 "weibo":     "weibo_uploader",
                 "zhihu":     "zhihu_uploader",
                 "toutiao":   "toutiao_uploader",
@@ -306,8 +309,6 @@ class RealPlatformUploader:
                 "toutiao": "https://mp.toutiao.com/profile_v4/",
                 "baijiahao": "https://baijiahao.baidu.com/",
                 "fanqie":  "https://pugc.yueduwuxian.com/fqvideo/home/publish-video",
-                "devto":   "https://dev.to/dashboard",
-                "wordpress":"{site}/wp-admin/edit.php",
                 "x":       "https://twitter.com/",
                 "linkedin":"https://www.linkedin.com/feed/",
                 "facebook":"https://www.facebook.com/",
