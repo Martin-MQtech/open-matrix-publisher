@@ -28,7 +28,8 @@ ALL_SUPPORTED_PLATFORMS = [
     {"id": "instagram", "name": "Instagram", "region": "global"},
     {"id": "tiktok", "name": "TikTok", "region": "global"},
     {"id": "devto", "name": "Dev.to", "region": "global"},
-    {"id": "wordpress", "name": "WordPress", "region": "global"}
+    {"id": "wordpress", "name": "WordPress", "region": "global"},
+    {"id": "telegram", "name": "Telegram", "region": "global"}
 ]
 
 def list_platforms() -> Dict[str, Any]:

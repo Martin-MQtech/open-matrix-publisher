@@ -552,7 +552,8 @@
             { id: "instagram",  name: "Instagram",cat: "global",color: "#e4405f", beta: true },
             { id: "facebook",   name: "Facebook",cat: "global", color: "#1877f2" },
             { id: "devto",      name: "Dev.to",  cat: "global", color: "#0a0a0a", api: true, mono: "D" },
-            { id: "wordpress",  name: "WordPress",cat: "global",color: "#21759b", api: true, mono: "W" }
+            { id: "wordpress",  name: "WordPress",cat: "global",color: "#21759b", api: true, mono: "W" },
+            { id: "telegram",   name: "Telegram",cat: "global", color: "#26a5e4", api: true, mono: "T" }
         ];
 
         // Simple Icons（官方平面单色 SVG 路径，内联离线可用）
@@ -717,6 +718,12 @@
                 const pass = prompt('应用密码（站点 → 用户 → 应用程序密码，不是登录密码）：');
                 if (!pass) return;
                 payload = { platform_id: 'wordpress', site_url: site.trim(), username: user.trim(), app_password: pass.trim() };
+            } else if (platformId === 'telegram') {
+                const token = prompt('Telegram Bot Token（@BotFather 创建，格式 123456:ABC...）：');
+                if (!token) return;
+                const chat = prompt('目标群/频道 chat_id（把 bot 拉进去后 @userinfobot 查询）：');
+                if (!chat) return;
+                payload = { platform_id: 'telegram', bot_token: token.trim(), chat_id: chat.trim() };
             } else {
                 return;
             }

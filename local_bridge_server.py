@@ -227,7 +227,7 @@ def get_status():
 
     creds = load_credentials()
     session_status = {}
-    all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "baijiahao", "fanqie", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok", "devto", "wordpress"]
+    all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "baijiahao", "fanqie", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok", "devto", "wordpress", "telegram"]
     
     for pid in all_platforms:
         is_logged, msg = check_profile_logged_in(pid)
@@ -286,8 +286,8 @@ def configure_key():
     from omp_paths import data_dir
     data = request.json or {}
     platform_id = data.get("platform_id", "")
-    if platform_id not in ("devto", "wordpress"):
-        return jsonify({"status": "error", "msg": "仅支持 Dev.to / WordPress API Key 配置"}), 400
+    if platform_id not in ("devto", "wordpress", "telegram"):
+        return jsonify({"status": "error", "msg": "仅支持 Dev.to / WordPress / Telegram 免费 API 配置"}), 400
 
     creds = {}
     if platform_id == "devto":
@@ -295,13 +295,19 @@ def configure_key():
         if not api_key:
             return jsonify({"status": "error", "msg": "请输入 Dev.to API Key"}), 400
         creds = {"api_key": api_key}
-    else:
+    elif platform_id == "wordpress":
         site_url = (data.get("site_url") or "").strip().rstrip("/")
         username = (data.get("username") or "").strip()
         app_password = (data.get("app_password") or "").strip()
         if not (site_url and username and app_password):
             return jsonify({"status": "error", "msg": "请输入站点地址 / 用户名 / 应用密码"}), 400
         creds = {"site_url": site_url, "username": username, "app_password": app_password}
+    else:
+        bot_token = (data.get("bot_token") or "").strip()
+        chat_id = (data.get("chat_id") or "").strip()
+        if not (bot_token and chat_id):
+            return jsonify({"status": "error", "msg": "请输入 bot_token 与 chat_id"}), 400
+        creds = {"bot_token": bot_token, "chat_id": chat_id}
 
     import json as _json
     d = data_dir()

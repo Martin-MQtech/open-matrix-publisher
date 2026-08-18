@@ -108,7 +108,7 @@ def check_profile_logged_in(platform_id):
         possible_files = ["x_default.json", "twitter_default.json"]
 
     # API-key 平台凭据文件很小（几十字节），放宽大小阈值
-    min_size = 10 if platform_id in ("devto", "wordpress") else 50
+    min_size = 10 if platform_id in ("devto", "wordpress", "telegram") else 50
     found_file = None
     for d in [sau_cookies_dir, local_cookies_dir]:
         for pf in possible_files:
@@ -120,18 +120,20 @@ def check_profile_logged_in(platform_id):
             break
 
     if not found_file:
-        if platform_id in ("devto", "wordpress"):
+        if platform_id in ("devto", "wordpress", "telegram"):
             return False, "🔑 需配置 API Key"
         return False, "🔑 需扫码登录"
 
-    # API-key 平台（Dev.to / WordPress）：凭据文件含 api_key/app_password 即已配置
-    if platform_id in ("devto", "wordpress"):
+    # API-key 平台（Dev.to / WordPress / Telegram）：凭据文件含对应字段即已配置
+    if platform_id in ("devto", "wordpress", "telegram"):
         try:
             with open(found_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
             if platform_id == "devto" and data.get("api_key"):
                 return True, "✅ 已配置"
             if platform_id == "wordpress" and data.get("app_password"):
+                return True, "✅ 已配置"
+            if platform_id == "telegram" and data.get("bot_token") and data.get("chat_id"):
                 return True, "✅ 已配置"
             return False, "🔑 需配置 API Key"
         except Exception:
@@ -182,7 +184,7 @@ class RealPlatformUploader:
         sau_platforms = ["douyin", "kuaishou", "xiaohongshu", "tencent", "bilibili", "youtube"]
         custom_platforms = ["x", "linkedin", "facebook", "tiktok", "instagram",
                             "weibo", "zhihu", "toutiao", "baijiahao", "fanqie",
-                            "devto", "wordpress"]
+                            "devto", "wordpress", "telegram"]
 
         # Creator dashboard links per platform
         creator_links = {
@@ -302,6 +304,9 @@ class RealPlatformUploader:
                 "toutiao":   "toutiao_uploader",
                 "baijiahao": "baijiahao_uploader",
                 "fanqie":    "fanqie_uploader",
+                "devto":     "devto_uploader",
+                "wordpress": "wordpress_uploader",
+                "telegram":  "telegram_uploader",
             }
             custom_links = {
                 "weibo":   "https://weibo.com/u/",
@@ -313,6 +318,9 @@ class RealPlatformUploader:
                 "linkedin":"https://www.linkedin.com/feed/",
                 "facebook":"https://www.facebook.com/",
                 "tiktok":  "https://www.tiktok.com/",
+                "devto":   "https://dev.to/dashboard",
+                "wordpress": "{site}/wp-admin/edit.php",
+                "telegram": "https://t.me/",
             }
             module_name = module_map.get(self.platform_id)
             if not module_name:

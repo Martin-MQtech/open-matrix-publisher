@@ -122,6 +122,15 @@ PLATFORMS = {
         "success_domains": ["wordpress.com", "wp-admin"],
         "exclude_keywords": []
     },
+    "telegram": {
+        "name": "Telegram",
+        "url": "https://t.me/BotFather",
+        "api_key": True,
+        "cookie_files": ["telegram_default.json"],
+        "auth_cookies": [],
+        "success_domains": ["t.me"],
+        "exclude_keywords": []
+    },
 
     # ── 国际平台 ──────────────────────────────────────────────────────────
     "tiktok": {
