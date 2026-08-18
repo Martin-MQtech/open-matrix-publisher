@@ -2,7 +2,7 @@ import os, sys, json, time, subprocess, threading, asyncio
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 from real_uploader_engine import load_credentials, save_credentials, check_profile_logged_in, RealPlatformUploader, SAU_ROOT, cancel_running_task
-from omp_paths import sau_cli
+from omp_paths import sau_cli, data_dir
 from chat_ai_bridge import generate_copy_via_free_ai
 from url_downloader import download_remote_video, cleanup_temp_video, is_remote_url
 
@@ -31,10 +31,12 @@ ACTIVE_TASKS = {}
 # 导致 /api/history、/api/task-progress 等接口永久挂起。
 TASK_LOCK = threading.RLock()
 HISTORY_FILE_LOCK = threading.Lock()          # dedicated lock for load-modify-write of history json
-HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dispatch_history.json")
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
-COVER_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "covers")   # 封面帧图片
-TASK_PROGRESS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".task_progress")
+# 数据目录解析（源码态=项目目录，打包态=Application Support 持久目录）：统一走 omp_paths.data_dir()
+DATA_DIR = data_dir()
+HISTORY_FILE = os.path.join(DATA_DIR, "dispatch_history.json")
+UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
+COVER_DIR = os.path.join(DATA_DIR, "covers")   # 封面帧图片
+TASK_PROGRESS_DIR = os.path.join(DATA_DIR, ".task_progress")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(COVER_DIR, exist_ok=True)
 os.makedirs(TASK_PROGRESS_DIR, exist_ok=True)
@@ -259,9 +261,19 @@ def get_status():
 
 from interactive_login import PLATFORMS as LOGIN_PLATFORMS
 
+def _interactive_login_script_path():
+    """定位 interactive_login.py：源码态在项目目录；打包态（PyInstaller）
+    在 _MEIPASS 解压目录（由 --add-data 打入包内）。"""
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, "interactive_login.py")
+
 def _run_interactive_login_thread(platform_id):
-    script_path = os.path.join(os.path.dirname(__file__), "interactive_login.py")
-    cmd = [sys.executable, script_path, platform_id]
+    # 关键：必须用 SAU venv 的真实 Python 跑登录脚本，而不是 sys.executable。
+    # 打包态下 sys.executable 是 app 本体，用它启动会弹出一个新的软件窗口（第二个实例），
+    # 而不是扫码浏览器 —— 这是桌面版登录入口 bug 的根因。
+    from omp_paths import sau_python
+    script_path = _interactive_login_script_path()
+    cmd = [sau_python(), script_path, platform_id]
     try:
         subprocess.run(cmd, check=True)
     except Exception as e:
@@ -272,6 +284,13 @@ def launch_login():
     data = request.json or {}
     platform_id = data.get("platform_id", "zhihu")
     plat_info = LOGIN_PLATFORMS.get(platform_id, {})
+    if not plat_info:
+        # 未接入一键扫码登录的平台（如百家号/番茄）：如实告知，不启动错误流程
+        return jsonify({
+            "status": "unsupported",
+            "platform_id": platform_id,
+            "msg": f"⚠️ 【{platform_id}】暂不支持一键扫码登录。请在官网浏览器登录后，把 Cookie 文件放入 cookies/ 目录（参考执行手册 §3.3）。"
+        }), 400
     plat_name = plat_info.get("name", platform_id)
     
     t = threading.Thread(target=_run_interactive_login_thread, args=(platform_id,))
@@ -281,7 +300,7 @@ def launch_login():
     return jsonify({
         "status": "launched",
         "platform_id": platform_id,
-        "msg": f"🚀 已在桌面为你打开【{plat_name}】的有头浏览器窗口，请使用手机 App 扫码或账号登录！登录成功后系统将自动捕获凭证。"
+        "msg": f"🚀 已为你打开【{plat_name}】的浏览器登录窗口，请在弹出的浏览器中扫码或账号登录！登录成功后系统将自动捕获凭证。"
     })
 
 def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags, dispatch_session_id="", cover_file=""):
@@ -611,7 +630,7 @@ def serve_static(filename):
     必须放在所有 /api/* 路由之后（Flask 按注册顺序匹配，API 优先），
     且仅放行安全扩展名，避免把源码/配置当静态文件吐出。"""
     from flask import send_from_directory, abort
-    if filename.lower().endswith((".svg", ".png", ".ico", ".jpg", ".jpeg", ".gif", ".webp", ".css", ".js")):
+    if filename.lower().endswith((".svg", ".png", ".ico", ".jpg", ".jpeg", ".gif", ".webp", ".css", ".js", ".woff2", ".woff", ".ttf", ".eot")):
         return send_from_directory(os.path.dirname(__file__), filename)
     abort(404)
 

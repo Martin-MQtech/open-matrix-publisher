@@ -57,6 +57,14 @@ git ls-files cookies/
 
 ---
 
+## 三·五、交付前审核门禁（强制）
+
+- [ ] ✅ **自动审计**：`python3 scripts/pre_delivery_audit.py` 必须 0 FAIL（桌面版加 `--smoke`）
+- [ ] ✅ **打包态冒烟**（桌面版）：启动 .app → `/api/health` 200 → 扫码登录弹**真实浏览器** → 静态资源 200
+- [ ] ✅ **机制文档**：`docs/DELIVERY_REVIEW.md` 已随交付更新
+
+---
+
 ## 四、首次 push 前的最后动作
 
 > ⚠️ **当前工作区有大量未提交改动**（本轮全部视觉/功能/文档工作），首次 push 前需先完成一次干净的提交。

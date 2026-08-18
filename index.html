@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Open Matrix Publisher · 全域视频分发</title>
-    <meta name="description" content="Open Matrix Publisher：开源全域视频矩阵分发工具。选视频、写文案、勾选平台，一键并发分发到国内 10 大平台与海外 6 大平台。100% 本地运行。">
+    <title>Open Matrix Publisher (全域矩阵) · 一条内容，多域分发</title>
+    <meta name="description" content="Open Matrix Publisher（全域矩阵）：一条内容，多域分发。选视频、写文案、勾选平台，一键并发分发到当前已接入的 16 个平台（国内 10 + 海外 6）。100% 本地运行、开源免费。">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="vendor/fontawesome/all.min.css">
     <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64 128x128 256x256">
     <link rel="icon" href="logo.svg" type="image/svg+xml">
     <style>
@@ -375,7 +375,7 @@
             <img src="logo.svg" alt="logo">
             <div>
                 <div class="name">Open Matrix Publisher</div>
-                <div class="tag">全域视频分发 · 本地运行</div>
+                <div class="tag">一条内容 · 多域分发</div>
             </div>
         </div>
         <div class="topbar-right">
@@ -388,7 +388,7 @@
     <main class="shell">
         <div class="warn-banner" id="env-warning" style="display:none;"></div>
         <div class="page-head">
-            <h1>一条视频，一次发到 16 个平台</h1>
+            <h1>一条内容，多域分发</h1>
             <p>选视频 → 写文案 → 勾选平台 → 一键发布。数据与 Cookie 均留在本机。</p>
         </div>
 
@@ -456,17 +456,17 @@
                 <section class="panel">
                     <div class="step-head">
                         <span class="step-num">3</span> 选择平台
-                        <span class="step-hint"><span id="sel-count">已选 0 个</span> · <span id="login-count">已登录 -/16</span></span>
+                        <span class="step-hint"><span id="sel-count">已选 0 个</span> · <span id="login-count">已登录 -/<span id="login-total"></span></span></span>
                     </div>
 
                     <div class="platform-group">
-                        <span><i class="fa-solid fa-flag" style="color:var(--accent-2);"></i> 国内 · 10</span>
+                        <span><i class="fa-solid fa-flag" style="color:var(--accent-2);"></i> 国内 · <span id="cn-count"></span></span>
                         <span class="toggle" onclick="toggleCategory('cn')">全选 / 清空</span>
                     </div>
                     <div class="platform-grid" id="cn-grid"></div>
 
                     <div class="platform-group">
-                        <span><i class="fa-solid fa-globe" style="color:var(--accent-2);"></i> 海外 · 6</span>
+                        <span><i class="fa-solid fa-globe" style="color:var(--accent-2);"></i> 海外 · <span id="global-count"></span></span>
                         <span class="toggle" onclick="toggleCategory('global')">全选 / 清空</span>
                     </div>
                     <div class="platform-grid" id="global-grid"></div>
@@ -581,6 +581,16 @@
         let dispatchCtl = { cancelled: false, taskIds: {} };
 
         function el(id) { return document.getElementById(id); }
+
+        /* ── 平台计数动态化：平台列表增长时自动跟随（不硬编码数量） ── */
+        (function initPlatformCounts() {
+            const set = (id, cat) => { const e = el(id); if (e) e.textContent = PLATFORMS.filter(p => p.cat === cat).length; };
+            set('cn-count', 'cn');
+            set('global-count', 'global');
+            const lt = el('login-total');
+            if (lt) lt.textContent = PLATFORMS.length;
+        })();
+
         function formatBytes(n) {
             if (n == null) return '';
             const mb = n / 1048576;
@@ -663,7 +673,7 @@
                     else { pill.className = 'pstatus need'; pill.textContent = '需扫码'; }
                 });
                 const lc = el('login-count');
-                if (lc) lc.textContent = '已登录 ' + logged + '/16';
+                if (lc) lc.textContent = '已登录 ' + logged + '/' + PLATFORMS.length;
             } catch (e) { /* 引擎离线时静默 */ }
         }
 

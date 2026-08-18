@@ -29,10 +29,28 @@ jobs:
             --name "OpenMatrixPublisher" \
             --add-data "index.html:." \
             --add-data "logo.png:." \
+            --add-data "logo.svg:." \
+            --add-data "favicon.ico:." \
             --add-data "showcase_banner.jpg:." \
+            --add-data "interactive_login.py:." \
+            --add-data "custom_uploaders:custom_uploaders" \
+            --add-data "vendor/fontawesome:vendor/fontawesome" \
             --icon "icon.icns" \
             desktop_app.py
           cd dist && zip -r "OpenMatrixPublisher-macOS.zip" "OpenMatrixPublisher.app"
+
+      - name: Smoke test packaged app (real macOS boot check)
+        run: |
+          ./dist/OpenMatrixPublisher.app/Contents/MacOS/OpenMatrixPublisher --selftest
+          test -f selftest_result.json
+          grep -q '"ok": true' selftest_result.json
+          echo "macOS app selftest PASS"
+
+      - name: Upload macOS Build Artifact (always, for testing)
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenMatrixPublisher-macOS
+          path: dist/OpenMatrixPublisher-macOS.zip
 
       - name: Upload macOS Release Asset
         uses: softprops/action-gh-release@v1
@@ -64,9 +82,30 @@ jobs:
             --name "OpenMatrixPublisher-Setup" `
             --add-data "index.html;." `
             --add-data "logo.png;." `
+            --add-data "logo.svg;." `
+            --add-data "favicon.ico;." `
             --add-data "showcase_banner.jpg;." `
+            --add-data "interactive_login.py;." `
+            --add-data "custom_uploaders;custom_uploaders" `
+            --add-data "vendor/fontawesome;vendor/fontawesome" `
             --icon "icon.ico" `
             desktop_app.py
+
+      - name: Smoke test packaged exe (real Windows boot check)
+        shell: pwsh
+        run: |
+          & .\dist\OpenMatrixPublisher-Setup.exe --selftest
+          if ($LASTEXITCODE -ne 0) { Write-Error "Windows exe selftest FAILED (exit $LASTEXITCODE)"; exit 1 }
+          if (-not (Test-Path selftest_result.json)) { Write-Error "no selftest_result.json"; exit 1 }
+          $r = Get-Content selftest_result.json | ConvertFrom-Json
+          if ($r.ok -ne $true) { Write-Error "selftest_result.ok != true"; exit 1 }
+          Write-Host "Windows exe selftest PASS"
+
+      - name: Upload Windows Build Artifact (always, for testing)
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenMatrixPublisher-Windows
+          path: dist/OpenMatrixPublisher-Setup.exe
 
       - name: Upload Windows Release Asset
         uses: softprops/action-gh-release@v1

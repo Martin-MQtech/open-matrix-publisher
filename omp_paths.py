@@ -7,6 +7,21 @@
 任何需要定位 SAU 的模块都应从这里取路径，避免各文件各自硬编码分隔符。
 """
 import os
+import sys
+
+
+def data_dir():
+    """可写数据目录：源码运行态用项目目录（便于本地开发直接查看）；
+    PyInstaller 打包态（sys.frozen）下 __file__ 指向临时解压目录 _MEIPASS，
+    退出即清空 → 历史记录/上传/封面/Cookie/凭证改存到持久目录。
+    """
+    if getattr(sys, "frozen", False):
+        if os.name == "nt":
+            base = os.environ.get("APPDATA", os.path.expanduser("~"))
+        else:
+            base = os.path.join(os.path.expanduser("~"), "Library", "Application Support")
+        return os.path.join(base, "OpenMatrixPublisher")
+    return os.path.dirname(os.path.abspath(__file__))
 
 
 def sau_root():

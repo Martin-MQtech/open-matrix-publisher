@@ -4,7 +4,7 @@ from datetime import datetime
 # SAU (social-auto-upload) 安装路径：优先读环境变量 SAU_ROOT，
 # 默认 ~/social-auto-upload（自动展开用户主目录），任意机器/用户均可开箱即用。
 # 跨平台路径（Windows 的 .venv/Scripts vs POSIX 的 .venv/bin）统一由 omp_paths 解析。
-from omp_paths import sau_root, sau_cli, sau_python  # noqa: E402
+from omp_paths import sau_root, sau_cli, sau_python, data_dir  # noqa: E402
 
 SAU_ROOT = sau_root()
 SAU_CLI = sau_cli()
@@ -84,7 +84,8 @@ def _run_with_progress(cmd, env, cwd, timeout, on_progress=None, task_id=None):
     _RUNNING_PROCS.pop(task_id, None)
     return rc, "\n".join(logs[-800:])
 
-CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), "platform_credentials.json")
+# 凭证文件：打包态下 __file__ 指向临时解压目录会丢数据，统一走 data_dir() 持久目录
+CREDENTIALS_FILE = os.path.join(data_dir(), "platform_credentials.json")
 
 def load_credentials():
     if os.path.exists(CREDENTIALS_FILE):
@@ -98,7 +99,7 @@ def save_credentials(data):
 
 def check_profile_logged_in(platform_id):
     sau_cookies_dir = f"{SAU_ROOT}/cookies"
-    local_cookies_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies")
+    local_cookies_dir = os.path.join(data_dir(), "cookies")
 
     possible_files = [f"{platform_id}_default.json"]
     if platform_id in ["tiktok", "tk"]:

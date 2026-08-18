@@ -9,7 +9,10 @@ try:
 except ImportError:
     from playwright.async_api import async_playwright
 
-COOKIE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies")
+from omp_paths import data_dir  # noqa: E402
+
+# AI 门户会话 Cookie：打包态下 __file__ 指向临时目录会丢，统一走 data_dir() 持久目录
+COOKIE_DIR = os.path.join(data_dir(), "cookies")
 
 AI_PORTAL_CONFIGS = {
     "doubao": {

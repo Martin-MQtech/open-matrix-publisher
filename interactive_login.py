@@ -7,9 +7,12 @@
 import os, sys, json, time, asyncio
 from pathlib import Path
 
+from omp_paths import data_dir  # noqa: E402
+
 SAU_ROOT = os.path.expanduser(os.environ.get("SAU_ROOT", "~/social-auto-upload"))
 SAU_COOKIES = os.path.join(SAU_ROOT, "cookies")
-LOCAL_COOKIES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies")
+# 本地 Cookie 目录：统一走 omp_paths.data_dir()（源码态=项目 cookies/，打包态=Application Support 持久目录）
+LOCAL_COOKIES = os.path.join(data_dir(), "cookies")
 
 CHROME_UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "

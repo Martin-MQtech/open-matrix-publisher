@@ -14,7 +14,38 @@ def start_backend():
     from local_bridge_server import app
     app.run(host="127.0.0.1", port=5001, debug=False)
 
+def selftest():
+    """打包产物自检模式（--selftest）：启动内嵌后端 → 轮询 /api/health →
+    写 selftest_result.json → 退出（0=通过，1=失败）。
+    供 CI 在真实 runner 上对打包产物做冒烟测试，防止"构建成功但跑不起来"。
+    """
+    import json as _json
+    import time
+    import urllib.request
+
+    t = threading.Thread(target=start_backend, daemon=True)
+    t.start()
+    ok = False
+    for _ in range(30):
+        time.sleep(0.5)
+        try:
+            with urllib.request.urlopen("http://127.0.0.1:5001/api/health", timeout=2) as r:
+                if _json.loads(r.read().decode()).get("status") == "ok":
+                    ok = True
+                    break
+        except Exception:
+            pass
+    result = {"ok": ok, "service": "open-matrix-publisher", "mode": "selftest"}
+    with open("selftest_result.json", "w", encoding="utf-8") as f:
+        _json.dump(result, f, ensure_ascii=False)
+    print(f"SELFTEST {'PASS' if ok else 'FAIL'}")
+    sys.exit(0 if ok else 1)
+
+
 def main():
+    if "--selftest" in sys.argv:
+        selftest()
+        return
     print("==========================================================")
     print("🚀 正在启动 Open Matrix Publisher (全域矩阵) 桌面客户端...")
     print("==========================================================")
@@ -32,7 +63,7 @@ def main():
         import webview
         print("🖥️ 正在创建原生应用视窗 (PyWebView Engine)...")
         window = webview.create_window(
-            title="Open Matrix Publisher (全域矩阵) · 16 平台 AI 原生全域分发中枢",
+            title="Open Matrix Publisher (全域矩阵) · 一条内容，多域分发",
             url=app_url,
             width=1380,
             height=900,

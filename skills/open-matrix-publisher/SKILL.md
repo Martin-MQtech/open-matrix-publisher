@@ -5,12 +5,12 @@ description: Open Matrix Publisher (全域矩阵) 智能体发布技能。支持
 
 # Open Matrix Publisher 智能体分发技能
 
-本技能为智能体（Google Antigravity、DeepSeek Harness、Hermes Agent、Zed、Claude Code、Cursor）提供全网 16 平台多渠道并发分发与状态查询能力。
+本技能为智能体（Google Antigravity、DeepSeek Harness、Hermes Agent、Zed、Claude Code、Cursor）提供全网多渠道并发分发与状态查询能力（当前已接入 16 平台）。
 
 ## 核心能力
 - **`publish_video`**：将本地或远程 HTTP/HTTPS 直链视频批量推送到指定的国内与海外平台矩阵。
 - **`check_account_status`**：检查各平台的登录 Cookie 与账号授权有效性。
-- **`list_supported_platforms`**：获取 16 大平台列表与配置。
+- **`list_supported_platforms`**：获取当前支持的平台列表与配置。
 
 ## 调用方式
 

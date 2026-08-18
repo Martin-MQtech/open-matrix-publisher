@@ -5,7 +5,7 @@
 # 🌐 Open Matrix Publisher (全域矩阵)
 
 > **专为传统国际贸易、跨境电商与出海品牌打造的 AI 原生全域社媒分发与营销中枢。**  
-> 一套资产，中英双语，一键分发到 16 个平台 · 🇨🇳 国内 10 大平台 · 🌏 国际 6 大平台。100% 本地运行、免注册、开源免费。
+> **Slogan：一条内容，多域分发**  —  一套资产，中英双语，一键分发到当前已接入的 16 个平台（🇨🇳 国内 10 · 🌏 国际 6）。100% 本地运行、免注册、开源免费。
 
 [![GitHub Stars](https://img.shields.io/github/stars/Martin-MQtech/open-matrix-publisher?style=social)](https://github.com/Martin-MQtech/open-matrix-publisher)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -36,7 +36,7 @@ Open Matrix Publisher 旨在打破国内外割裂的自媒体营销现状，为�
 
 ---
 
-## 🌐 16 平台分发矩阵 (16-Platform Matrix)
+## 🌐 平台分发矩阵（当前已接入 16 平台）(Platform Matrix)
 
 > 登录方式一站式：控制台平台卡片点「扫码登录/刷新」→ 弹出登录窗口 → Cookie 自动落盘本地 `cookies/`，之后全部静默复用，无需重复登录。
 
