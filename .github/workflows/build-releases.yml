@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-macos:
     runs-on: macos-latest
@@ -28,6 +31,7 @@ jobs:
           pyinstaller --noconfirm --onedir --windowed \
             --name "OpenMatrixPublisher" \
             --add-data "index.html:." \
+            --add-data "app.html:." \
             --add-data "logo.png:." \
             --add-data "logo.svg:." \
             --add-data "favicon.ico:." \
@@ -94,6 +98,7 @@ jobs:
           pyinstaller --noconfirm --onefile --windowed `
             --name "OpenMatrixPublisher-Setup" `
             --add-data "index.html;." `
+            --add-data "app.html;." `
             --add-data "logo.png;." `
             --add-data "logo.svg;." `
             --add-data "favicon.ico;." `
@@ -107,9 +112,11 @@ jobs:
       - name: Smoke test packaged exe (real Windows boot check)
         shell: pwsh
         run: |
-          & .\dist\OpenMatrixPublisher-Setup.exe --selftest
-          if ($LASTEXITCODE -ne 0) { Write-Error "Windows exe selftest FAILED (exit $LASTEXITCODE)"; exit 1 }
-          if (-not (Test-Path selftest_result.json)) { Write-Error "no selftest_result.json"; exit 1 }
+          # --windowed exe 不挂控制台，Start-Process 不等待；改为轮询结果文件
+          Start-Process -FilePath .\dist\OpenMatrixPublisher-Setup.exe -ArgumentList '--selftest' -PassThru | Out-Null
+          $deadline = (Get-Date).AddSeconds(90)
+          while (-not (Test-Path selftest_result.json) -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 2 }
+          if (-not (Test-Path selftest_result.json)) { Write-Error "Windows exe selftest timeout (no selftest_result.json)"; exit 1 }
           $r = Get-Content selftest_result.json | ConvertFrom-Json
           if ($r.ok -ne $true) { Write-Error "selftest_result.ok != true"; exit 1 }
           Write-Host "Windows exe selftest PASS"

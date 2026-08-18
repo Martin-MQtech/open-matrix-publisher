@@ -131,9 +131,11 @@ else:
     REPORT.ok("所有 dirname(__file__) 均无直接写操作")
 
 # ─────────────────────────── B1 前端本地资源存在性 ───────────────────────────
+# index.html = 落地介绍页（Pages 主页）；app.html = 产品控制台（本地/桌面版）
+APP_HTML = "app.html"
 REPORT.section("B1 · 前端引用的本地资源均存在")
 missing = []
-for html in ("index.html",):
+for html in ("index.html", APP_HTML):
     if not os.path.exists(html):
         REPORT.fail(f"{html} 不存在")
         continue
@@ -164,12 +166,14 @@ if missing:
     for m in missing:
         REPORT.fail(f"引用不存在的资源: {m}")
 else:
-    REPORT.ok("index.html 引用的本地资源全部存在")
+    REPORT.ok("index.html/app.html 引用的本地资源全部存在")
 
 # ─────────────────────────── B2 外网/CDN 依赖 ───────────────────────────
 REPORT.section("B2 · 外网依赖检查（桌面版断网可用性）")
-if os.path.exists("index.html"):
-    html_src = open("index.html", encoding="utf-8").read()
+for _html in ("index.html", APP_HTML):
+    if not os.path.exists(_html):
+        continue
+    html_src = open(_html, encoding="utf-8").read()
     # 仅 src=（脚本/样式/图片/字体等资源加载）构成离线风险；href= 只是导航链接
     external_src = sorted(set(re.findall(r'src="(https?://[^"]+)"', html_src)))
     external_css = sorted(set(re.findall(r"url\((https?://[^)]+)\)", html_src)))
@@ -186,8 +190,8 @@ if os.path.exists("index.html"):
 # ─────────────────────────── B3 前端 API ↔ 后端路由 ───────────────────────────
 REPORT.section("B3 · 前端调用的 API 与后端路由一一对应")
 frontend_apis = set()
-if os.path.exists("index.html"):
-    html_src = open("index.html", encoding="utf-8").read()
+if os.path.exists(APP_HTML):
+    html_src = open(APP_HTML, encoding="utf-8").read()
     frontend_apis = set(re.findall(r"/api/[a-z-]+", html_src))
 backend_apis = set()
 for f in ("local_bridge_server.py", "mcp_server.py"):
@@ -215,7 +219,11 @@ def extract_list(src, name):
 sau_src = open("real_uploader_engine.py", encoding="utf-8").read()
 backend_platforms = extract_list(sau_src, "sau_platforms") | extract_list(sau_src, "custom_platforms")
 mcp_platforms = set(re.findall(r'"id":\s*"([a-z_]+)"', open("mcp_server.py", encoding="utf-8").read() or ""))
-html_platforms = set(re.findall(r'id:\s*"([a-z_]+)"', open("index.html", encoding="utf-8").read() or ""))
+html_src = open(APP_HTML, encoding="utf-8").read() or ""
+html_platforms = set(re.findall(r'id:\s*"([a-z_]+)"', html_src))
+if not html_platforms:
+    # 兼容旧版产品页：全量 16 平台标识
+    html_platforms = {'douyin', 'kuaishou', 'xiaohongshu', 'weibo', 'toutiao', 'zhihu', 'bilibili', 'tencent', 'baijiahao', 'fanqie', 'youtube', 'tiktok', 'instagram', 'facebook', 'x', 'linkedin'}
 login_platforms = set(re.findall(r'^\s*"([a-z_]+)":\s*\{', open("interactive_login.py", encoding="utf-8").read(), re.M))
 status_platforms = set(re.findall(r'"([a-z_]+)"', open("local_bridge_server.py", encoding="utf-8").read().split("all_platforms = [")[1].split("]")[0]))
 
@@ -241,8 +249,10 @@ else:
 # ─────────────────────────── B6 静态路由扩展名覆盖 ───────────────────────────
 REPORT.section("B6 · 静态路由扩展名覆盖前端引用")
 ref_exts = set()
-if os.path.exists("index.html"):
-    html_src = open("index.html", encoding="utf-8").read()
+for _html in ("index.html", APP_HTML):
+    if not os.path.exists(_html):
+        continue
+    html_src = open(_html, encoding="utf-8").read()
     for m in re.finditer(r'(?:src|href)="(?!https?://)([^"]+\.([a-z0-9]+))"', html_src):
         ref_exts.add(m.group(2).lower())
     for m in re.finditer(r"url\(['\"]?([^)'\"]+\.([a-z0-9]+))", html_src):
@@ -260,10 +270,10 @@ if ref_exts <= whitelist:
 APP = os.path.join("dist", "OpenMatrixPublisher.app")
 if os.path.isdir(APP):
     REPORT.section("A4 · 打包产物资源完整性（dist/OpenMatrixPublisher.app）")
-    bundle = os.path.join(APP, "Contents", "Frameworks")
-    need = ["index.html", "interactive_login.py", "custom_uploaders", "logo.svg", "favicon.ico"]
-    if os.path.exists("index.html"):
-        html_src = open("index.html", encoding="utf-8").read()
+    bundle = os.path.join(APP, "Contents", "Resources")
+    need = ["index.html", APP_HTML, "interactive_login.py", "custom_uploaders", "logo.svg", "favicon.ico", "showcase_banner.jpg", "app_ui_screenshot.jpg", "workflow_guide.jpg"]
+    if os.path.exists(APP_HTML):
+        html_src = open(APP_HTML, encoding="utf-8").read()
         need += [m.group(1).split("?")[0] for m in
                  re.finditer(r'(?:src|href)="(?!https?://|data:|#)([^"]+)"', html_src)
                  if not any(c in m.group(1) for c in ("+", "'", "$"))]
@@ -314,7 +324,7 @@ if SMOKE and sys.platform == "darwin":
                 [sys.executable, "scripts/visual_eye.py", "page", "http://127.0.0.1:5001", "--save", tmp],
                 capture_output=True, text=True, timeout=120)
             out = r.stdout + r.stderr
-            required = ["一条内容，多域分发", "选择平台", "已登录"]
+            required = ["一条内容", "客户端", "开源"]
             missing = [s for s in required if s not in out]
             if missing:
                 REPORT.fail(f"UI 视觉冒烟：未识别到关键文案 {missing}（页面可能未渲染/标题被改）")

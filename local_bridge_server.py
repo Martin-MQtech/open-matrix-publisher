@@ -158,8 +158,9 @@ def is_already_published(video_file, platform_id):
 
 @app.route("/", methods=["GET"])
 def index():
+    # 本地/桌面版直接进产品控制台（app.html）；落地介绍页 index.html 仅供 GitHub Pages 主页
     from flask import send_from_directory
-    return send_from_directory(os.path.dirname(__file__), "index.html")
+    return send_from_directory(os.path.dirname(__file__), "app.html")
 
 @app.route("/api/health", methods=["GET"])
 def health():

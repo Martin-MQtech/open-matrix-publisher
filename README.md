@@ -12,6 +12,13 @@
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB)](https://python.org)
 [![MCP Ready](https://img.shields.io/badge/MCP-Protocol%20Ready-00e6ff)](https://modelcontextprotocol.io)
 
+**🌐 官方网站（产品介绍 · 下载 · 使用指南）**：https://martin-mqtech.github.io/open-matrix-publisher/  
+**💻 产品控制台界面**（下载安装后本地运行）：
+
+<p align="center">
+  <img src="app_ui_screenshot.jpg" alt="Open Matrix Publisher 产品控制台界面" width="720">
+</p>
+
 **核心流程演示（约 15 秒）**：选视频 → 写文案 → 勾选平台 → 一键发布。
 
 <p align="center">

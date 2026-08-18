@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Matrix Publisher (全域矩阵) · 一条内容，多域分发</title>
+    <meta name="description" content="Open Matrix Publisher（全域矩阵）：一条内容，多域分发。选视频、写文案、勾选平台，一键并发分发到当前已接入的 16 个平台（国内 10 + 海外 6）。100% 本地运行、开源免费。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="vendor/fontawesome/all.min.css">
+    <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64 128x128 256x256">
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <style>
+        :root {
+            /* 黑 · 灰 · 橙黄 */
+            --bg: #15130f;            /* 暖黑 */
+            --surface: #1c1a15;        /* 炭黑 */
+            --surface-2: #23201a;      /* 灰 */
+            --surface-3: #2a2721;
+            --ink: #f2eee6;            /* 暖白 */
+            --ink-2: #cfc9bd;
+            --muted: #9a9384;          /* 灰 */
+            --faint: #6f695c;
+            --line: rgba(242, 238, 230, 0.08);
+            --line-2: rgba(242, 238, 230, 0.16);
+
+            --accent: #e8892e;         /* 橙 */
+            --accent-2: #f3b25a;       /* 黄 */
+            --accent-deep: #c96f1e;
+            --accent-ink: #1c1308;
+            --accent-soft: rgba(232, 137, 46, 0.12);
+            --accent-line: rgba(232, 137, 46, 0.34);
+            --accent-grad: linear-gradient(135deg, #f5b25a 0%, #e8892e 55%, #d6762a 100%);
+
+            --success: #9cc08f;
+            --success-soft: rgba(156, 192, 143, 0.14);
+            --danger: #d07b6c;
+            --warn: #d8a24a;
+
+            /* 兼容旧引用 */
+            --bg-dark: var(--bg);
+            --bg-card: var(--surface);
+            --border-glow: var(--line);
+            --accent-cyan: var(--accent);
+            --accent-teal: var(--success);
+            --accent-gold: var(--accent-2);
+            --accent-orange: var(--accent-2);
+            --accent-purple: #b7a58f;
+            --accent-red: var(--danger);
+            --text-main: var(--ink);
+            --text-muted: var(--muted);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+            line-height: 1.65;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { color: var(--accent-2); }
+
+        /* ── 顶栏 ── */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 28px;
+            background: rgba(21, 19, 15, 0.9);
+            border-bottom: 1px solid var(--line);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand img { width: 32px; height: 32px; border-radius: 9px; }
+        .brand .name { font-size: 15px; font-weight: 700; letter-spacing: 0.2px; }
+        .brand .tag { font-size: 12px; color: var(--faint); }
+        .topbar-right { display: flex; align-items: center; gap: 18px; font-size: 12.5px; }
+        .topbar-right .link { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+        .topbar-right .link:hover { color: var(--ink); }
+        .engine-dot { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); }
+        .engine-dot::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+        .engine-dot.on { color: var(--success); }
+        .engine-dot.on::before { background: var(--success); }
+        .engine-dot.off { color: var(--warn); }
+        .engine-dot.off::before { background: var(--warn); }
+
+        /* ── 布局 ── */
+        .shell { max-width: 1060px; margin: 0 auto; padding: 32px 24px 60px; }
+
+        .page-head { margin-bottom: 28px; }
+        .page-head h1 {
+            font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', serif;
+            font-size: 30px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            margin-bottom: 8px;
+        }
+        .page-head p { color: var(--muted); font-size: 13.5px; }
+
+        .workspace { display: grid; grid-template-columns: 1fr 400px; gap: 20px; align-items: start; }
+        @media (max-width: 940px) { .workspace { grid-template-columns: 1fr; } }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 12px 32px rgba(0,0,0,0.14);
+        }
+        .col-main { display: flex; flex-direction: column; gap: 20px; }
+
+        .step-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 7px;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent-line);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .step-hint { margin-left: auto; font-size: 11.5px; font-weight: 400; color: var(--faint); }
+
+        /* ── 视频 ── */
+        .dropzone {
+            position: relative;
+            border: 1px dashed var(--line-2);
+            border-radius: 12px;
+            background: var(--surface-2);
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .dropzone:hover, .dropzone.drag { border-color: var(--accent-line); background: var(--surface-3); }
+        .dropzone video { width: 100%; max-height: 320px; object-fit: contain; background: #000; display: block; }
+        .drop-empty { text-align: center; color: var(--muted); pointer-events: none; }
+        .drop-empty i { font-size: 30px; color: var(--accent); display: block; margin-bottom: 10px; }
+        .drop-empty .strong { color: var(--ink); font-weight: 600; }
+        .url-row { display: flex; gap: 8px; margin-top: 12px; }
+        .url-row input {
+            flex: 1;
+            background: var(--surface-2);
+            border: 1px solid var(--line-2);
+            border-radius: 9px;
+            padding: 10px 12px;
+            color: var(--ink);
+            font-size: 13px;
+            outline: none;
+            font-family: inherit;
+        }
+        .url-row input:focus { border-color: var(--accent-line); }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border-radius: 9px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--line-2);
+            background: var(--surface-2);
+            color: var(--ink-2);
+            transition: border-color 0.2s, color 0.2s, background 0.2s, transform 0.15s;
+            white-space: nowrap;
+        }
+        .btn:hover { border-color: var(--accent-line); color: var(--accent); }
+        .btn.primary {
+            background: var(--accent-grad);
+            border: none;
+            color: var(--accent-ink);
+        }
+        .btn.primary:hover { transform: translateY(-1px); color: var(--accent-ink); filter: brightness(1.05); }
+        .btn.block { width: 100%; justify-content: center; padding: 13px 16px; font-size: 14.5px; }
+        .icon-btn {
+            background: var(--surface-2);
+            border: 1px solid var(--line-2);
+            color: var(--muted);
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-btn:hover { color: var(--ink); }
+        .pr-cancel { background: none; border: none; color: var(--faint); font-size: 11px; cursor: pointer; padding: 2px 4px; }
+        .pr-cancel:hover { color: var(--danger); }
+        .video-meta { margin-top: 10px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+        .video-meta .ok { color: var(--success); }
+
+        /* ── 文案 ── */
+        .field { margin-bottom: 14px; }
+        .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+        .field input, .field textarea {
+            width: 100%;
+            background: var(--surface-2);
+            border: 1px solid var(--line-2);
+            border-radius: 9px;
+            padding: 11px 13px;
+            color: var(--ink);
+            font-size: 13.5px;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .field input:focus, .field textarea:focus { border-color: var(--accent-line); }
+        .field textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+
+        .ai-helper { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+        .ai-helper summary {
+            padding: 11px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink-2);
+            user-select: none;
+        }
+        .ai-helper summary:hover { color: var(--accent); }
+        .ai-body { padding: 2px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+        .ai-body .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .ai-body .hint { font-size: 11.5px; color: var(--faint); }
+
+        /* ── 平台 ── */
+        .platform-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink-2);
+            margin: 6px 0 10px;
+        }
+        .platform-group .toggle { font-size: 11.5px; color: var(--accent); cursor: pointer; font-weight: 500; }
+        .platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .pcard {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 9px 10px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            opacity: 0.75;
+        }
+        .pcard:hover { border-color: var(--line-2); opacity: 1; }
+        .pcard.selected { border-color: var(--accent-line); background: var(--accent-soft); opacity: 1; }
+        .pcard .left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .picon {
+            width: 22px; height: 22px; flex: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .pname { font-size: 12px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pstatus { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--faint); }
+        .pstatus.logged { color: var(--success); }
+        .pstatus.need { color: var(--warn); }
+        .qr-btn {
+            background: none; border: none; color: var(--accent);
+            font-size: 11px; cursor: pointer; padding: 3px 5px;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .qr-btn:hover { color: var(--accent-2); }
+        .beta-tag {
+            font-size: 9px; color: var(--muted);
+            border: 1px solid var(--line-2); border-radius: 4px; padding: 0 4px; margin-left: 4px;
+        }
+        .checkbox {
+            width: 15px; height: 15px; border-radius: 4px; flex: none;
+            border: 1px solid var(--line-2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; color: transparent;
+        }
+        .pcard.selected .checkbox { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+        /* ── 发布 ── */
+        .publish-box { margin-top: 20px; }
+        .publish-box .note { font-size: 11px; color: var(--faint); margin-top: 10px; text-align: center; }
+
+        footer {
+            margin-top: 20px;
+            padding: 24px;
+            border-top: 1px solid var(--line);
+            text-align: center;
+            font-size: 12px;
+            color: var(--faint);
+        }
+        footer .sep { margin: 0 8px; }
+
+        .warn-banner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 10px 14px;
+            border: 1px solid rgba(216, 162, 74, 0.35);
+            background: rgba(216, 162, 74, 0.10);
+            color: var(--warn);
+            border-radius: 10px;
+            font-size: 12.5px;
+        }
+
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .history-item { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+        .history-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+        .history-title { font-weight: 600; font-size: 13px; color: var(--ink); }
+        .history-time { font-size: 11px; color: var(--faint); flex: none; }
+        .history-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip { font-size: 11px; padding: 2px 9px; border-radius: 20px; border: 1px solid var(--line-2); color: var(--ink-2); display: inline-flex; align-items: center; gap: 5px; }
+        .chip.ok { color: var(--success); border-color: rgba(156, 192, 143, 0.3); background: var(--success-soft); }
+        .chip a { color: inherit; }
+        .history-empty { color: var(--faint); font-size: 12.5px; text-align: center; padding: 14px 0; }
+
+        /* ── 弹窗 ── */
+        .overlay {
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            z-index: 200;
+            display: none;
+            align-items: center; justify-content: center;
+        }
+        .overlay.show { display: flex; }
+        .modal {
+            width: 560px; max-width: 92vw;
+            background: var(--surface);
+            border: 1px solid var(--line-2);
+            border-radius: 14px;
+            padding: 26px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .modal h3 { font-size: 16px; margin-bottom: 14px; }
+        .modal .box { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 12.5px; }
+        .modal .actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .progress-row { margin-bottom: 12px; }
+        .progress-row .pr-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+        .progress-track { height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--accent-grad); transition: width 0.3s ease; }
+    </style>
+</head>
+<body>
+
+    <header class="topbar">
+        <div class="brand">
+            <img src="logo.svg" alt="logo">
+            <div>
+                <div class="name">Open Matrix Publisher</div>
+                <div class="tag">一条内容 · 多域分发</div>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <span class="engine-dot" id="engine-status">检测引擎中…</span>
+            <a class="link" href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
+            <a class="link" href="https://www.emuqi.com" target="_blank"><i class="fa-solid fa-flask"></i> 木齐科技</a>
+        </div>
+    </header>
+
+    <main class="shell">
+        <div class="warn-banner" id="env-warning" style="display:none;"></div>
+        <div class="page-head">
+            <h1>一条内容，多域分发</h1>
+            <p>选视频 → 写文案 → 勾选平台 → 一键发布。数据与 Cookie 均留在本机。</p>
+        </div>
+
+        <div class="workspace">
+            <!-- 左列 -->
+            <div class="col-main">
+                <section class="panel">
+                    <div class="step-head">
+                        <span class="step-num">1</span> 选择视频
+                        <span class="step-hint">本地文件或远程直链</span>
+                    </div>
+
+                    <div class="dropzone" id="dropzone">
+                        <video id="video-preview" style="display:none;" controls></video>
+                        <div class="drop-empty" id="drop-empty">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span class="strong">拖入视频文件</span> 或
+                            <span class="strong">点击浏览</span>
+                        </div>
+                    </div>
+                    <input type="file" id="file-input" accept="video/*" style="display:none;">
+
+                    <div class="url-row">
+                        <input type="text" id="video-url" placeholder="或粘贴远程视频直链 (https://…)">
+                        <button class="btn" id="btn-fetch-url"><i class="fa-solid fa-arrow-down"></i> 拉取</button>
+                    </div>
+                    <div class="video-meta" id="video-meta" style="display:none;"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="step-head">
+                        <span class="step-num">2</span> 文案
+                        <span class="step-hint">标题 + 描述 + 标签</span>
+                    </div>
+
+                    <div class="field">
+                        <label>标题</label>
+                        <input type="text" id="post-title" placeholder="一句话说清楚这条视频讲什么">
+                    </div>
+                    <div class="field">
+                        <label>描述</label>
+                        <textarea id="post-desc" placeholder="补充背景、亮点、行动引导…"></textarea>
+                    </div>
+                    <div class="field">
+                        <label>标签（用逗号分隔，可选）</label>
+                        <input type="text" id="post-tags" placeholder="如：氢健康, 新材料, 出海">
+                    </div>
+
+                    <details class="ai-helper">
+                        <summary><i class="fa-solid fa-wand-magic-sparkles"></i> AI 文案助手（豆包 / Kimi · 免费）</summary>
+                        <div class="ai-body">
+                            <div class="hint">一键复制主题并打开网页助手，生成后复制结果，点右侧按钮回填。</div>
+                            <div class="row">
+                                <button class="btn" onclick="openAiWebPage('doubao')"><i class="fa-solid fa-arrow-up-right-from-square"></i> 打开豆包</button>
+                                <button class="btn" onclick="openAiWebPage('kimi')"><i class="fa-solid fa-arrow-up-right-from-square"></i> 打开 Kimi</button>
+                                <button class="btn" onclick="parseFromClipboard()"><i class="fa-solid fa-paste"></i> 粘贴我复制的文案</button>
+                            </div>
+                        </div>
+                    </details>
+                </section>
+            </div>
+
+            <!-- 右列 -->
+            <div>
+                <section class="panel">
+                    <div class="step-head">
+                        <span class="step-num">3</span> 选择平台
+                        <span class="step-hint"><span id="sel-count">已选 0 个</span> · <span id="login-count">已登录 -/<span id="login-total"></span></span></span>
+                    </div>
+
+                    <div class="platform-group">
+                        <span><i class="fa-solid fa-flag" style="color:var(--accent-2);"></i> 国内 · <span id="cn-count"></span></span>
+                        <span class="toggle" onclick="toggleCategory('cn')">全选 / 清空</span>
+                    </div>
+                    <div class="platform-grid" id="cn-grid"></div>
+
+                    <div class="platform-group">
+                        <span><i class="fa-solid fa-globe" style="color:var(--accent-2);"></i> 海外 · <span id="global-count"></span></span>
+                        <span class="toggle" onclick="toggleCategory('global')">全选 / 清空</span>
+                    </div>
+                    <div class="platform-grid" id="global-grid"></div>
+                </section>
+
+                <div class="publish-box">
+                    <button class="btn primary block" id="btn-publish"><i class="fa-solid fa-paper-plane"></i> <span id="btn-publish-text">发布</span></button>
+                    <p class="note">发布后请到各平台创作者后台人工确认审核状态</p>
+                </div>
+            </div>
+        </div>
+
+        <section class="panel" id="history-panel" style="margin-top:20px;">
+            <div class="step-head">
+                <span class="step-num"><i class="fa-solid fa-clock-rotate-left"></i></span> 分发记录
+                <span class="step-hint" style="cursor:pointer;" onclick="loadHistory()"><i class="fa-solid fa-rotate"></i> 刷新</span>
+            </div>
+            <div class="history-list" id="history-list">
+                <div class="history-empty">加载中…</div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        Open Matrix Publisher · <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank">MIT 开源</a><span class="sep">·</span>由 <a href="https://www.emuqi.com" target="_blank">木齐科技 (MUQI Tech)</a> 孵化<span class="sep">·</span>Cookie 与视频均留在本机
+    </footer>
+
+    <!-- 确认弹窗 -->
+    <div class="overlay" id="confirm-overlay">
+        <div class="modal">
+            <h3>确认发布</h3>
+            <div class="box">
+                <div style="margin-bottom:6px;"><strong id="confirm-name"></strong></div>
+                <div style="color:var(--muted);">将发布到 <strong id="confirm-count" style="color:var(--accent);">0</strong> 个平台</div>
+            </div>
+            <div class="actions">
+                <button class="btn" onclick="hideConfirm()">取消</button>
+                <button class="btn primary" onclick="confirmDispatch()">确认并开始</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 进度弹窗 -->
+    <div class="overlay" id="progress-overlay">
+        <div class="modal">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h3 style="margin:0;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent);"></i> 正在分发…</h3>
+                <button class="icon-btn" onclick="hideProgress()" title="关闭（任务在后台继续）"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="progress-list"></div>
+            <p class="note" style="text-align:left; margin-top:12px;">已开始上传的平台无法安全撤回；关闭窗口后任务会在后台继续，可在“分发记录”中查看。</p>
+            <div class="actions" style="margin-top:14px;">
+                <button class="btn" onclick="cancelAll()" id="btn-cancel-all"><i class="fa-solid fa-stop"></i> 取消剩余</button>
+                <button class="btn" onclick="hideProgress()"><i class="fa-solid fa-eye-slash"></i> 后台继续</button>
+                <button class="btn primary" id="close-progress" style="display:none;" onclick="hideProgress()">完成并关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:5001';
+
+        const PLATFORMS = [
+            { id: "tencent",    name: "视频号",  cat: "cn",     color: "#07c160", mono: "视" },
+            { id: "douyin",     name: "抖音",    cat: "cn",     color: "#ffffff", mono: "抖" },
+            { id: "bilibili",   name: "B站",     cat: "cn",     color: "#00a1d6" },
+            { id: "kuaishou",   name: "快手",    cat: "cn",     color: "#ff5000" },
+            { id: "xiaohongshu",name: "小红书",  cat: "cn",     color: "#ff2442" },
+            { id: "weibo",      name: "微博",    cat: "cn",     color: "#e6162d", mono: "微" },
+            { id: "toutiao",    name: "头条",    cat: "cn",     color: "#f04142", mono: "头" },
+            { id: "zhihu",      name: "知乎",    cat: "cn",     color: "#0084ff" },
+            { id: "baijiahao",  name: "百家号",  cat: "cn",     color: "#2932e1", mono: "百" },
+            { id: "fanqie",     name: "番茄视频", cat: "cn",    color: "#ff6b00", mono: "番" },
+
+            { id: "youtube",    name: "YouTube", cat: "global", color: "#ff0000" },
+            { id: "tiktok",     name: "TikTok",  cat: "global", color: "#ffffff", beta: true },
+            { id: "x",          name: "X",       cat: "global", color: "#ffffff", beta: true },
+            { id: "linkedin",   name: "LinkedIn",cat: "global", color: "#0a66c2", beta: true },
+            { id: "instagram",  name: "Instagram",cat: "global",color: "#e4405f", beta: true },
+            { id: "facebook",   name: "Facebook",cat: "global", color: "#1877f2" },
+        ];
+
+        // Simple Icons（官方平面单色 SVG 路径，内联离线可用）
+        const ICONS = {
+            youtube: "M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z",
+            tiktok: "M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z",
+            x: "M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z",
+            linkedin: "M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z",
+            instagram: "M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077",
+            facebook: "M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z",
+            bilibili: "M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773zM8 11.107c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c0-.373.129-.689.386-.947.258-.257.574-.386.947-.386zm8 0c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373Z",
+            kuaishou: "M18.315 12.264c2.33 0 4.218 1.88 4.218 4.2V19.8c0 2.32-1.888 4.2-4.218 4.2h-6.202a4.218 4.218 0 0 1-4.023-2.938l-3.676 1.833a2.04 2.04 0 0 1-2.731-.903 2.015 2.015 0 0 1-.216-.907v-5.94a2.03 2.03 0 0 1 2.035-2.024 2.044 2.044 0 0 1 .919.218l3.673 1.85a4.218 4.218 0 0 1 4.02-2.925zm-.062 2.162h-6.078c-1.153 0-2.09.921-2.108 2.065v3.247c0 1.148.925 2.081 2.073 2.1h6.113c1.153 0 2.09-.922 2.109-2.065v-3.247a2.104 2.104 0 0 0-2.074-2.1zM4.18 15.72a.554.554 0 0 0-.555.542v3.734a.556.556 0 0 0 .798.496l.01-.004 3.463-1.756V17.51l-3.467-1.73a.557.557 0 0 0-.249-.06zM9.28 0a5.667 5.667 0 0 1 4.98 2.965 4.921 4.921 0 0 1 3.36-1.317c2.714 0 4.913 2.177 4.913 4.863 0 2.686-2.2 4.863-4.912 4.863a4.921 4.921 0 0 1-3.996-2.034 5.651 5.651 0 0 1-4.345 2.034c-3.131 0-5.67-2.546-5.67-5.687C3.61 2.546 6.149 0 9.28 0Zm8.34 3.926c-1.441 0-2.61 1.157-2.61 2.585s1.169 2.585 2.61 2.585c1.443 0 2.612-1.157 2.612-2.585s-1.169-2.585-2.611-2.585zM9.28 2.287a3.395 3.395 0 0 0-3.39 3.4c0 1.877 1.518 3.4 3.39 3.4a3.395 3.395 0 0 0 3.39-3.4c0-1.878-1.518-3.4-3.39-3.4z",
+            xiaohongshu: "M22.405 9.879c.002.016.01.02.07.019h.725a.797.797 0 0 0 .78-.972.794.794 0 0 0-.884-.618.795.795 0 0 0-.692.794c0 .101-.002.666.001.777zm-11.509 4.808c-.203.001-1.353.004-1.685.003a2.528 2.528 0 0 1-.766-.126.025.025 0 0 0-.03.014L7.7 16.127a.025.025 0 0 0 .01.032c.111.06.336.124.495.124.66.01 1.32.002 1.981 0 .01 0 .02-.006.023-.015l.712-1.545a.025.025 0 0 0-.024-.036zM.477 9.91c-.071 0-.076.002-.076.01a.834.834 0 0 0-.01.08c-.027.397-.038.495-.234 3.06-.012.24-.034.389-.135.607-.026.057-.033.042.003.112.046.092.681 1.523.787 1.74.008.015.011.02.017.02.008 0 .033-.026.047-.044.147-.187.268-.391.371-.606.306-.635.44-1.325.486-1.706.014-.11.021-.22.03-.33l.204-2.616.022-.293c.003-.029 0-.033-.03-.034zm7.203 3.757a1.427 1.427 0 0 1-.135-.607c-.004-.084-.031-.39-.235-3.06a.443.443 0 0 0-.01-.082c-.004-.011-.052-.008-.076-.008h-1.48c-.03.001-.034.005-.03.034l.021.293c.076.982.153 1.964.233 2.946.05.4.186 1.085.487 1.706.103.215.223.419.37.606.015.018.037.051.048.049.02-.003.742-1.642.804-1.765.036-.07.03-.055.003-.112zm3.861-.913h-.872a.126.126 0 0 1-.116-.178l1.178-2.625a.025.025 0 0 0-.023-.035l-1.318-.003a.148.148 0 0 1-.135-.21l.876-1.954a.025.025 0 0 0-.023-.035h-1.56c-.01 0-.02.006-.024.015l-.926 2.068c-.085.169-.314.634-.399.938a.534.534 0 0 0-.02.191.46.46 0 0 0 .23.378.981.981 0 0 0 .46.119h.59c.041 0-.688 1.482-.834 1.972a.53.53 0 0 0-.023.172.465.465 0 0 0 .23.398c.15.092.342.12.475.12l1.66-.001c.01 0 .02-.006.023-.015l.575-1.28a.025.025 0 0 0-.024-.035zm-6.93-4.937H3.1a.032.032 0 0 0-.034.033c0 1.048-.01 2.795-.01 6.829 0 .288-.269.262-.28.262h-.74c-.04.001-.044.004-.04.047.001.037.465 1.064.555 1.263.01.02.03.033.051.033.157.003.767.009.938-.014.153-.02.3-.06.438-.132.3-.156.49-.419.595-.765.052-.172.075-.353.075-.533.002-2.33 0-4.66-.007-6.991a.032.032 0 0 0-.032-.032zm11.784 6.896c0-.014-.01-.021-.024-.022h-1.465c-.048-.001-.049-.002-.05-.049v-4.66c0-.072-.005-.07.07-.07h.863c.08 0 .075.004.075-.074V8.393c0-.082.006-.076-.08-.076h-3.5c-.064 0-.075-.006-.075.073v1.445c0 .083-.006.077.08.077h.854c.075 0 .07-.004.07.07v4.624c0 .095.008.084-.085.084-.37 0-1.11-.002-1.304 0-.048.001-.06.03-.06.03l-.697 1.519s-.014.025-.008.036c.006.01.013.008.058.008 1.748.003 3.495.002 5.243.002.03-.001.034-.006.035-.033v-1.539zm4.177-3.43c0 .013-.007.023-.02.024-.346.006-.692.004-1.037.004-.014-.002-.022-.01-.022-.024-.005-.434-.007-.869-.01-1.303 0-.072-.006-.071.07-.07l.733-.003c.041 0 .081.002.12.015.093.025.16.107.165.204.006.431.002 1.153.001 1.153zm2.67.244a1.953 1.953 0 0 0-.883-.222h-.18c-.04-.001-.04-.003-.042-.04V10.21c0-.132-.007-.263-.025-.394a1.823 1.823 0 0 0-.153-.53 1.533 1.533 0 0 0-.677-.71 2.167 2.167 0 0 0-1-.258c-.153-.003-.567 0-.72 0-.07 0-.068.004-.068-.065V7.76c0-.031-.01-.041-.046-.039H17.93s-.016 0-.023.007c-.006.006-.008.012-.008.023v.546c-.008.036-.057.015-.082.022h-.95c-.022.002-.028.008-.03.032v1.481c0 .09-.004.082.082.082h.913c.082 0 .072.128.072.128V11.19s.003.117-.06.117h-1.482c-.068 0-.06.082-.06.082v1.445s-.01.068.064.068h1.457c.082 0 .076-.006.076.079v3.225c0 .088-.007.081.082.081h1.43c.09 0 .082.007.082-.08v-3.27c0-.029.006-.035.033-.035l2.323-.003c.098 0 .191.02.28.061a.46.46 0 0 1 .274.407c.008.395.003.79.003 1.185 0 .259-.107.367-.33.367h-1.218c-.023.002-.029.008-.028.033.184.437.374.871.57 1.303a.045.045 0 0 0 .04.026c.17.005.34.002.51.003.15-.002.517.004.666-.01a2.03 2.03 0 0 0 .408-.075c.59-.18.975-.698.976-1.313v-1.981c0-.128-.01-.254-.034-.38 0 .078-.029-.641-.724-.998z",
+            zhihu: "M5.721 0C2.251 0 0 2.25 0 5.719V18.28C0 21.751 2.252 24 5.721 24h12.56C21.751 24 24 21.75 24 18.281V5.72C24 2.249 21.75 0 18.281 0zm1.964 4.078c-.271.73-.5 1.434-.68 2.11h4.587c.545-.006.445 1.168.445 1.171H9.384a58.104 58.104 0 01-.112 3.797h2.712c.388.023.393 1.251.393 1.266H9.183a9.223 9.223 0 01-.408 2.102l.757-.604c.452.456 1.512 1.712 1.906 2.177.473.681.063 2.081.063 2.081l-2.794-3.382c-.653 2.518-1.845 3.607-1.845 3.607-.523.468-1.58.82-2.64.516 2.218-1.73 3.44-3.917 3.667-6.497H4.491c0-.015.197-1.243.806-1.266h2.71c.024-.32.086-3.254.086-3.797H6.598c-.136.406-.158.447-.268.753-.594 1.095-1.603 1.122-1.907 1.155.906-1.821 1.416-3.6 1.591-4.064.425-1.124 1.671-1.125 1.671-1.125zM13.078 6h6.377v11.33h-2.573l-2.184 1.373-.401-1.373h-1.219zm1.313 1.219v8.86h.623l.263.937 1.455-.938h1.456v-8.86z"
+        };
+
+        function platformIcon(p, size) {
+            const s = size || 20;
+            if (ICONS[p.id]) {
+                return '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="' + p.color + '" aria-hidden="true"><path d="' + ICONS[p.id] + '"/></svg>';
+            }
+            const ch = p.mono || (p.name || '').charAt(0);
+            return '<span style="font-size:' + Math.round(s * 0.6) + 'px;font-weight:700;color:' + p.color + ';line-height:1;letter-spacing:-0.02em;">' + ch + '</span>';
+        }
+
+        const AI_PORTALS = {
+            "doubao": "https://www.doubao.com/chat/",
+            "kimi": "https://kimi.moonshot.cn/"
+        };
+
+        let currentVideo = null; // { path, name, size }
+        let dispatchCtl = { cancelled: false, taskIds: {} };
+
+        function el(id) { return document.getElementById(id); }
+
+        /* ── 平台计数动态化：平台列表增长时自动跟随（不硬编码数量） ── */
+        (function initPlatformCounts() {
+            const set = (id, cat) => { const e = el(id); if (e) e.textContent = PLATFORMS.filter(p => p.cat === cat).length; };
+            set('cn-count', 'cn');
+            set('global-count', 'global');
+            const lt = el('login-total');
+            if (lt) lt.textContent = PLATFORMS.length;
+        })();
+
+        function formatBytes(n) {
+            if (n == null) return '';
+            const mb = n / 1048576;
+            return mb >= 1 ? mb.toFixed(1) + ' MB' : (n / 1024).toFixed(0) + ' KB';
+        }
+
+        /* ── 引擎连接状态 ── */
+        async function checkEngine() {
+            const dot = el('engine-status');
+            try {
+                const res = await fetch(API + '/api/health', { cache: 'no-store' });
+                const data = await res.json();
+                if (data && data.status === 'ok') {
+                    dot.className = 'engine-dot on';
+                    dot.textContent = '引擎已连接';
+                    const warn = el('env-warning');
+                    if (data.sau_available === false) {
+                        if (warn) { warn.style.display = 'flex'; warn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> 未检测到 social-auto-upload 引擎（' + (data.sau_root || '') + '），发布将失败。请安装 SAU 或用 SAU_ROOT 指向正确路径。'; }
+                    } else if (warn) {
+                        warn.style.display = 'none';
+                    }
+                    refreshSessionStatus();
+                    loadHistory();
+                    return;
+                }
+            } catch (e) { /* fallthrough */ }
+            dot.className = 'engine-dot off';
+            dot.textContent = '引擎未连接 · 请本地运行 start_ui.sh';
+        }
+
+        /* ── 平台 ── */
+        function renderPlatforms() {
+            const cn = el('cn-grid'), gl = el('global-grid');
+            cn.innerHTML = ''; gl.innerHTML = '';
+            PLATFORMS.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'pcard';
+                card.id = 'card-' + p.id;
+                card.onclick = () => { card.classList.toggle('selected'); updateCount(); };
+                card.innerHTML = `
+                    <div class="left">
+                        <div class="picon">${platformIcon(p)}</div>
+                        <span class="pname">${p.name}${p.beta ? '<span class="beta-tag">测试中</span>' : ''}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span class="pstatus" id="status-${p.id}">…</span>
+                        <button class="qr-btn" onclick="launchQrLogin('${p.id}', event)" title="扫码登录 / 刷新"><i class="fa-solid fa-qrcode"></i></button>
+                        <span class="checkbox"><i class="fa-solid fa-check"></i></span>
+                    </div>
+                `;
+                (p.cat === 'cn' ? cn : gl).appendChild(card);
+            });
+            updateCount();
+        }
+
+        function updateCount() {
+            const n = document.querySelectorAll('.pcard.selected').length;
+            el('sel-count').textContent = '已选 ' + n + ' 个';
+            el('btn-publish-text').textContent = n > 0 ? ('发布到 ' + n + ' 个平台') : '发布';
+        }
+
+        function toggleCategory(cat) {
+            const list = PLATFORMS.filter(p => p.cat === cat);
+            const all = list.every(p => el('card-' + p.id).classList.contains('selected'));
+            list.forEach(p => el('card-' + p.id).classList.toggle('selected', !all));
+            updateCount();
+        }
+
+        async function refreshSessionStatus() {
+            try {
+                const res = await fetch(API + '/api/status');
+                const data = await res.json();
+                const sessions = data.sessions || {};
+                let logged = 0;
+                PLATFORMS.forEach(p => {
+                    const pill = el('status-' + p.id);
+                    if (!pill) return;
+                    const s = sessions[p.id] || {};
+                    if (s.logged_in) { pill.className = 'pstatus logged'; pill.textContent = '已登录'; logged++; }
+                    else { pill.className = 'pstatus need'; pill.textContent = '需扫码'; }
+                });
+                const lc = el('login-count');
+                if (lc) lc.textContent = '已登录 ' + logged + '/' + PLATFORMS.length;
+            } catch (e) { /* 引擎离线时静默 */ }
+        }
+
+        async function launchQrLogin(platformId, event) {
+            if (event) event.stopPropagation();
+            try {
+                const res = await fetch(API + '/api/launch-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ platform_id: platformId })
+                });
+                const data = await res.json();
+                alert('已在桌面打开登录窗口，请扫码登录。\n' + (data.msg || ''));
+                refreshSessionStatus();
+            } catch (e) {
+                alert('无法连接本地引擎，请先运行 start_ui.sh。');
+            }
+        }
+
+        /* ── 分发记录 ── */
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+        }
+
+        async function loadHistory() {
+            const list = el('history-list');
+            try {
+                const res = await fetch(API + '/api/history');
+                const data = await res.json();
+                const records = data.records || [];
+                const active = Object.values(data._active_tasks || {}).filter(t => t.status === 'running');
+
+                if (!records.length && !active.length) {
+                    list.innerHTML = '<div class="history-empty">暂无发布记录</div>';
+                    return;
+                }
+                list.innerHTML = '';
+
+                active.forEach(t => {
+                    const name = (PLATFORMS.find(p => p.id === t.platform_id) || { name: t.platform_id }).name;
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerHTML = '<div class="history-head">' +
+                        '<span class="history-title"><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent);"></i> 进行中 · ' + escapeHtml(name) + '</span>' +
+                        '<span class="history-time">' + escapeHtml(t.stage || '') + '</span>' +
+                        '</div><div class="progress-track"><div class="progress-fill" style="width:' + (t.pct || 0) + '%;"></div></div>';
+                    list.appendChild(item);
+                });
+
+                records.slice().reverse().forEach(r => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    const plats = Object.entries(r.platforms || {});
+                    const chips = plats.length
+                        ? plats.map(([pid, info]) => {
+                            const name = (PLATFORMS.find(p => p.id === pid) || { name: pid }).name;
+                            const ok = info.status === 'success' && info.real;
+                            const link = (ok && info.link) ? ' <a href="' + escapeHtml(info.link) + '" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>' : '';
+                            return '<span class="chip' + (ok ? ' ok' : '') + '">' + name + link + '</span>';
+                        }).join('')
+                        : '<span class="chip">待发布</span>';
+                    item.innerHTML = '<div class="history-head">' +
+                        '<span class="history-title">' + escapeHtml(r.title || r.video_file || '') + '</span>' +
+                        '<span class="history-time">' + escapeHtml(r.timestamp || '') + '</span>' +
+                        '</div><div class="history-chips">' + chips + '</div>';
+                    list.appendChild(item);
+                });
+
+                if (active.length) setTimeout(loadHistory, 2000);
+            } catch (e) {
+                list.innerHTML = '<div class="history-empty">无法连接引擎</div>';
+            }
+        }
+
+        /* ── 视频 ── */
+        const dropzone = el('dropzone');
+        const fileInput = el('file-input');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => selectVideoFile(fileInput.files[0]));
+
+        ['dragover', 'dragenter'].forEach(ev => dropzone.addEventListener(ev, e => {
+            e.preventDefault(); dropzone.classList.add('drag');
+        }));
+        ['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, e => {
+            e.preventDefault(); dropzone.classList.remove('drag');
+        }));
+        dropzone.addEventListener('drop', e => {
+            const f = e.dataTransfer.files && e.dataTransfer.files[0];
+            if (f) selectVideoFile(f);
+        });
+
+        el('btn-fetch-url').addEventListener('click', fetchRemoteUrl);
+        el('video-url').addEventListener('keydown', e => { if (e.key === 'Enter') fetchRemoteUrl(); });
+
+        function setPreview(src, name, size) {
+            const v = el('video-preview');
+            const empty = el('drop-empty');
+            if (src) {
+                v.src = src; v.style.display = 'block'; empty.style.display = 'none';
+            } else {
+                v.removeAttribute('src'); v.style.display = 'none'; empty.style.display = 'block';
+            }
+            const meta = el('video-meta');
+            if (name) {
+                meta.style.display = 'flex';
+                meta.innerHTML = `<i class="fa-solid fa-film"></i> <span>${name}</span>` +
+                    (size != null ? `<span style="color:var(--faint);">${formatBytes(size)}</span>` : '') +
+                    `<span class="ok"><i class="fa-solid fa-circle-check"></i> 已就绪</span>`;
+            } else {
+                meta.style.display = 'none';
+            }
+        }
+
+        async function selectVideoFile(file) {
+            if (!file) return;
+            setPreview(URL.createObjectURL(file), file.name, file.size);
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                const res = await fetch(API + '/api/upload-video', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!res.ok || !data.saved_path) throw new Error(data.error || '上传失败');
+                currentVideo = { path: data.saved_path, name: file.name, size: data.size };
+                updateVideoMetaOk();
+            } catch (e) {
+                alert('视频上传到本地引擎失败：' + (e.message || e) + '\n请确认已运行 start_ui.sh。');
+            }
+        }
+
+        async function fetchRemoteUrl() {
+            const url = el('video-url').value.trim();
+            if (!url) return;
+            if (!/^https?:\/\//i.test(url)) { alert('请输入 http/https 开头的视频直链'); return; }
+            const name = url.split('/').pop().split('?')[0] || '远程视频';
+            setPreview(url, name, null);
+            try {
+                const res = await fetch(API + '/api/download-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.saved_path) throw new Error(data.error || '拉取失败');
+                currentVideo = { path: data.saved_path, name, size: data.size };
+                updateVideoMetaOk();
+            } catch (e) {
+                alert('远程视频拉取失败：' + (e.message || e));
+            }
+        }
+
+        function updateVideoMetaOk() {
+            const meta = el('video-meta');
+            if (!currentVideo) return;
+            meta.style.display = 'flex';
+            meta.innerHTML = `<i class="fa-solid fa-film"></i> <span>${currentVideo.name}</span>` +
+                (currentVideo.size != null ? `<span style="color:var(--faint);">${formatBytes(currentVideo.size)}</span>` : '') +
+                `<span class="ok"><i class="fa-solid fa-circle-check"></i> 已就绪</span>`;
+        }
+
+        /* ── AI 文案 ── */
+        function cleanTopic() {
+            const t = el('post-title').value.trim();
+            if (t) return t.slice(0, 30);
+            const v = currentVideo ? currentVideo.name : '';
+            return v.replace(/\.(mp4|mov|avi|mkv)$/i, '').replace(/[_-]+/g, ' ').trim() || '我的视频';
+        }
+
+        function openAiWebPage(key) {
+            const topic = cleanTopic();
+            const prompt = `请为【${topic}】写一段短视频发布文案：\n标题：（28 字以内）\n正文：（突出核心亮点与行动引导）`;
+            navigator.clipboard.writeText(prompt).then(() => {
+                alert('主题与提示词已复制，即将打开 ' + key.toUpperCase() + '，粘贴即可。');
+                window.open(AI_PORTALS[key], '_blank');
+            }).catch(() => window.open(AI_PORTALS[key], '_blank'));
+        }
+
+        async function parseFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (!text || !text.trim()) { alert('剪贴板为空，请先复制 AI 生成的文案'); return; }
+                const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+                if (lines.length) {
+                    el('post-title').value = lines[0].replace(/^标题[：:]\s*/, '').replace(/^[#【\s]+/, '').slice(0, 80);
+                    if (lines.length > 1) el('post-desc').value = lines.slice(1).join('\n').replace(/^正文[：:]\s*/, '');
+                }
+                alert('已回填文案。');
+            } catch (e) {
+                alert('无法读取剪贴板，请手动粘贴。');
+            }
+        }
+
+        /* ── 发布 ── */
+        function getSelected() {
+            return PLATFORMS.filter(p => el('card-' + p.id).classList.contains('selected'));
+        }
+
+        function publish() {
+            if (!currentVideo) { alert('请先选择或拖入一个视频'); return; }
+            const sel = getSelected();
+            if (!sel.length) { alert('请至少勾选一个平台'); return; }
+            el('confirm-name').textContent = currentVideo.name;
+            el('confirm-count').textContent = sel.length;
+            el('confirm-overlay').classList.add('show');
+        }
+        function hideConfirm() { el('confirm-overlay').classList.remove('show'); }
+        function hideProgress() { el('progress-overlay').classList.remove('show'); }
+
+        function confirmDispatch() {
+            hideConfirm();
+            startDispatch();
+        }
+
+        function parseTags() {
+            return el('post-tags').value.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+        }
+
+        async function startDispatch() {
+            const overlay = el('progress-overlay');
+            const list = el('progress-list');
+            const closeBtn = el('close-progress');
+            const cancelAllBtn = el('btn-cancel-all');
+            dispatchCtl = { cancelled: false, taskIds: {} };
+            overlay.classList.add('show');
+            closeBtn.style.display = 'none';
+            cancelAllBtn.style.display = 'inline-flex';
+            list.innerHTML = '';
+
+            const sel = getSelected();
+            const title = el('post-title').value.trim() || currentVideo.name;
+            const desc = el('post-desc').value.trim();
+            const tags = parseTags();
+
+            sel.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'progress-row';
+                row.id = 'row-' + p.id;
+                row.innerHTML = `
+                    <div class="pr-top">
+                        <span style="display:inline-flex;align-items:center;gap:6px;">${platformIcon(p, 14)} ${p.name}</span>
+                        <span style="display:flex; align-items:center; gap:8px;">
+                            <span id="status-${p.id}-p" style="color:var(--muted);">等待中…</span>
+                            <button class="pr-cancel" onclick="cancelTask('${p.id}')" title="取消该平台">取消</button>
+                        </span>
+                    </div>
+                    <div class="progress-track"><div class="progress-fill" id="fill-${p.id}"></div></div>
+                `;
+                list.appendChild(row);
+            });
+
+            for (const p of sel) {
+                if (dispatchCtl.cancelled) {
+                    const st = el('status-' + p.id + '-p');
+                    if (st) st.innerHTML = '<span style="color:var(--faint);">已跳过</span>';
+                    continue;
+                }
+                try {
+                    const res = await fetch(API + '/api/start-upload-task', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            platform_id: p.id,
+                            video_file: currentVideo.path,
+                            title, desc, tags
+                        })
+                    });
+                    const data = await res.json();
+                    const st = el('status-' + p.id + '-p');
+                    const fill = el('fill-' + p.id);
+
+                    if (res.status === 409 || data.status === 'blocked_duplicate') {
+                        st.innerHTML = '<span style="color:var(--accent-2);">已发布过 · 防重拦截</span>';
+                        fill.style.width = '100%';
+                        continue;
+                    }
+                    if (data.task_id) {
+                        dispatchCtl.taskIds[p.id] = data.task_id;
+                        await new Promise(r => trackTask(p, data.task_id, r));
+                    } else {
+                        st.innerHTML = '<span style="color:var(--danger);">' + (data.msg || data.error || '启动失败') + '</span>';
+                    }
+                } catch (e) {
+                    const st = el('status-' + p.id + '-p');
+                    if (st) st.innerHTML = '<span style="color:var(--danger);">请求失败</span>';
+                }
+            }
+
+            cancelAllBtn.style.display = 'none';
+            closeBtn.style.display = 'inline-flex';
+            refreshSessionStatus();
+            loadHistory();
+        }
+
+        async function cancelTask(platformId) {
+            const tid = dispatchCtl.taskIds[platformId];
+            if (!tid) return;
+            try {
+                await fetch(API + '/api/cancel-task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task_id: tid })
+                });
+            } catch (e) { /* 忽略 */ }
+        }
+
+        async function cancelAll() {
+            dispatchCtl.cancelled = true;
+            const ids = Object.values(dispatchCtl.taskIds);
+            for (const tid of ids) {
+                try {
+                    await fetch(API + '/api/cancel-task', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ task_id: tid })
+                    });
+                } catch (e) { /* 忽略 */ }
+            }
+            const btn = el('btn-cancel-all');
+            if (btn) btn.style.display = 'none';
+        }
+
+        function trackTask(p, taskId, done) {
+            const st = el('status-' + p.id + '-p');
+            const fill = el('fill-' + p.id);
+            const timer = setInterval(async () => {
+                try {
+                    const res = await fetch(API + '/api/task-progress?task_id=' + taskId);
+                    const info = await res.json();
+                    if (info.pct !== undefined) fill.style.width = info.pct + '%';
+                    if (info.stage) st.textContent = info.stage;
+
+                    if (info.status === 'completed') {
+                        clearInterval(timer);
+                        st.innerHTML = '<span style="color:var(--success);">' + info.stage + '</span>';
+                        fill.style.width = '100%';
+                        done();
+                    } else if (info.status === 'cancelled') {
+                        clearInterval(timer);
+                        st.innerHTML = '<span style="color:var(--faint);">已取消</span>';
+                        fill.style.width = '100%';
+                        fill.style.background = 'var(--faint)';
+                        done();
+                    } else if (info.status === 'failed') {
+                        clearInterval(timer);
+                        st.innerHTML = '<span style="color:var(--danger);">' + (info.error || info.stage || '失败') + '</span>';
+                        fill.style.width = '100%';
+                        done();
+                    }
+                } catch (e) {
+                    clearInterval(timer);
+                    done();
+                }
+            }, 500);
+        }
+
+        el('btn-publish').addEventListener('click', publish);
+
+        /* ── 启动 ── */
+        renderPlatforms();
+        loadHistory();
+        checkEngine();
+    </script>
+</body>
+</html>

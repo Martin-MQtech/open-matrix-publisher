@@ -5,7 +5,7 @@ a = Analysis(
     ['desktop_app.py'],
     pathex=[],
     binaries=[],
-    datas=[('index.html', '.'), ('logo.png', '.'), ('logo.svg', '.'), ('favicon.ico', '.'), ('showcase_banner.jpg', '.'), ('interactive_login.py', '.'), ('custom_uploaders', 'custom_uploaders'), ('vendor/fontawesome', 'vendor/fontawesome')],
+    datas=[('index.html', '.'), ('app.html', '.'), ('logo.png', '.'), ('logo.svg', '.'), ('favicon.ico', '.'), ('showcase_banner.jpg', '.'), ('app_ui_screenshot.jpg', '.'), ('workflow_guide.jpg', '.'), ('interactive_login.py', '.'), ('custom_uploaders', 'custom_uploaders'), ('vendor/fontawesome', 'vendor/fontawesome')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
