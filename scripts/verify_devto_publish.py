@@ -29,7 +29,7 @@ if not KEY:
 # 1. 保存凭据到两处（本地 + SAU）
 creds = {"api_key": KEY}
 targets = [
-    data_dir() / "cookies" / "devto_default.json",
+    Path(data_dir()) / "cookies" / "devto_default.json",
     Path.home() / "social-auto-upload" / "cookies" / "devto_default.json",
 ]
 for t in targets:
@@ -37,8 +37,8 @@ for t in targets:
     t.write_text(json.dumps(creds, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"✅ 凭据已写入 {t}")
 
-# 2. 真实发布
-sys.path.insert(0, str(Path.home() / "social-auto-upload"))
+# 2. 真实发布（custom_uploaders 在项目根目录）
+sys.path.insert(0, str(PROJECT_ROOT))
 from custom_uploaders.devto_uploader import publish  # noqa: E402
 
 title = f"OMP E2E 验证 {time.strftime('%H%M%S')}"

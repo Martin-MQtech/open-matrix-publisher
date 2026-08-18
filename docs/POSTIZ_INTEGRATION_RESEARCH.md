@@ -5,6 +5,10 @@
 
 ---
 
+## ⚠️ 平台侧风险记录（2026-08-18 实测）
+
+**Dev.to 新建 API key 全部 401**：Forem issue [#23675](https://github.com/forem/forem/issues/23675)（2026-07-25 报告，未修复）——新生成的 API key 对任何认证端点（如 `/api/articles/me`）都返回 401，公开端点正常。请求格式与官方文档完全一致（curl 与代码同结果），**适配器代码本身正确**，待平台修复后即可完成真实发布验证（`python3 scripts/verify_devto_publish.py <KEY>`）。
+
 ## 1. Postiz 完整平台清单（32 个，官方 API 文档实列）
 
 来源：Postiz Public API `/integrations` 的 identifier 枚举 + providers 文档。
