@@ -175,6 +175,23 @@ async def login_flow(
             pass
 
 
+def make_result(ok: bool, status: str, msg: str = "", platform: str = "") -> dict:
+    """统一结果结构（供各上传器返回）。"""
+    return {"success": bool(ok), "status": status, "message": msg, "platform": platform}
+
+
+def is_logged_in(platform: str, name: str = "default") -> bool:
+    """检查该平台是否已有有效登录 Cookie（storage_state 中含会话 cookie）。"""
+    cf = account_file(platform, name)
+    if not cf.exists() or cf.stat().st_size < 50:
+        return False
+    try:
+        state = json.loads(cf.read_text(encoding="utf-8"))
+        return _has_session(state.get("cookies", []), platform)
+    except Exception:
+        return False
+
+
 def run(coro):
     """同步入口：在已有事件循环外安全跑协程。"""
     return asyncio.run(coro)

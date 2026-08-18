@@ -26,6 +26,14 @@ PLATFORM = "baijiahao"
 UPLOAD_URL = "https://baijiahao.baidu.com/builder/rc/edit?type=video"
 LOGIN_URL = "https://baijiahao.baidu.com/"
 
+def publish(video_path: str, title: str, tags: list[str] | None = None,
+            desc: str | None = None) -> bool:
+    """引擎入口：返回 bool（True=发布成功）。"""
+    uploader = BaijiahaoUploader()
+    res = asyncio.run(uploader.upload(video_path, title, desc or "", tags))
+    return bool(res.get("success"))
+
+
 class BaijiahaoUploader:
     def __init__(self, account_name: str = "default", headless: bool = True):
         self.account_name = account_name

@@ -40,13 +40,18 @@ async def upload(video_path: str, title: str, tags: list[str] | None = None,
     try:
         await page.goto(COMPOSE_URL, wait_until="domcontentloaded")
         # feed 页发帖框旁的「Video」图标（英文界面 name=Video；中文 name=视频）。
-        # 注意：不能用 button:has-text("Video") —— 它会误匹配整个发帖框大容器
-        # （bbox 524x300，文本含 "Video Photo Write article"），点了只是聚焦发帖框。
-        # 必须用精确 accessible name 匹配小图标。点 Video 会触发浏览器原生文件
-        # 选择对话框，headless 下用 expect_file_chooser 捕获后 set_files。
+        # 它是 DIV[role=button]，且 feed 需完全渲染后才出现（有时 10s+），
+        # 必须等待其可见再点击，否则点击落在空处、filechooser 永不触发。
         video_btn = page.get_by_role("button", name="Video", exact=True).or_(
             page.get_by_role("button", name="视频", exact=True)
         ).first
+        try:
+            await video_btn.wait_for(state="visible", timeout=60000)
+        except Exception:
+            print("[LinkedIn] 发帖框 Video 按钮未出现（自动登录未完成或会话失效）")
+            return False
+        await page.wait_for_timeout(2000)
+        # 点 Video 会触发浏览器原生文件选择对话框，headless 下用 expect_file_chooser 捕获
         async with page.expect_file_chooser(timeout=20000) as fc_info:
             await video_btn.click()
         fc = await fc_info.value
@@ -63,6 +68,11 @@ async def upload(video_path: str, title: str, tags: list[str] | None = None,
 
         # 文案编辑器（此时已在 compose 步骤）
         editor = page.locator('[contenteditable="true"], div[role="textbox"]').first
+        try:
+            await editor.wait_for(state="visible", timeout=30000)
+        except Exception:
+            print("[LinkedIn] 未出现文案编辑器")
+            return False
         caption = (desc or title) + ("\n" + " ".join(f"#{t}" for t in (tags or [])) if tags else "")
         await editor.click()
         await page.keyboard.type(caption, delay=20)

@@ -86,6 +86,22 @@ PLATFORMS = {
         "success_domains": ["zhihu.com"],
         "exclude_keywords": ["signin"]
     },
+    "baijiahao": {
+        "name": "百家号",
+        "url": "https://baijiahao.baidu.com/",
+        "cookie_files": ["baijiahao_default.json"],
+        "auth_cookies": ["BDUSS", "BAIDUID"],
+        "success_domains": ["baijiahao.baidu.com"],
+        "exclude_keywords": ["login", "passport"]
+    },
+    "fanqie": {
+        "name": "番茄视频",
+        "url": "https://pugc.yueduwuxian.com/fqvideo/login",
+        "cookie_files": ["fanqie_default.json"],
+        "auth_cookies": ["sessionid", "sessionid_ss"],
+        "success_domains": ["pugc.yueduwuxian.com"],
+        "exclude_keywords": ["login"]
+    },
 
     # ── 国际平台 ──────────────────────────────────────────────────────────
     "tiktok": {

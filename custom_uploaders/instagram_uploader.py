@@ -76,18 +76,10 @@ async def upload(video_path: str, title: str, tags: list[str] | None = None,
     context = await load_context(browser, cookie_path)
     page = await context.new_page()
     try:
-        # 1. 进入首页并点击左侧「新建」按钮（aria-label 可能随语言变化）
-        await page.goto("https://www.instagram.com/", wait_until="domcontentloaded")
+        # 1. 直接访问创建页（headless 下点击「新建」会被 IG 反自动化压制，直接导航可绕过）
+        await page.goto("https://www.instagram.com/create/select/?media_type=1", wait_until="domcontentloaded")
         await _dismiss_overlays(page)
         await page.wait_for_timeout(3000)
-
-        new_post_clicked = await _click_visible(page, [
-            '[aria-label="新建"]', '[aria-label="New post"]', '[aria-label="新建帖子"]',
-            'a[href="/create/"]', 'svg[aria-label="新建"]',
-        ])
-        if not new_post_clicked:
-            print("[Instagram] 未能点击「新建」按钮，可能未登录或页面改版")
-            return False
 
         # 2. 等待文件选择框并写入视频
         file_input = page.locator('input[type="file"]').first
@@ -98,16 +90,18 @@ async def upload(video_path: str, title: str, tags: list[str] | None = None,
             return False
         await file_input.set_input_files(video_path)
         print("[Instagram] 已选择视频文件，等待上传处理...")
-        await page.wait_for_timeout(8000)
+        await page.wait_for_timeout(12000)
 
         # 3. 点击「下一步 / Next」（可能出现两次：裁剪、封面）
-        for _ in range(2):
+        for _ in range(3):
             clicked = await _click_visible(page, [
                 'button:has-text("下一步")', 'button:has-text("Next")',
                 '[role="button"]:has-text("下一步")', '[role="button"]:has-text("Next")',
+                'div[role="button"]:has-text("下一步")', 'div[role="button"]:has-text("Next")',
             ])
             if clicked:
-                await page.wait_for_timeout(3000)
+                print("[Instagram] 点击了下一步")
+                await page.wait_for_timeout(6000)
 
         # 4. 填写文案（标题 + 标签）
         caption = f"{title or ''}"
@@ -123,10 +117,12 @@ async def upload(video_path: str, title: str, tags: list[str] | None = None,
         except Exception:
             pass
 
-        # 5. 点击「分享 / Share」
+        # 5. 点击「分享 / Share」（等待文案页出现后执行）
+        await page.wait_for_timeout(3000)
         shared = await _click_visible(page, [
             'button:has-text("分享")', 'button:has-text("Share")',
             '[role="button"]:has-text("分享")', '[role="button"]:has-text("Share")',
+            'div[role="button"]:has-text("分享")', 'div[role="button"]:has-text("Share")',
         ])
         if not shared:
             print("[Instagram] 未找到「分享」按钮，可能未到最终发布页")

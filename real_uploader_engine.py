@@ -295,6 +295,9 @@ class RealPlatformUploader:
                 "facebook":"https://www.facebook.com/",
                 "tiktok":  "https://www.tiktok.com/",
             }
+            module_name = module_map.get(self.platform_id)
+            if not module_name:
+                return {"success": False, "error": f"未找到 {self.platform_id} 的自定义上传器模块"}
             # 通过环境变量传递参数，避免把 desc 直接拼进执行代码（注入/语法风险）
             args_payload = json.dumps({
                 "video": self.video_path,
