@@ -71,7 +71,7 @@
 | **YouTube / Threads / Pinterest / Instagram Graph** | ✅ 免费配额（需开发者 app 审核） | 已有免费替代（SAU/instagrapi），不重复接 |
 
 **结论**：
-1. 我们**不会为任何平台付 API 费**——已接入的 16 平台全部走免费路线（Cookie/SAU/instagrapi），X 等收费 API 平台我们已有免费替代；
+1. 我们**不会为任何平台付 API 费**——已接入的 20 平台全部走免费路线（Cookie/SAU/instagrapi），X 等收费 API 平台我们已有免费替代；
 2. 从 Postiz 借鉴的仅限**免费 API 平台**（Dev.to/Hashnode/WordPress/Telegram 等），零成本；
 3. "合到一起"本就不成立——我们不引入 Postiz 本体（AGPL 许可证 + 重型架构），只拿它的平台清单和接入路径作参考。
 

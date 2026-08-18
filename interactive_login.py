@@ -131,6 +131,15 @@ PLATFORMS = {
         "success_domains": ["t.me"],
         "exclude_keywords": []
     },
+    "pinterest": {
+        "name": "Pinterest",
+        "url": "https://developers.pinterest.com/",
+        "api_key": True,
+        "cookie_files": ["pinterest_default.json"],
+        "auth_cookies": [],
+        "success_domains": ["pinterest.com"],
+        "exclude_keywords": []
+    },
 
     # ── 国际平台 ──────────────────────────────────────────────────────────
     "tiktok": {

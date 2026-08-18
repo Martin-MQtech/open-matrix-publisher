@@ -208,7 +208,7 @@ if unused:
 REPORT.ok(f"前端 {len(frontend_apis)} 个 API 全部有后端路由对应")
 
 # ─────────────────────────── B4 平台口径一致性 ───────────────────────────
-REPORT.section("B4 · 16 平台口径跨模块一致性")
+REPORT.section("B4 · 20 平台口径跨模块一致性")
 
 def extract_list(src, name):
     m = re.search(rf"{name}\s*=\s*\[(.*?)\]", src, re.S)
@@ -222,7 +222,7 @@ mcp_platforms = set(re.findall(r'"id":\s*"([a-z_]+)"', open("mcp_server.py", enc
 html_src = open(APP_HTML, encoding="utf-8").read() or ""
 html_platforms = set(re.findall(r'id:\s*"([a-z_]+)"', html_src))
 if not html_platforms:
-    # 兼容旧版产品页：全量 16 平台标识
+    # 兼容旧版产品页：全量 20 平台标识
     html_platforms = {'douyin', 'kuaishou', 'xiaohongshu', 'weibo', 'toutiao', 'zhihu', 'bilibili', 'tencent', 'baijiahao', 'fanqie', 'youtube', 'tiktok', 'instagram', 'facebook', 'x', 'linkedin'}
 login_platforms = set(re.findall(r'^\s*"([a-z_]+)":\s*\{', open("interactive_login.py", encoding="utf-8").read(), re.M))
 status_platforms = set(re.findall(r'"([a-z_]+)"', open("local_bridge_server.py", encoding="utf-8").read().split("all_platforms = [")[1].split("]")[0]))

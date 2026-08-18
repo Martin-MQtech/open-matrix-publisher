@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-CI 检查：固化「16 平台口径」。
+CI 检查：固化「20 平台口径」。
 
 扫描 README / 执行手册 / 宣传文档（docs/、skills/ 下的所有 Markdown），
-若出现 28 / 18 / 15 / 14+ / 7 等旧平台数字（后跟平台语境词）即报错，退出码 1。
+若出现 28 / 19 / 18 / 16 / 15 / 14+ / 7 等旧平台数字（后跟平台语境词）即报错，退出码 1。
 
 设计要点：
 - 数字必须紧跟「平台/大/个/国内外/主流」等语境词，避免误报「15 秒」「7 天」等无关数字；
-- 清理说明里「28/18/15/14+/7 等旧表述」这类字面量（斜杠列表、后无「平台」）不会被误抓；
-- 当前正确口径固定为 16（国内 10 + 海外 6），16 不在检测列表内。
+- 清理说明里「28/19/18/16/15/14+/7 等旧表述」这类字面量（斜杠列表、后无「平台」）不会被误抓；
+- 当前正确口径固定为 20（国内 10 + 海外 10），20 不在检测列表内。
 
 用法：
     python scripts/check_platform_count.py            # 扫描全部目标文档
@@ -35,7 +35,7 @@ SCAN_PATTERNS = [
 
 # 旧平台数字口径：数字 + 平台语境词
 OLD_COUNT_RE = re.compile(
-    r"(?:28|18|15)\s*(?:个|大)?\s*(?:国内外|主流)?\s*平台"
+    r"(?:28|19|18|16|15)\s*(?:个|大)?\s*(?:国内外|主流)?\s*平台"
     r"|14\s*\+\s*(?:个|大)?\s*平台"
     r"|7\s*(?:个|大)\s*(?:国内外|主流)?\s*平台"
 )
@@ -67,7 +67,7 @@ def check_file(path: Path) -> list[str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="校验 16 平台口径一致性")
+    parser = argparse.ArgumentParser(description="校验 20 平台口径一致性")
     parser.add_argument("--verbose", action="store_true", help="打印扫描文件数")
     args = parser.parse_args()
 
@@ -82,12 +82,12 @@ def main() -> int:
         problems.extend(check_file(f))
 
     if problems:
-        print("❌ 检测到旧平台口径（当前正确口径：16 平台 = 国内 10 + 海外 6）：")
+        print("❌ 检测到旧平台口径（当前正确口径：20 平台 = 国内 10 + 海外 10）：")
         print("\n".join(problems))
-        print("\n请修正为「16 平台」口径后重新提交。")
+        print("\n请修正为「20 平台」口径后重新提交。")
         return 1
 
-    print(f"✅ 平台口径检查通过：{len(files)} 个文档，无 28/18/15/14+/7 等旧数字。")
+    print(f"✅ 平台口径检查通过：{len(files)} 个文档，无 28/19/18/16/15/14+/7 等旧数字。")
     return 0
 
 

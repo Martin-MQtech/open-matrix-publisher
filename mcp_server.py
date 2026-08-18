@@ -29,11 +29,12 @@ ALL_SUPPORTED_PLATFORMS = [
     {"id": "tiktok", "name": "TikTok", "region": "global"},
     {"id": "devto", "name": "Dev.to", "region": "global"},
     {"id": "wordpress", "name": "WordPress", "region": "global"},
-    {"id": "telegram", "name": "Telegram", "region": "global"}
+    {"id": "telegram", "name": "Telegram", "region": "global"},
+    {"id": "pinterest", "name": "Pinterest", "region": "global"}
 ]
 
 def list_platforms() -> Dict[str, Any]:
-    """Returns list of all 18 supported domestic and international platforms."""
+    """Returns list of all 20 supported domestic and international platforms."""
     return {"platforms": ALL_SUPPORTED_PLATFORMS, "total": len(ALL_SUPPORTED_PLATFORMS)}
 
 def check_accounts() -> Dict[str, Any]:

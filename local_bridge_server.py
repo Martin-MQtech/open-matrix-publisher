@@ -227,7 +227,7 @@ def get_status():
 
     creds = load_credentials()
     session_status = {}
-    all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "baijiahao", "fanqie", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok", "devto", "wordpress", "telegram"]
+    all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "baijiahao", "fanqie", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok", "devto", "wordpress", "telegram", "pinterest"]
     
     for pid in all_platforms:
         is_logged, msg = check_profile_logged_in(pid)
@@ -282,12 +282,12 @@ def _run_interactive_login_thread(platform_id):
 
 @app.route("/api/configure-key", methods=["POST"])
 def configure_key():
-    """API-key 平台（Dev.to / WordPress）凭据配置：写入 cookies/{platform}_default.json。"""
+    """API-key 平台（Dev.to / WordPress / Telegram / Pinterest）凭据配置：写入 cookies/{platform}_default.json。"""
     from omp_paths import data_dir
     data = request.json or {}
     platform_id = data.get("platform_id", "")
-    if platform_id not in ("devto", "wordpress", "telegram"):
-        return jsonify({"status": "error", "msg": "仅支持 Dev.to / WordPress / Telegram 免费 API 配置"}), 400
+    if platform_id not in ("devto", "wordpress", "telegram", "pinterest"):
+        return jsonify({"status": "error", "msg": "仅支持 Dev.to / WordPress / Telegram / Pinterest 免费 API 配置"}), 400
 
     creds = {}
     if platform_id == "devto":
@@ -302,6 +302,12 @@ def configure_key():
         if not (site_url and username and app_password):
             return jsonify({"status": "error", "msg": "请输入站点地址 / 用户名 / 应用密码"}), 400
         creds = {"site_url": site_url, "username": username, "app_password": app_password}
+    elif platform_id == "pinterest":
+        access_token = (data.get("access_token") or "").strip()
+        board_id = (data.get("board_id") or "").strip()
+        if not (access_token and board_id):
+            return jsonify({"status": "error", "msg": "请输入 Pinterest access_token 与 board_id"}), 400
+        creds = {"access_token": access_token, "board_id": board_id}
     else:
         bot_token = (data.get("bot_token") or "").strip()
         chat_id = (data.get("chat_id") or "").strip()

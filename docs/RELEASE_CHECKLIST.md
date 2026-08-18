@@ -13,8 +13,8 @@
 - [x] ✅ **远端已配置**：`git remote -v` 指向 `https://github.com/Martin-MQtech/open-matrix-publisher.git`
 - [x] ✅ **存在提交历史**：`git log --oneline` 有记录（当前最新 3fc5207）
 - [x] ✅ **许可证**：`LICENSE` 存在且为 MIT，版权人「Martin · MUQI Tech（木齐科技）」，与 README 声明的 MIT 一致
-- [x] ✅ **平台口径**：README/执行手册/SKILL/宣传草稿统一为「16 平台（国内 10 已接入 + 海外 6，其中 4 个国际平台验证中）」，无 28/18/15/14+/7 等旧数字残留
-- [x] ✅ **平台口径 CI 门禁**：`.github/workflows/platform-count-check.yml` 在每次 push / PR 自动运行 `scripts/check_platform_count.py`，扫描 README/执行手册/全部 `docs/` 与 `skills/` 下 Markdown，出现 28/18/15/14+/7 等旧平台数字即失败（本地可先跑 `python3 scripts/check_platform_count.py` 自检）
+- [x] ✅ **平台口径**：README/执行手册/SKILL/宣传草稿统一为「20 平台（国内 10 + 海外 10，LinkedIn 暂不支持）」，无 28/19/18/16/15/14+/7 等旧数字残留
+- [x] ✅ **平台口径 CI 门禁**：`.github/workflows/platform-count-check.yml` 在每次 push / PR 自动运行 `scripts/check_platform_count.py`，扫描 README/执行手册/全部 `docs/` 与 `skills/` 下 Markdown，出现 28/19/18/16/15/14+/7 等旧平台数字即失败（本地可先跑 `python3 scripts/check_platform_count.py` 自检）
 - [x] ✅ **README 首屏素材**：`logo.png`（大 M + 橙黄渐变 O + 外圈，置顶居中）+ `media/demo-flow.gif`（15 秒核心流程演示）+ `logo.svg`（网页/favicon）+ `favicon.ico`（16~256px 多尺寸，浏览器降级用）+ `logo-mono-{white,black,orange}.svg/.png`（单色版）
 - [x] ✅ **文档体系**：`执行手册.md`（权威总纲）、`docs/DESIGN_AND_PRODUCT_PLAN.md`（设计与产品方案）、`docs/RELEASE_CHECKLIST.md`（本文件）
 
@@ -81,8 +81,8 @@ git ls-files cookies/
 ## 五、发布后跟进（非阻塞，但建议尽快）
 
 - [ ] ⬜ 开启 GitHub Pages（静态界面预览页，README 已有链接）
-- [ ] ⬜ 4 个「测试中」国际平台（X/LinkedIn/TikTok/Instagram）端到端验证后更新口径
-- [ ] ⬜ 宣发帖（`docs/PROMOTION_POSTS.md` / `docs/CREATIVE_PROMOTION_POSTS.md`）按 16 平台口径发布
+- [x] ✅ 国际平台端到端验证已收尾：X / Facebook / TikTok / Instagram 实测发布成功，LinkedIn 暂不支持（待官方 API）
+- [x] ✅ 宣发帖（`docs/PROMOTION_POSTS.md` / `docs/CREATIVE_PROMOTION_POSTS.md`）按 20 平台口径发布
 - [ ] ⬜ 提交至 MagicBox.tools / Product Hunt（策略见 `docs/OPENSOURCE_GROWTH_STRATEGY.md`）
 
 ---

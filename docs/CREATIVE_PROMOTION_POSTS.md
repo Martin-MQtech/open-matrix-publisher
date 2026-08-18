@@ -25,7 +25,7 @@
 | 弹窗抢占前台、打扰日常工作 🤯 | **前台 0 干扰，凭证落盘，后台静默无感分发** |
 | 标题文字死板复制易重合 🤖 | **AI 动态适应各平台字数限制与话题格式** |
 
-目前支持 **抖音、快手、小红书、B站、微信视频号、知乎、微博、头条、百家号、番茄、YouTube、TikTok、X、LinkedIn、Instagram、Facebook** 共 16 个国内外平台（国内 10 + 海外 6）！
+目前支持 **抖音、快手、小红书、B站、微信视频号、知乎、微博、头条、百家号、番茄、YouTube、TikTok、X、LinkedIn、Instagram、Facebook、Dev.to、WordPress、Telegram、Pinterest** 共 20 个平台（国内 10 + 海外 10，其中 LinkedIn 暂不支持）！
 
 ---
 

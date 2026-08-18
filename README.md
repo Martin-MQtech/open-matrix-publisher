@@ -34,9 +34,9 @@
 **Open Matrix Publisher** is an open-source, desktop-first, privacy-respecting content distribution matrix tool that automates content publishing across domestic Chinese and top international social networks.
 
 ### 🌟 Key Highlights:
-1. **16+ Platform Matrix (国内 10 · 国际 6+)**:
+1. **20 Platform Matrix (国内 10 · 国际 10)**:
    - **Domestic (🇨🇳)**: WeChat Channels (视频号), Douyin (抖音), Bilibili (B站), Kuaishou (快手), RED (小红书), Weibo (微博), Toutiao (今日头条), Zhihu (知乎), Baijiahao (百家号), Fanqie (番茄视频).
-   - **Global (🌏)**: YouTube / Shorts, TikTok, Instagram Reels, Facebook Video, X (Twitter), LinkedIn, and expanding candidates (Google Blogger, Substack, Pinterest, Meta Threads, Rumble).
+   - **Global (🌏)**: YouTube / Shorts, TikTok, Instagram Reels, Facebook Video, X (Twitter), LinkedIn, Dev.to, WordPress, Telegram, Pinterest, and expanding candidates (Google Blogger, Substack, Meta Threads, Rumble).
 2. **100% Local & Privacy-First**:
    - All cookies, tokens, and videos stay strictly on your local machine. No cloud tracking, zero data leaks.
 3. **AI-Native MCP Integration (DeepSeek / Claude / Cursor Ready)**:
@@ -77,7 +77,7 @@ Open Matrix Publisher 旨在打破国内外割裂的自媒体营销现状，为�
 | **百家号** (Baijiahao) | 自定义适配器 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
 | **番茄视频** (Fanqie) | 自定义适配器 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
 
-### 🌏 海外与扩展阵列 (6 Global + Extended Candidate Platforms)
+### 🌏 海外与扩展阵列 (10 Global + Extended Candidate Platforms)
 
 | 平台 Platform | 引擎 Engine | 登录方式 Login | 验证状态 Status |
 | :--- | :--- | :--- | :--- |
@@ -89,10 +89,10 @@ Open Matrix Publisher 旨在打破国内外割裂的自媒体营销现状，为�
 | **Dev.to** | 免费官方 API | API Key（控制台配置） | ✅ 免费 API 已接入，实测发布成功 |
 | **WordPress** | 免费官方 API | 应用密码（控制台配置） | ✅ 免费 API 已接入 · 支持真视频上传嵌入 (Video Embed, Verified) |
 | **Telegram** | 免费 Bot API | bot_token + chat_id（控制台配置） | ✅ 免费 API 已接入 (Free API, Verified) |
-| **LinkedIn** | Profile 隔离引擎 | 账号密码 | ⚠️ 暂挂 (Parked for Profile Isolation) |
+| **Pinterest** | 免费官方 API | access_token + board_id（控制台配置） | ✅ 免费 API 已接入 (Free API, Added — 视频 Pin 需 Standard access 审核) |
+| **LinkedIn** | —（待官方 API） | — | ⛔ 暂不支持 (Web 反自动化拦截，待官方 Marketing API) |
 | **Google Blogger** | Patchright / API | Google 账号 | 🌟 候选扩充 (SEO Candidate) |
 | **Substack** | Patchright / Session | 邮箱凭证 | 🌟 候选扩充 (Newsletter Candidate) |
-| **Pinterest** | Patchright / Session | 账号密码 | 🌟 候选扩充 (DTC Candidate) |
 | **Meta Threads** | IG Session 复用 | IG 凭证复用 | 🌟 候选扩充 (Threads Candidate) |
 | **Rumble** | Patchright / Session | 账号密码 | 🌟 候选扩充 (Independent Candidate) |
 
@@ -102,7 +102,7 @@ Open Matrix Publisher 旨在打破国内外割裂的自媒体营销现状，为�
 
 本项目原生深度适配全球主流自主智能体架构 (AI Agents) 与 MCP 协议：
 
-- **DeepSeek Harness (MCP / CLI)**：可通过 JSON-RPC Stdio 协议直接指挥全网 16 大平台分发（参见 [`docs/DEEPSEEK_CHEATSHEET.md`](docs/DEEPSEEK_CHEATSHEET.md)）。
+- **DeepSeek Harness (MCP / CLI)**：可通过 JSON-RPC Stdio 协议直接指挥全网 20 大平台分发（参见 [`docs/DEEPSEEK_CHEATSHEET.md`](docs/DEEPSEEK_CHEATSHEET.md)）。
 - **Google Antigravity (AGY Jump)**：原生 Skill 规范支持（`skills/open-matrix-publisher/SKILL.md`），多 Agent 协同调度。
 - **Claude Code & Cursor**：内置标准 MCP Server（`mcp_server.py`），对话中一句话触发全网分发。
 - **Nous Hermes & Zed**：Zed Context Servers 原生 MCP 扩展与 CLI 管道极速编排。
