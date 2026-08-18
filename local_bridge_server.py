@@ -280,6 +280,47 @@ def _run_interactive_login_thread(platform_id):
     except Exception as e:
         print(f"Interactive login error for {platform_id}: {e}")
 
+@app.route("/api/configure-key", methods=["POST"])
+def configure_key():
+    """API-key 平台（Dev.to / WordPress）凭据配置：写入 cookies/{platform}_default.json。"""
+    from omp_paths import data_dir
+    data = request.json or {}
+    platform_id = data.get("platform_id", "")
+    if platform_id not in ("devto", "wordpress"):
+        return jsonify({"status": "error", "msg": "仅支持 Dev.to / WordPress API Key 配置"}), 400
+
+    creds = {}
+    if platform_id == "devto":
+        api_key = (data.get("api_key") or "").strip()
+        if not api_key:
+            return jsonify({"status": "error", "msg": "请输入 Dev.to API Key"}), 400
+        creds = {"api_key": api_key}
+    else:
+        site_url = (data.get("site_url") or "").strip().rstrip("/")
+        username = (data.get("username") or "").strip()
+        app_password = (data.get("app_password") or "").strip()
+        if not (site_url and username and app_password):
+            return jsonify({"status": "error", "msg": "请输入站点地址 / 用户名 / 应用密码"}), 400
+        creds = {"site_url": site_url, "username": username, "app_password": app_password}
+
+    import json as _json
+    d = data_dir()
+    cookies_dir = os.path.join(d, "cookies")
+    os.makedirs(cookies_dir, exist_ok=True)
+    # 同时写 SAU cookies 目录（引擎 account_file 优先读 SAU 侧）
+    from omp_paths import sau_root
+    targets = [os.path.join(cookies_dir, f"{platform_id}_default.json")]
+    if sau_root:
+        targets.append(os.path.join(sau_root, "cookies", f"{platform_id}_default.json"))
+    for t in targets:
+        try:
+            os.makedirs(os.path.dirname(t), exist_ok=True)
+            with open(t, "w", encoding="utf-8") as f:
+                f.write(_json.dumps(creds, ensure_ascii=False, indent=2))
+        except Exception as e:
+            print(f"configure-key write error {t}: {e}")
+    return jsonify({"status": "ok", "platform_id": platform_id, "msg": f"✅ {platform_id} 凭据已保存"})
+
 @app.route("/api/launch-login", methods=["POST"])
 def launch_login():
     data = request.json or {}
@@ -292,6 +333,14 @@ def launch_login():
             "platform_id": platform_id,
             "msg": f"⚠️ 【{platform_id}】暂不支持一键扫码登录。请在官网浏览器登录后，把 Cookie 文件放入 cookies/ 目录（参考执行手册 §3.3）。"
         }), 400
+    if plat_info.get("api_key"):
+        # API-key 平台不走浏览器：前端弹出「配置 Key」表单
+        return jsonify({
+            "status": "api_key",
+            "platform_id": platform_id,
+            "name": plat_info.get("name", platform_id),
+            "msg": f"【{plat_info.get('name', platform_id)}】为免费 API 平台，请在控制台填写 API Key / 应用密码完成配置。"
+        })
     plat_name = plat_info.get("name", platform_id)
     
     t = threading.Thread(target=_run_interactive_login_thread, args=(platform_id,))

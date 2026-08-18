@@ -550,7 +550,7 @@
             { id: "x",          name: "X",       cat: "global", color: "#ffffff", beta: true },
             { id: "linkedin",   name: "LinkedIn",cat: "global", color: "#0a66c2", disabled: true },
             { id: "instagram",  name: "Instagram",cat: "global",color: "#e4405f", beta: true },
-            { id: "facebook",   name: "Facebook",cat: "global", color: "#1877f2" },
+            { id: "facebook",   name: "Facebook",cat: "global", color: "#1877f2" }
         ];
 
         // Simple Icons（官方平面单色 SVG 路径，内联离线可用）
@@ -641,7 +641,7 @@
                     </div>
                     <div style="display:flex; align-items:center; gap:6px;">
                         <span class="pstatus" id="status-${p.id}">${p.disabled ? '待官方 API' : '…'}</span>
-                        ${p.disabled ? '' : `<button class="qr-btn" onclick="launchQrLogin('${p.id}', event)" title="扫码登录 / 刷新"><i class="fa-solid fa-qrcode"></i></button>`}
+                        ${p.disabled ? '' : (p.api ? `<button class="qr-btn" onclick="launchQrLogin('${p.id}', event)" title="配置 API Key"><i class="fa-solid fa-key"></i></button>` : `<button class="qr-btn" onclick="launchQrLogin('${p.id}', event)" title="扫码登录 / 刷新"><i class="fa-solid fa-qrcode"></i></button>`)}
                         <span class="checkbox"><i class="fa-solid fa-check"></i></span>
                     </div>
                 `;

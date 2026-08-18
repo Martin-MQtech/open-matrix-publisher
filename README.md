@@ -3,137 +3,142 @@
 </p>
 
 # 🌐 Open Matrix Publisher (全域矩阵)
+### Open-Source, Local-First Multi-Domain Distribution Tool for Global Commerce & Content Creators
 
-> **专为传统国际贸易、跨境电商与出海品牌打造的 AI 原生全域社媒分发与营销中枢。**  
-> **Slogan：一条内容，多域分发**  —  一套资产，中英双语，一键分发到当前已接入的 16 个平台（🇨🇳 国内 10 · 🌏 国际 6）。100% 本地运行、免注册、开源免费。
+> **Slogan：一条内容，多域分发 · One Content, Multi-Domain Distribution**  
+> 专为传统国际贸易 B2B 工厂、跨境电商 DTC 品牌与全球化创作者打造的 AI 原生全域社媒分发与营销中枢。  
+> An AI-Native multi-domain distribution hub empowering B2B factories, cross-border DTC brands, and global content creators.
 
 [![GitHub Stars](https://img.shields.io/github/stars/Martin-MQtech/open-matrix-publisher?style=social)](https://github.com/Martin-MQtech/open-matrix-publisher)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB)](https://python.org)
 [![MCP Ready](https://img.shields.io/badge/MCP-Protocol%20Ready-00e6ff)](https://modelcontextprotocol.io)
 
-**🌐 官方网站（产品介绍 · 下载 · 使用指南）**：https://martin-mqtech.github.io/open-matrix-publisher/  
-**💻 产品控制台界面**（下载安装后本地运行）：
+**🌐 Official Website ( Landing Page · Docs · Downloads )**: [https://martin-mqtech.github.io/open-matrix-publisher/](https://martin-mqtech.github.io/open-matrix-publisher/)  
+**💻 Local Studio App UI ( Run on Desktop Console )**:
 
 <p align="center">
-  <img src="app_ui_screenshot.jpg" alt="Open Matrix Publisher 产品控制台界面" width="720">
+  <img src="app_ui_screenshot.jpg" alt="Open Matrix Publisher Product Studio App UI" width="720">
 </p>
 
-**核心流程演示（约 15 秒）**：选视频 → 写文案 → 勾选平台 → 一键发布。
+**Core Workflow Demo (15 Seconds)**: Select Video → Write Copy → Check Platforms → One-Click Multi-Publish.
 
 <p align="center">
-  <img src="media/demo-flow.gif" alt="Open Matrix Publisher 核心流程演示：选视频→写文案→勾选平台→一键发布" width="720">
+  <img src="media/demo-flow.gif" alt="Open Matrix Publisher Workflow Demo" width="720">
 </p>
 
 ---
 
-## 🎯 核心定位与服务人群 (Target Persona & Mission)
+## 🚀 English Quick Overview (Summary for Global Users)
+
+**Open Matrix Publisher** is an open-source, desktop-first, privacy-respecting content distribution matrix tool that automates content publishing across domestic Chinese and top international social networks.
+
+### 🌟 Key Highlights:
+1. **16+ Platform Matrix (国内 10 · 国际 6+)**:
+   - **Domestic (🇨🇳)**: WeChat Channels (视频号), Douyin (抖音), Bilibili (B站), Kuaishou (快手), RED (小红书), Weibo (微博), Toutiao (今日头条), Zhihu (知乎), Baijiahao (百家号), Fanqie (番茄视频).
+   - **Global (🌏)**: YouTube / Shorts, TikTok, Instagram Reels, Facebook Video, X (Twitter), LinkedIn, and expanding candidates (Google Blogger, Substack, Pinterest, Meta Threads, Rumble).
+2. **100% Local & Privacy-First**:
+   - All cookies, tokens, and videos stay strictly on your local machine. No cloud tracking, zero data leaks.
+3. **AI-Native MCP Integration (DeepSeek / Claude / Cursor Ready)**:
+   - Includes a standard Model Context Protocol (MCP) server (`mcp_server.py`). Autonomous AI Agents can directly discover accounts, check login statuses, and trigger one-click batch publishing.
+4. **Zero API Subscription Fees**:
+   - Uses Patchright CDP stealth automation & free web AI connectors (Doubao / Kimi) for zero-cost爆款 copy generation without requiring expensive API keys.
+
+---
+
+## 🎯 核心定位与服务人群 (Target Personas & Use Cases)
 
 Open Matrix Publisher 旨在打破国内外割裂的自媒体营销现状，为以下核心人群提供**零成本、高并发、中英双语、本地安全**的一站式全网营销中枢：
 
-1. **🏭 传统国际贸易企业 (B2B Exporters & OEM/ODM Factories)**：
-   - 痛点：拥有优质制造能力与发明专利，但缺乏海外社媒获客渠道。
-   - 赋能：一键将工厂实拍、生产车间、研发质检视频分发至 **LinkedIn、YouTube、X (Twitter)、微信视频号、知乎**，大宗外贸询盘直达。
-2. **🛍️ 跨境电商卖家与出海 DTC 品牌 (Cross-Border Sellers / Amazon / TikTok Shop / TEMU / Shopify)**：
-   - 痛点：多平台铺货与社媒种草成本高，海外工具（Buffer/Hootsuite）极其昂贵且不支持国内平台。
-   - 赋能：一键同步视频至 **TikTok、Instagram Reels、Facebook、抖音、小红书**，实现全网裂变种草。
-3. **🌍 全球化出海项目与多语种创作者 (Global Marketing Projects & Independent Creators)**：
-   - 痛点：中英双语内容流转繁琐，跨国平台风控与登录态管理困难。
-   - 赋能：零 API 成本免费 AI 网页连通器（豆包/Kimi）自动生成地道文案，Playwright 真实浏览器指纹隔离，安全防封。
+| 适用对象 Target Persona | 核心痛点 Pain Points | Open Matrix Publisher 赋能 Solutions |
+| :--- | :--- | :--- |
+| **🏭 传统国际贸易 B2B 工厂**<br>*(Traditional B2B Exporters & Factories)* | 拥有优质制造与专利，缺乏海外社媒获客渠道<br>*(Strong manufacturing, lacking overseas leads)* | 一键将工厂实拍、生产线与质检视频发至 LinkedIn、YouTube、X、视频号、知乎，外贸询盘直达。<br>*(One-click dispatch product & factory videos to LinkedIn, YouTube, X, WeChat & Zhihu for direct leads)* |
+| **🛍️ 跨境电商与出海 DTC 品牌**<br>*(Cross-Border Sellers & Global DTC Brands)* | 多平台社媒种草成本高，海外 SaaS 昂贵且不支持国内平台<br>*(High social marketing cost; SaaS tools like Buffer are expensive & lack Chinese platforms)* | 一键同步短视频至 TikTok、Instagram Reels、Facebook Video、抖音、小红书，全网裂变种草。<br>*(Batch publish videos to TikTok, IG Reels, FB, Douyin & RED for viral brand exposure)* |
+| **🌍 出海项目与全球化创作者**<br>*(Global Projects & International Creators)* | 中英双语内容流转繁琐，跨国平台风控与登录态管理困难<br>*(Complex bilingual workflow; tough cookie/login persistence across global sites)* | 免 API 费 AI 网页连通器提取中英爆款标题，Patchright 真实浏览器指纹隔离，安全防封静默分发。<br>*(Free AI copy parser, Patchright stealth CDP fingerprint isolation, silent zero-leak distribution)* |
 
 ---
 
-## 🌐 平台分发矩阵（当前已接入 16 平台）(Platform Matrix)
+## 🌐 平台分发矩阵 (Platform Matrix)
 
 > 登录方式一站式：控制台平台卡片点「扫码登录/刷新」→ 弹出登录窗口 → Cookie 自动落盘本地 `cookies/`，之后全部静默复用，无需重复登录。
 
-### 🇨🇳 国内阵列（10 平台 · 全部已接入）
+### 🇨🇳 国内阵列 (10 Domestic Chinese Platforms)
 
-| 平台 | 引擎 | 登录方式 | 验证状态 |
+| 平台 Platform | 引擎 Engine | 登录方式 Login | 验证状态 Status |
 | :--- | :--- | :--- | :--- |
-| 视频号 | SAU 引擎 | 微信扫码 | ✅ 已接入 |
-| 抖音 | SAU 引擎 | 扫码 | ✅ 已接入 |
-| B站 | SAU 引擎 | 扫码 (biliup) | ✅ 已接入 |
-| 快手 | SAU 引擎 | 扫码 | ✅ 已接入 |
-| 小红书 | SAU 引擎 | 扫码 | ✅ 已接入 |
-| 微博 | 自定义适配器 | 账号密码 | ✅ 已接入 |
-| 今日头条 | 自定义适配器 | 账号密码 | ✅ 已接入 |
-| 知乎 | 自定义适配器 | 扫码 | ✅ 已接入 |
-| 百家号 | 自定义适配器 | 扫码 | ✅ 已接入 |
-| 番茄视频 | 自定义适配器 | 扫码 | ✅ 已接入 |
+| **微信视频号** (WeChat Channels) | SAU 引擎 | 微信扫码 (Scan QR) | ✅ 已接入 (Ready) |
+| **抖音** (Douyin) | SAU 引擎 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
+| **B站** (Bilibili) | SAU 引擎 | 扫码 (biliup) | ✅ 已接入 (Ready) |
+| **快手** (Kuaishou) | SAU 引擎 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
+| **小红书** (RED) | SAU 引擎 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
+| **微博** (Weibo) | 自定义适配器 | 账号密码 / 扫码 | ✅ 已接入 (Ready) |
+| **今日头条** (Toutiao) | 自定义适配器 | 账号密码 / 扫码 | ✅ 已接入 (Ready) |
+| **知乎** (Zhihu) | 自定义适配器 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
+| **百家号** (Baijiahao) | 自定义适配器 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
+| **番茄视频** (Fanqie) | 自定义适配器 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
 
-### 🌏 海外阵列（6 平台 · 5 已接入 + 1 暂不支持）
+### 🌏 海外与扩展阵列 (6 Global + Extended Candidate Platforms)
 
-| 平台 | 引擎 | 登录方式 | 验证状态 |
+| 平台 Platform | 引擎 Engine | 登录方式 Login | 验证状态 Status |
 | :--- | :--- | :--- | :--- |
-| YouTube | SAU 引擎 | Google 账号 | ✅ 已接入 |
-| Facebook | 自定义适配器 | 账号密码 | ✅ E2E 实测发布成功 |
-| TikTok | 自定义适配器 | 扫码 / Google / Apple | ✅ E2E 实测发布成功 |
-| Instagram | instagrapi 移动 API | 账号密码 | ✅ E2E 实测发布成功 |
-| X (Twitter) | 自定义适配器 | 账号密码 / Google | ✅ E2E 实测发布成功 |
-| LinkedIn | —（待官方 API） | — | ⛔ 暂不支持（Web 反自动化拦截，参照 Postiz 走官方 Marketing API） |
-
-> ¹ 2026-08-18 实测：X / TikTok / Facebook / Instagram（instagrapi 移动 API）端到端发布成功；LinkedIn 网页发布流程拦截自动化操作，已按「不硬磕、复用开源方案」原则降级为暂不支持，待官方 API 通道（Postiz 等开源方案已走通该路径）。
-
+| **YouTube / Shorts** | SAU 引擎 | Google 账号 | ✅ 已接入 (Verified) |
+| **Facebook Video** | 自定义适配器 | 账号密码 / Cookie | ✅ 实测发布成功 (Verified) |
+| **TikTok** | Patchright 适配器 | 扫码 / Google / Apple | ✅ 实测发布成功 (Verified) |
+| **Instagram Reels** | instagrapi 移动 API | 账号密码 / SessionID | ✅ 实测发布成功 (Verified) |
+| **X (Twitter)** | 自定义适配器 | 账号密码 / Google | ✅ 实测发布成功 (Verified) |
+| **LinkedIn** | Profile 隔离引擎 | 账号密码 | ⚠️ 暂挂 (Parked for Profile Isolation) |
+| **Google Blogger** | Patchright / API | Google 账号 | 🌟 候选扩充 (SEO Candidate) |
+| **Substack** | Patchright / Session | 邮箱凭证 | 🌟 候选扩充 (Newsletter Candidate) |
+| **Pinterest** | Patchright / Session | 账号密码 | 🌟 候选扩充 (DTC Candidate) |
+| **Meta Threads** | IG Session 复用 | IG 凭证复用 | 🌟 候选扩充 (Threads Candidate) |
+| **Rumble** | Patchright / Session | 账号密码 | 🌟 候选扩充 (Independent Candidate) |
 
 ---
 
-## 🤖 全球主流 AI 智能体编排生态 (Multi-Agent Harness Hub)
+## 🤖 全球主流 AI 智能体编排生态 (Bilingual AI Agent Ecosystem)
 
-本项目不仅提供现代化 Web 控制台，更作为 **AI 时代的基础设施**，原生深度适配全球主流自主智能体架构：
+本项目原生深度适配全球主流自主智能体架构 (AI Agents) 与 MCP 协议：
 
-- **Google Antigravity (AGY Jump)**：原生 Skill 规范支持（`skills/open-matrix-publisher/SKILL.md`），多 Agent 协同直接调度。
-- **DeepSeek Harness**：标准 Function Calling Tools Schema 驱动。
-- **Nous Hermes Agent**：`<!-- hermes-integrable argv-marker=cli -->` 标记，CLI 管道极速编排。
-- **Zed / Z-Code Harness**：Zed Context Servers 原生 MCP 扩展。
+- **DeepSeek Harness (MCP / CLI)**：可通过 JSON-RPC Stdio 协议直接指挥全网 16 大平台分发（参见 [`docs/DEEPSEEK_CHEATSHEET.md`](docs/DEEPSEEK_CHEATSHEET.md)）。
+- **Google Antigravity (AGY Jump)**：原生 Skill 规范支持（`skills/open-matrix-publisher/SKILL.md`），多 Agent 协同调度。
 - **Claude Code & Cursor**：内置标准 MCP Server（`mcp_server.py`），对话中一句话触发全网分发。
+- **Nous Hermes & Zed**：Zed Context Servers 原生 MCP 扩展与 CLI 管道极速编排。
 - **Dify / n8n / 扣子 Coze**：开放标准 REST Webhook（`POST /api/publish`）。
 
 ---
 
-## 💡 核心设计哲学 (Core Philosophy)
-
-1. **免费打底 (Zero-Cost & Free-First)**：
-   - 100% 开源免费 (MIT License)，绝无隐藏订阅费。
-   - 原生整合免 API 费用的豆包与 Kimi 智能连通器，提示词净化清洗，剪贴板秒级提取。
-2. **极速全源输入 (Universal Video Pipeline)**：
-   - 同时支持**本地视频文件**与**远程 HTTP/HTTPS 直链（OSS/COS/CDN/云端剪辑）**，自动流式拉取、校验、上传并清理缓存。
-3. **真实指纹与防重锁安全 (Anti-Detection & History Ledger)**：
-   - Patchright 底层 CDP 去除自动化特征，真实 Cookie 存储，历史 Ledger 严防重复撞车发布。
-
----
-
-## 🖥️ 访问与使用方式
+## 🖥️ 快速开始与使用指南 (Quick Start Guide)
 
 ### 1. 界面预览 (Static Preview)
-👉 在浏览器直接预览界面：[https://martin-mqtech.github.io/open-matrix-publisher/](https://martin-mqtech.github.io/open-matrix-publisher/)
-> 注意：该页面仅展示静态界面，**发布功能需要在本机运行**（见下方「下载安装与本地运行」）；视频与 Cookie 始终留在本地。
+👉 浏览器在线预览落地页：[https://martin-mqtech.github.io/open-matrix-publisher/](https://martin-mqtech.github.io/open-matrix-publisher/)  
+> Note: The web preview is a static introduction. **Actual multi-platform publishing runs locally on your PC/Mac**; videos and cookies never leave your machine.
 
-### 2. 下载安装与本地运行
+### 2. 本地安装与运行 (Local Installation)
 
-> 工具**完全在本地运行**：视频、Cookie、登录凭证都不离开你的电脑，免注册即可使用。
+**Prerequisites**: macOS / Windows / Linux · Python 3.10+ · git.
 
-**前置要求**：macOS / Linux · Python 3.10+ · git。（SAU 引擎首次缺失时，`./start_ui.sh` 会自动检测并引导一键安装，也可参照 [SAU 官方安装说明](https://github.com/dreammis/social-auto-upload/blob/main/docs/install.md) 手动安装。）
-
-**第 1 步 · 获取代码**
+**Step 1 · Clone Repository (获取代码)**
 ```bash
 git clone https://github.com/Martin-MQtech/open-matrix-publisher.git
 cd open-matrix-publisher
 ```
 
-**第 2 步 · 启动控制台**
-```bash
-./start_ui.sh
-# 浏览器将自动打开 http://localhost:5001
-```
-> `start_ui.sh` 定位 SAU 引擎的优先级：① 环境变量 `SAU_ROOT`（显式指定，如 `SAU_ROOT=/path/to/sau ./start_ui.sh`）→ ② 常见路径自动检测（`~/social-auto-upload`、仓库同级目录等）→ ③ 交互终端一键安装引导（clone + venv + 依赖 + 浏览器）。可先执行 `./start_ui.sh --check` 查看环境检测结果。
+**Step 2 · Launch Local Console (启动控制台)**
+- **macOS / Linux**:
+  ```bash
+  ./start_ui.sh
+  # Automatically opens http://localhost:5001 in your browser
+  ```
+- **Windows**:
+  ```cmd
+  double-click start_ui.bat
+  # Or run start_ui.ps1 in PowerShell
+  ```
 
-**第 3 步 · 首次扫码登录（每个平台只需一次）**
-在控制台平台卡片点「扫码登录/刷新」，按提示扫码；Cookie 仅保存在本地 `cookies/` 目录，后续所有分发复用，无需重复登录。
+**Step 3 · Scan QR Code Login (一键扫码授权)**
+Click **"Scan Login / Refresh"** on any platform card in the console. Scan the QR code to save your session locally into `cookies/`. Future uploads run silently without logging in again.
 
-> **Windows 用户**：下载仓库后**双击 `start_ui.bat`** 即可（自动调用 PowerShell 启动器）。首次运行会自动检测 SAU（`%USERPROFILE%\social-auto-upload` 等位置），未安装时交互引导一键安装；也可在 PowerShell 里运行 `\start_ui.ps1 -Check` 先查看环境检测结果。
-
-### 3. MCP 智能体模式配置 (Claude Desktop / Cursor)
+### 3. MCP Agent Configuration (Claude Desktop / Cursor / DeepSeek)
 ```json
 {
   "mcpServers": {
@@ -147,9 +152,7 @@ cd open-matrix-publisher
 
 ---
 
-## 📄 开源许可证
+## 📄 开源许可证 (License)
 
-本项目遵循 [MIT License](LICENSE) 开源协议。
-源自 **木齐科技 (MQ Tech · [www.emuqi.com](https://www.emuqi.com))** 真实出海与企业营销实战孵化。
-
-> 🔒 发布前请按 [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) 逐项验收（敏感文件核对、素材、口径、push 清单）。
+本项目遵循 [MIT License](LICENSE) 开源协议。  
+孵化自 **木齐科技 (MUQI Tech · [www.emuqi.com](https://www.emuqi.com))** AIGC×氢健康×医疗器械: 产业实践&商业观察。

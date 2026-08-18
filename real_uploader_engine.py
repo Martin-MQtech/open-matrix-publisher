@@ -120,6 +120,19 @@ def check_profile_logged_in(platform_id):
     if not found_file:
         return False, "🔑 需扫码登录"
 
+    # API-key 平台（Dev.to / WordPress）：凭据文件含 api_key/app_password 即已配置
+    if platform_id in ("devto", "wordpress"):
+        try:
+            with open(found_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if platform_id == "devto" and data.get("api_key"):
+                return True, "✅ 已配置"
+            if platform_id == "wordpress" and data.get("app_password"):
+                return True, "✅ 已配置"
+            return False, "🔑 需配置 API Key"
+        except Exception:
+            return False, "🔑 需配置 API Key"
+
     # 特殊平台深度 Cookie Token 校验
     if platform_id == "zhihu":
         try:
@@ -279,6 +292,8 @@ class RealPlatformUploader:
                 "facebook":  "facebook_uploader",
                 "tiktok":    "tiktok_uploader",
                 "tk":        "tiktok_uploader",
+                "devto":     "devto_uploader",
+                "wordpress": "wordpress_uploader",
                 "weibo":     "weibo_uploader",
                 "zhihu":     "zhihu_uploader",
                 "toutiao":   "toutiao_uploader",
@@ -291,6 +306,8 @@ class RealPlatformUploader:
                 "toutiao": "https://mp.toutiao.com/profile_v4/",
                 "baijiahao": "https://baijiahao.baidu.com/",
                 "fanqie":  "https://pugc.yueduwuxian.com/fqvideo/home/publish-video",
+                "devto":   "https://dev.to/dashboard",
+                "wordpress":"{site}/wp-admin/edit.php",
                 "x":       "https://twitter.com/",
                 "linkedin":"https://www.linkedin.com/feed/",
                 "facebook":"https://www.facebook.com/",
