@@ -39,6 +39,15 @@ jobs:
             desktop_app.py
           cd dist && zip -r "OpenMatrixPublisher-macOS.zip" "OpenMatrixPublisher.app"
 
+      - name: Build macOS DMG (drag-to-install)
+        run: |
+          mkdir -p dmg_stage
+          cp -R "dist/OpenMatrixPublisher.app" dmg_stage/
+          ln -s /Applications dmg_stage/Applications
+          hdiutil create -volname "Open Matrix Publisher" \
+            -srcfolder dmg_stage -ov -format UDZO \
+            "dist/OpenMatrixPublisher-0.1.0.dmg"
+
       - name: Smoke test packaged app (real macOS boot check)
         run: |
           ./dist/OpenMatrixPublisher.app/Contents/MacOS/OpenMatrixPublisher --selftest
@@ -50,13 +59,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OpenMatrixPublisher-macOS
-          path: dist/OpenMatrixPublisher-macOS.zip
+          path: |
+            dist/OpenMatrixPublisher-macOS.zip
+            dist/OpenMatrixPublisher-0.1.0.dmg
 
       - name: Upload macOS Release Asset
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: dist/OpenMatrixPublisher-macOS.zip
+          files: |
+            dist/OpenMatrixPublisher-macOS.zip
+            dist/OpenMatrixPublisher-0.1.0.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
