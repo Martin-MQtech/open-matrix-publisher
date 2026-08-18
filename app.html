@@ -295,6 +295,10 @@
             font-size: 9px; color: var(--muted);
             border: 1px solid var(--line-2); border-radius: 4px; padding: 0 4px; margin-left: 4px;
         }
+        .off-tag { color: var(--muted); border-color: var(--line-2); opacity: .7; }
+        .pcard.disabled { opacity: .45; filter: grayscale(.6); cursor: not-allowed; }
+        .pcard.disabled:hover { border-color: var(--line-2); }
+        .pcard.disabled .picon svg, .pcard.disabled .picon { opacity: .6; }
         .checkbox {
             width: 15px; height: 15px; border-radius: 4px; flex: none;
             border: 1px solid var(--line-2);
@@ -544,7 +548,7 @@
             { id: "youtube",    name: "YouTube", cat: "global", color: "#ff0000" },
             { id: "tiktok",     name: "TikTok",  cat: "global", color: "#ffffff", beta: true },
             { id: "x",          name: "X",       cat: "global", color: "#ffffff", beta: true },
-            { id: "linkedin",   name: "LinkedIn",cat: "global", color: "#0a66c2", beta: true },
+            { id: "linkedin",   name: "LinkedIn",cat: "global", color: "#0a66c2", disabled: true },
             { id: "instagram",  name: "Instagram",cat: "global",color: "#e4405f", beta: true },
             { id: "facebook",   name: "Facebook",cat: "global", color: "#1877f2" },
         ];
@@ -627,17 +631,17 @@
             cn.innerHTML = ''; gl.innerHTML = '';
             PLATFORMS.forEach(p => {
                 const card = document.createElement('div');
-                card.className = 'pcard';
+                card.className = 'pcard' + (p.disabled ? ' disabled' : '');
                 card.id = 'card-' + p.id;
-                card.onclick = () => { card.classList.toggle('selected'); updateCount(); };
+                card.onclick = () => { if (p.disabled) return; card.classList.toggle('selected'); updateCount(); };
                 card.innerHTML = `
                     <div class="left">
                         <div class="picon">${platformIcon(p)}</div>
-                        <span class="pname">${p.name}${p.beta ? '<span class="beta-tag">测试中</span>' : ''}</span>
+                        <span class="pname">${p.name}${p.beta ? '<span class="beta-tag">测试中</span>' : ''}${p.disabled ? '<span class="beta-tag off-tag">暂不支持</span>' : ''}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:6px;">
-                        <span class="pstatus" id="status-${p.id}">…</span>
-                        <button class="qr-btn" onclick="launchQrLogin('${p.id}', event)" title="扫码登录 / 刷新"><i class="fa-solid fa-qrcode"></i></button>
+                        <span class="pstatus" id="status-${p.id}">${p.disabled ? '待官方 API' : '…'}</span>
+                        ${p.disabled ? '' : `<button class="qr-btn" onclick="launchQrLogin('${p.id}', event)" title="扫码登录 / 刷新"><i class="fa-solid fa-qrcode"></i></button>`}
                         <span class="checkbox"><i class="fa-solid fa-check"></i></span>
                     </div>
                 `;

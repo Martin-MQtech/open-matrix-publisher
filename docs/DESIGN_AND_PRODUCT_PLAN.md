@@ -26,10 +26,19 @@
 |---|---|---|
 | 国内平台视频上传（抖音/快手/小红书/B站/视频号/YouTube） | social-auto-upload (SAU) | 已用 |
 | 反检测浏览器自动化 | Patchright（Playwright fork） | 已用 |
+| **Instagram Reels 移动端 API** | **instagrapi（4.2k+ stars 开源库）** | **已用，2026-08-18 实测发布成功**（绕过 Web 反自动化） |
 | 平台品牌图标 | Simple Icons | 已定，Phase 1 接入 |
 | 字体 | Google Fonts（Fraunces / Inter / Noto Sans/Serif SC） | 已用 |
 | 通用 UI 图标 | Font Awesome | 已用（品牌图标改走 Simple Icons） |
 | 桌面封装 | pywebview / Tauri | 已定方向，Phase 3 落地 |
+
+**已验证的开源方案（2026-08-18 调研）**：
+| 平台/需求 | 方案 | 结论 |
+|---|---|---|
+| LinkedIn 发布（含视频） | **Postiz**（gitroomhq/postiz-app，开源自托管，30+ 平台） | 走 **LinkedIn 官方 Marketing API**（OAuth 授权），非浏览器自动化——这是"别人已解决"的成熟路径，**本项目暂不自行硬磕 LinkedIn Web 反自动化，待官方 API 通道**（Postiz 或直接接 LinkedIn API） |
+| AI Agent 化调度 | **Postiz Agent**（postiz-agent，CLI for AI agents） | 与本品"AI Agent 直接驱动"的第二使用模式同构，可作架构参照 |
+| 多平台调度 | Mixpost / Socioboard / Buffer 类 | 备选参照，未纳入 |
+| **平台清单扩展（2026-08-18 调研）** | **Postiz 32 平台清单**（详见 `docs/POSTIZ_INTEGRATION_RESEARCH.md`） | 借鉴其已验证的官方 API 接入路径，**逐个接入轻量适配器**（不引入 Postiz 本体：AGPL 许可证 + 重型架构冲突）；**只接免费 API 平台**（Dev.to / Hashnode / WordPress / Telegram 等 API-key 类），**不接收费 API**（X/Reddit 等——X 已有 Cookie 自动化免费方案，不重复付 API 费） |
 
 **Phase 2 立项前必须调研的复用候选**：
 | 模块 | 候选复用 | 说明 |
@@ -61,7 +70,30 @@
 - **平台清单是数据，不是身份**：前端 `PLATFORMS` 数组是唯一用户侧数据源，后端引擎清单 / `interactive_login` / `mcp_server` 同步维护，审计 B4 强制一致性；UI 计数（国内/海外/已登录）全部动态计算，禁止硬编码数量。
 - **品牌与 Slogan 不得绑定具体平台数**（Slogan 定稿：一条内容，多域分发）；平台数量只出现在矩阵表的"当前已接入"事实列。
 
-### 1.4 核心使用流程（唯一主流程）
+### 1.4 双模式使用（产品理念，2026-08-18 定稿）
+
+> 传统软件无法被 AI Agent 直接操纵；而本项目所有后端接口（REST / CLI / MCP）在开发之初就是由 AI Agent 驱动打磨出来的。因此产品天然支持**两种使用方式**，且第二方式可能更流行：
+
+**模式 A —— 独立软件使用（人类直接操作）**
+- 打开控制台 → 选内容 → 填文案 → 勾平台 → 一键发布；数据与 Cookie 留在本机。
+- 适合日常手动操作、演示、非技术用户。
+
+**模式 B —— AI Agent 接管（后台全自动）**
+- 用户把**项目文件夹 / 工具箱**交给 AI Agent（如 Claude / Antigravity / Freebuff），直接下指令：
+  "把 `素材/` 里新视频分发到抖音、TikTok、X、Facebook"——Agent 在后台全部跑完、全部发送、全部自动完成。
+- 依赖：稳定的 REST 接口（`/api/*`）+ CLI 入口（`dispatch.py` / MCP server）+ 本地 Cookie 库（`cookies/`），三者必须持续保持可用、可被脚本调用。
+- **架构要求（强制）**：任何 UI 改动不得破坏接口层；新增平台必须同步暴露到 `real_uploader_engine` + `interactive_login` + MCP 平台清单，确保 Agent 也能驱动。
+
+**两种模式共享同一套后端与登录态**——软件界面只是模式 A 的壳，模式 B 直接复用全部引擎能力。
+
+### 1.5 平台接入策略：能复用就不硬磕（2026-08-18 定稿）
+- 平台反自动化（Web 发布流程拦截）是常见障碍，**不投入无限时间硬磕**：
+  1. 优先找开源成熟方案（instagrapi 类移动 API 库、Postiz 类调度器、官方 API）；
+  2. 别人已解决的（如 LinkedIn 走官方 Marketing API），直接采用或等其成熟后接入；
+  3. 暂时无法解决的平台，**降级为"暂不支持"**（前端置灰标记），不阻塞主线交付。
+- 当前状态：X / Facebook / TikTok / Instagram 已实测发布成功；LinkedIn 标记"暂不支持（待官方 API）"。
+
+### 1.6 核心使用流程（唯一主流程）
 ```
 ① 选择内容（本地文件 / 远程直链） → ② 填写文案（标题/描述/标签） → ③ 勾选平台 → ④ 发布 → 进度/取消 → 分发记录（防重可见）
 ```
