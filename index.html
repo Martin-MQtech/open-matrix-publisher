@@ -175,6 +175,66 @@
         }
         .workflow-img-wrapper img { width: 100%; height: auto; display: block; }
 
+        /* 3 栏高保真 UI 示意框样式 */
+        .workflow-ui-showcase {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+            max-width: 1040px; margin: 0 auto 40px auto; padding: 20px;
+            background: var(--bg); border: 1px solid var(--line-2);
+            border-radius: 16px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            text-align: left;
+        }
+        .wf-card {
+            background: var(--surface); border: 1px solid var(--line-2);
+            border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+        }
+        .wf-card-header {
+            background: var(--surface-2); padding: 10px 14px;
+            display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--line);
+            font-size: 12px; font-weight: 600; color: var(--ink-2);
+        }
+        .wf-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .wf-dot.red { background: #ff5f56; }
+        .wf-dot.yellow { background: #ffbd2e; }
+        .wf-dot.green { background: #27c93f; }
+        .wf-title { margin-left: 6px; font-size: 12px; color: var(--muted); }
+
+        .wf-card-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+        .wf-badge-row { display: flex; gap: 8px; }
+        .wf-badge {
+            font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px;
+            background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2);
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .wf-badge.mac { color: var(--accent-light); border-color: rgba(245, 178, 90, 0.3); }
+        .wf-badge.win { color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); }
+
+        .wf-mini-box {
+            background: var(--surface-2); border: 1px solid var(--line);
+            border-radius: 8px; padding: 10px; font-size: 12px;
+        }
+        .wf-code-line { font-family: monospace; font-size: 12px; color: var(--ink); margin-bottom: 4px; }
+        .accent-text { color: var(--accent-light); font-weight: 700; }
+        .green-text { color: #10b981; font-weight: 600; }
+        .wf-sub-text { font-size: 11px; color: var(--muted); }
+
+        .wf-qr-row { display: flex; gap: 8px; font-size: 11px; }
+        .wf-qr-box, .wf-cookie-box {
+            background: var(--surface-2); border: 1px solid var(--line);
+            border-radius: 6px; padding: 6px 10px; color: var(--ink-2);
+            display: inline-flex; align-items: center; gap: 6px; font-weight: 500;
+        }
+
+        .wf-plat-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .wf-tag {
+            font-size: 10px; background: rgba(245, 178, 90, 0.12); color: var(--accent-light);
+            padding: 3px 7px; border-radius: 4px; border: 1px solid rgba(245, 178, 90, 0.25);
+        }
+        .wf-progress-bar {
+            height: 6px; background: var(--surface-3); border-radius: 3px;
+            overflow: hidden; margin-bottom: 6px;
+        }
+        .wf-progress-fill { width: 100%; height: 100%; background: var(--accent-grad); }
+
         .steps-grid {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1040px; margin: 0 auto; text-align: left;
         }
@@ -333,8 +393,60 @@
             <p>无需复杂的服务器配置，像使用常用桌面软件一样简单</p>
         </div>
 
-        <div class="workflow-img-wrapper">
-            <img src="workflow_guide.jpg" alt="3 步极速使用流程图示">
+        <!-- 高保真 3 栏桌面 UI 示意展示框 -->
+        <div class="workflow-ui-showcase">
+            <!-- 步骤 1 示意框 -->
+            <div class="wf-card">
+                <div class="wf-card-header">
+                    <span class="wf-dot red"></span><span class="wf-dot yellow"></span><span class="wf-dot green"></span>
+                    <span class="wf-title">步骤 01 · 运行桌面客户端</span>
+                </div>
+                <div class="wf-card-body">
+                    <div class="wf-badge-row">
+                        <span class="wf-badge mac"><i class="fa-brands fa-apple"></i> macOS (.dmg)</span>
+                        <span class="wf-badge win"><i class="fa-brands fa-windows"></i> Windows (.exe)</span>
+                    </div>
+                    <div class="wf-mini-box">
+                        <div class="wf-code-line"><span class="accent-text">➜</span> OpenMatrixPublisher.app <span class="green-text">运行中</span></div>
+                        <div class="wf-sub-text">双击启动本地控制台 (http://127.0.0.1:5001)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤 2 示意框 -->
+            <div class="wf-card">
+                <div class="wf-card-header">
+                    <span class="wf-dot red"></span><span class="wf-dot yellow"></span><span class="wf-dot green"></span>
+                    <span class="wf-title">步骤 02 · 扫码授权与 AI 文案</span>
+                </div>
+                <div class="wf-card-body">
+                    <div class="wf-qr-row">
+                        <div class="wf-qr-box"><i class="fa-solid fa-qrcode"></i> 扫码安全授权</div>
+                        <div class="wf-cookie-box"><i class="fa-solid fa-shield-halved"></i> 本机加密</div>
+                    </div>
+                    <div class="wf-mini-box">
+                        <div class="wf-code-line"><span class="accent-text">✨ AI 助手:</span> 豆包/Kimi 零成本爆款提取</div>
+                        <div class="wf-sub-text">1秒自动清洗标题、描述与标签</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤 3 示意框 -->
+            <div class="wf-card">
+                <div class="wf-card-header">
+                    <span class="wf-dot red"></span><span class="wf-dot yellow"></span><span class="wf-dot green"></span>
+                    <span class="wf-title">步骤 03 · 一键并发静默发布</span>
+                </div>
+                <div class="wf-card-body">
+                    <div class="wf-plat-tags">
+                        <span class="wf-tag">微信视频号</span><span class="wf-tag">抖音</span><span class="wf-tag">B站</span><span class="wf-tag">YouTube</span><span class="wf-tag">TikTok</span>
+                    </div>
+                    <div class="wf-mini-box">
+                        <div class="wf-progress-bar"><div class="wf-progress-fill"></div></div>
+                        <div class="wf-sub-text green-text">✓ 已静默并发提交至全网平台</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="steps-grid">
