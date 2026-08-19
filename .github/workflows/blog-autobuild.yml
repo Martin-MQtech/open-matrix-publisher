@@ -1,0 +1,38 @@
+name: Blog Auto-Build
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'blog/_posts/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Rebuild static blog from Markdown posts
+        run: python3 scripts/build_blog.py
+
+      - name: Commit generated pages back to main
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit — generated pages are up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add blog/index.html blog/atom.xml blog/posts/
+          git commit -m "chore(blog): rebuild static pages from _posts"
+          git push
