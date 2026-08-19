@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twenty Channels, One Publish · Open Matrix Journal</title>
+<meta name="description" content="How Open Matrix Publisher grew its distribution network from 16 to 20 platforms — and the free-API-first rule that keeps the whole thing at zero cost.">
+<meta property="og:title" content="Twenty Channels, One Publish · Open Matrix Journal">
+<meta property="og:description" content="How Open Matrix Publisher grew its distribution network from 16 to 20 platforms — and the free-API-first rule that keeps the whole thing at zero cost.">
+<meta property="og:type" content="website">
+<link rel="icon" href="../../favicon.ico" sizes="any">
+<link rel="alternate" type="application/atom+xml" title="Twenty Channels, One Publish · Open Matrix Journal" href="../atom.xml">
+<link rel="stylesheet" href="../assets/blog.css">
+</head>
+<body>
+<header class="site-head">
+  <div class="head-inner">
+    <a class="brand" href="../../index.html">
+      <img src="../../logo.svg" alt="Open Matrix Publisher" class="brand-logo">
+      <span class="brand-name">Open Matrix <em>Journal</em></span>
+    </a>
+    <nav class="head-nav">
+      <a href="../../index.html">Main Site</a>
+      <a href="../index.html" class="active">Blog</a>
+      <a href="https://github.com/Martin-MQtech/open-matrix-publisher">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<article class="article"><div class="post-date">2026-08-19</div><h1>Twenty Channels, One Publish</h1><div class="post-tags"><span class="tag">open-source</span><span class="tag">distribution</span><span class="tag">api</span><span class="tag">engineering</span></div><div class="article-body"><p>One video. One article. Twenty channels. That is the promise of Open Matrix Publisher, and this week the platform count crossed twenty for the first time.</p>
+<p>The number itself is not the point — the network is meant to keep growing, and a few channels will inevitably fall away as others join. What matters is the principle that decides <em>how</em> each channel gets connected.</p>
+<h2>Ten domestic, ten global</h2>
+<p>The current matrix is split down the middle: ten Chinese platforms and ten international ones. The two halves are wired completely differently.</p>
+<p>The domestic ten run on cookie-based automation. You scan a QR code once, the session is stored locally, and publishing reuses that real browser session. Nothing is ever uploaded to us — credentials and cookies live only on your own machine.</p>
+<p>The international ten are a mix. Where a platform offers a free official API, we use it directly: Dev.to, WordPress, Telegram, and Pinterest all publish through their own documented endpoints, with zero cost and no scraping. Social platforms without a usable free API get connected through proven open-source paths — Instagram, for instance, publishes through the same mobile API client that the community has battle-tested for years.</p>
+<h2>The free-API-first rule</h2>
+<p>Not every official API is free, and we treat that as a hard boundary.</p>
+<p>X has effectively priced out its free tier, and Reddit charges for commercial access — so we do not pay, and we do not integrate them through paid APIs. X still publishes, but through local cookie automation rather than its billing meter. LinkedIn currently has neither a free API nor an automation path that holds up, so it stays on the bench until a sane option exists.</p>
+<p>The short version: if a platform wants us to pay for the privilege of posting our own content, we simply wait or go around. There are always more channels.</p>
+<h2>Ship it yourself first</h2>
+<p>There is a discipline underneath all of this that has nothing to do with APIs. New accounts on public platforms are fragile — a fresh account that immediately starts posting automated content is exactly what spam filters are built to catch. We learned that the hard way.</p>
+<p>The fix is the same principle this journal is built on: publish where you control the channel first, then distribute. A static site belongs to you. No algorithm, no moderation queue, no risk of losing the archive. The distribution layer is a tool; the content is yours.</p>
+<p>One piece of content. Everywhere it belongs. Twenty channels today, more tomorrow — each one free, local-first, and yours to keep.</p></div><a class="back-link" href="../index.html">All posts</a></article>
+</main>
+<footer class="site-foot">
+  <p><a href="../../index.html">Open Matrix Publisher</a> · One Content, Multi-Domain Distribution · MIT License</p>
+  <p class="foot-muted">Incubated by <a href="https://www.emuqi.com">MUQI Tech</a> — AIGC × Hydrogen Health × Medical Devices</p>
+</footer>
+</body>
+</html>

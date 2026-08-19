@@ -5,8 +5,30 @@
   <link rel="alternate" type="text/html" href="https://martin-mqtech.github.io/open-matrix-publisher/blog/"/>
   <link rel="self" type="application/atom+xml" href="https://martin-mqtech.github.io/open-matrix-publisher/blog/atom.xml"/>
   <id>https://martin-mqtech.github.io/open-matrix-publisher/blog/</id>
-  <updated>2026-08-18T00:00:00Z</updated>
+  <updated>2026-08-19T00:00:00Z</updated>
   <author><name>Open Matrix Publisher</name><uri>https://github.com/Martin-MQtech/open-matrix-publisher</uri></author>
+  <entry>
+    <title>Twenty Channels, One Publish</title>
+    <link rel="alternate" type="text/html" href="https://martin-mqtech.github.io/open-matrix-publisher/blog/posts/twenty-channels-one-publish.html"/>
+    <id>https://martin-mqtech.github.io/open-matrix-publisher/blog/posts/twenty-channels-one-publish.html</id>
+    <updated>2026-08-19T00:00:00Z</updated>
+    <published>2026-08-19T00:00:00Z</published>
+    <summary>How Open Matrix Publisher grew its distribution network from 16 to 20 platforms — and the free-API-first rule that keeps the whole thing at zero cost.</summary>
+    <content type="html">&lt;p&gt;One video. One article. Twenty channels. That is the promise of Open Matrix Publisher, and this week the platform count crossed twenty for the first time.&lt;/p&gt;
+&lt;p&gt;The number itself is not the point — the network is meant to keep growing, and a few channels will inevitably fall away as others join. What matters is the principle that decides &lt;em&gt;how&lt;/em&gt; each channel gets connected.&lt;/p&gt;
+&lt;h2&gt;Ten domestic, ten global&lt;/h2&gt;
+&lt;p&gt;The current matrix is split down the middle: ten Chinese platforms and ten international ones. The two halves are wired completely differently.&lt;/p&gt;
+&lt;p&gt;The domestic ten run on cookie-based automation. You scan a QR code once, the session is stored locally, and publishing reuses that real browser session. Nothing is ever uploaded to us — credentials and cookies live only on your own machine.&lt;/p&gt;
+&lt;p&gt;The international ten are a mix. Where a platform offers a free official API, we use it directly: Dev.to, WordPress, Telegram, and Pinterest all publish through their own documented endpoints, with zero cost and no scraping. Social platforms without a usable free API get connected through proven open-source paths — Instagram, for instance, publishes through the same mobile API client that the community has battle-tested for years.&lt;/p&gt;
+&lt;h2&gt;The free-API-first rule&lt;/h2&gt;
+&lt;p&gt;Not every official API is free, and we treat that as a hard boundary.&lt;/p&gt;
+&lt;p&gt;X has effectively priced out its free tier, and Reddit charges for commercial access — so we do not pay, and we do not integrate them through paid APIs. X still publishes, but through local cookie automation rather than its billing meter. LinkedIn currently has neither a free API nor an automation path that holds up, so it stays on the bench until a sane option exists.&lt;/p&gt;
+&lt;p&gt;The short version: if a platform wants us to pay for the privilege of posting our own content, we simply wait or go around. There are always more channels.&lt;/p&gt;
+&lt;h2&gt;Ship it yourself first&lt;/h2&gt;
+&lt;p&gt;There is a discipline underneath all of this that has nothing to do with APIs. New accounts on public platforms are fragile — a fresh account that immediately starts posting automated content is exactly what spam filters are built to catch. We learned that the hard way.&lt;/p&gt;
+&lt;p&gt;The fix is the same principle this journal is built on: publish where you control the channel first, then distribute. A static site belongs to you. No algorithm, no moderation queue, no risk of losing the archive. The distribution layer is a tool; the content is yours.&lt;/p&gt;
+&lt;p&gt;One piece of content. Everywhere it belongs. Twenty channels today, more tomorrow — each one free, local-first, and yours to keep.&lt;/p&gt;</content>
+  </entry>
   <entry>
     <title>One Piece of Content, Everywhere It Belongs</title>
     <link rel="alternate" type="text/html" href="https://martin-mqtech.github.io/open-matrix-publisher/blog/posts/hello-world.html"/>
