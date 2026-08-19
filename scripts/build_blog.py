@@ -8,6 +8,7 @@ Usage (from the repository root):
 Produces:
     blog/index.html          -- homepage: newest-first post list
     blog/posts/<slug>.html   -- one page per post
+    blog/atom.xml            -- Atom feed for subscribers and content tools
 
 Rendering uses the `markdown` package when available (`pip install markdown`);
 otherwise it falls back to a small built-in renderer so the scaffold works on
@@ -37,6 +38,9 @@ POSTS_OUT = BLOG_DIR / "posts"
 REPO_URL = "https://github.com/Martin-MQtech/open-matrix-publisher"
 SITE_TITLE = "Open Matrix Journal"
 SITE_TAGLINE = "One Content, Multi-Domain Distribution"
+# GitHub Pages URL for this repo (see repo Settings -> Pages); atom.xml is
+# generated as an absolute-URL feed so subscribers follow it from anywhere.
+SITE_URL = "https://martin-mqtech.github.io/open-matrix-publisher/blog/"
 
 
 # --------------------------------------------------------------------------- #
@@ -44,6 +48,15 @@ SITE_TAGLINE = "One Content, Multi-Domain Distribution"
 # --------------------------------------------------------------------------- #
 def _escape(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def xml_escape(text: str) -> str:
+    """Escape text for XML (Atom) output, including quotes for attributes."""
+    return (
+        _escape(text)
+        .replace('"', "&quot;")
+        .replace("'", "&apos;")
+    )
 
 
 def _inline(text: str) -> str:
@@ -200,6 +213,7 @@ PAGE = """<!DOCTYPE html>
 <meta property="og:description" content="{description}">
 <meta property="og:type" content="website">
 <link rel="icon" href="{root}favicon.ico" sizes="any">
+<link rel="alternate" type="application/atom+xml" title="{title}" href="{atom_href}">
 <link rel="stylesheet" href="{css_path}">
 </head>
 <body>
@@ -232,6 +246,59 @@ def tag_html(tags: list[str]) -> str:
     return '<div class="post-tags">' + "".join(
         f'<span class="tag">{t}</span>' for t in tags
     ) + "</div>"
+
+
+# --------------------------------------------------------------------------- #
+# Atom feed
+# --------------------------------------------------------------------------- #
+def _rfc3339(date_str: str) -> str:
+    """Normalize a YYYY-MM-DD frontmatter date to RFC 3339 (Atom requires it)."""
+    date_str = date_str.strip()
+    if "T" in date_str:
+        return date_str
+    return date_str + "T00:00:00Z"
+
+
+def build_atom(posts: list[dict]) -> str:
+    """Generate the Atom 1.0 feed for the blog."""
+    entries: list[str] = []
+    for p in posts:
+        meta = p["meta"]
+        title = meta.get("title", p["slug"])
+        date = meta.get("date", "")
+        desc = meta.get("description", "")
+        link = SITE_URL + "posts/" + p["slug"] + ".html"
+        updated = _rfc3339(date)
+        # Full rendered HTML body keeps readers (and content tools) up to date
+        # without visiting the site; strip the duplicated leading H1 like the
+        # article pages do.
+        html = render_markdown(p["body"])
+        html = re.sub(r"^\s*<h1>.*?</h1>\s*", "", html, count=1, flags=re.S)
+        entries.append(
+            "  <entry>\n"
+            f"    <title>{xml_escape(title)}</title>\n"
+            f"    <link rel=\"alternate\" type=\"text/html\" href=\"{xml_escape(link)}\"/>\n"
+            f"    <id>{xml_escape(link)}</id>\n"
+            f"    <updated>{updated}</updated>\n"
+            f"    <published>{updated}</published>\n"
+            f"    <summary>{xml_escape(desc)}</summary>\n"
+            f"    <content type=\"html\">{xml_escape(html)}</content>\n"
+            "  </entry>\n"
+        )
+    updated = _rfc3339(posts[0]["meta"].get("date", "")) if posts else _rfc3339("1970-01-01")
+    return (
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        '<feed xmlns="http://www.w3.org/2005/Atom">\n'
+        f"  <title>{xml_escape(SITE_TITLE)}</title>\n"
+        f"  <subtitle>{xml_escape(SITE_TAGLINE)}</subtitle>\n"
+        f"  <link rel=\"alternate\" type=\"text/html\" href=\"{xml_escape(SITE_URL)}\"/>\n"
+        f"  <link rel=\"self\" type=\"application/atom+xml\" href=\"{xml_escape(SITE_URL)}atom.xml\"/>\n"
+        f"  <id>{xml_escape(SITE_URL)}</id>\n"
+        f"  <updated>{updated}</updated>\n"
+        f"  <author><name>Open Matrix Publisher</name><uri>{xml_escape(REPO_URL)}</uri></author>\n"
+        + "".join(entries)
+        + "</feed>\n"
+    )
 
 
 def homepage_body(posts: list[dict]) -> str:
@@ -289,6 +356,7 @@ def render_page(
     root: str,
     blog_home: str,
     css_path: str,
+    atom_href: str,
 ) -> str:
     return PAGE.format(
         title=title,
@@ -297,6 +365,7 @@ def render_page(
         root=root,
         blog_home=blog_home,
         css_path=css_path,
+        atom_href=atom_href,
         repo_url=REPO_URL,
         tagline=SITE_TAGLINE,
     )
@@ -317,7 +386,7 @@ def main() -> int:
     if not posts:
         print(f"warning: no .md files in {POSTS_DIR}", file=sys.stderr)
 
-    # Homepage (depth 1 -> repo root is ../)
+    # Homepage (depth 1 -> repo root is ../); atom.xml sits next to index.html
     write(
         BLOG_DIR / "index.html",
         render_page(
@@ -327,6 +396,7 @@ def main() -> int:
             root="../",
             blog_home="index.html",
             css_path="assets/blog.css",
+            atom_href="atom.xml",
         ),
     )
 
@@ -344,10 +414,14 @@ def main() -> int:
                 root="../../",
                 blog_home="../index.html",
                 css_path="../assets/blog.css",
+                atom_href="../atom.xml",
             ),
         )
 
-    print(f"Built {len(posts)} post(s).")
+    # Atom feed (absolute URLs, regenerated every build)
+    write(BLOG_DIR / "atom.xml", build_atom(posts))
+
+    print(f"Built {len(posts)} post(s) + atom.xml.")
     return 0
 
 

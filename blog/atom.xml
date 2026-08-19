@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Open Matrix Journal</title>
+  <subtitle>One Content, Multi-Domain Distribution</subtitle>
+  <link rel="alternate" type="text/html" href="https://martin-mqtech.github.io/open-matrix-publisher/blog/"/>
+  <link rel="self" type="application/atom+xml" href="https://martin-mqtech.github.io/open-matrix-publisher/blog/atom.xml"/>
+  <id>https://martin-mqtech.github.io/open-matrix-publisher/blog/</id>
+  <updated>2026-08-18T00:00:00Z</updated>
+  <author><name>Open Matrix Publisher</name><uri>https://github.com/Martin-MQtech/open-matrix-publisher</uri></author>
+  <entry>
+    <title>One Piece of Content, Everywhere It Belongs</title>
+    <link rel="alternate" type="text/html" href="https://martin-mqtech.github.io/open-matrix-publisher/blog/posts/hello-world.html"/>
+    <id>https://martin-mqtech.github.io/open-matrix-publisher/blog/posts/hello-world.html</id>
+    <updated>2026-08-18T00:00:00Z</updated>
+    <published>2026-08-18T00:00:00Z</published>
+    <summary>Why we built Open Matrix Publisher — and why your content should start on a channel you own.</summary>
+    <content type="html">&lt;p&gt;We started Open Matrix Publisher out of a small, recurring frustration: you create one video or write one article, and then you copy it by hand into a dozen different dashboards.&lt;/p&gt;
+&lt;p&gt;That workflow is slow, error-prone, and quietly discourages the consistency that actually builds an audience.&lt;/p&gt;
+&lt;h2&gt;Own the channel first&lt;/h2&gt;
+&lt;p&gt;The first hard lesson came early. A brand-new account on a public community platform was flagged and locked the moment we connected automated tooling to it.&lt;/p&gt;
+&lt;p&gt;The platform was doing its job — protecting its feed from spam. But the experience made a principle obvious:&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Your content should live somewhere you control first. Then distribute.&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;That is why this project treats a self-hosted, static site as the home base. A static site has no algorithm, no moderation queue, and no risk of losing your archive. It belongs to you.&lt;/p&gt;
+&lt;h2&gt;Publish locally, distribute globally&lt;/h2&gt;
+&lt;p&gt;Open Matrix Publisher runs on your own machine. Your credentials never leave your computer.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Write once, in Markdown.&lt;/li&gt;
+&lt;li&gt;Publish to your own site.&lt;/li&gt;
+&lt;li&gt;Distribute to the platforms where your audience actually is.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The distribution layer is a tool. The content is yours.&lt;/p&gt;
+&lt;h2&gt;What this journal is for&lt;/h2&gt;
+&lt;p&gt;This space is the project&apos;s zero-risk channel: release notes, field notes on cross-border commerce, and research on hydrogen biology and advanced materials — published here first, mirrored elsewhere when it makes sense.&lt;/p&gt;
+&lt;p&gt;If you are reading this, the scaffold is working. Write your next post in Markdown, rebuild, and it will appear here.&lt;/p&gt;</content>
+  </entry>
+</feed>
