@@ -235,6 +235,12 @@ PAGE = """<!DOCTYPE html>
 </main>
 <footer class="site-foot">
   <p><a href="{root}index.html">Open Matrix Publisher</a> · {tagline} · MIT License</p>
+  <p class="foot-actions">
+    <a class="rss-btn" href="{atom_href}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.18 17.82a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8ZM2 4.5A17.5 17.5 0 0 1 19.5 22h-4.1A13.4 13.4 0 0 0 2 8.6V4.5Zm0 6.3a11.2 11.2 0 0 1 11.2 11.2h-4.1A7.1 7.1 0 0 0 2 14.9v-4.1Z"/></svg>
+      Subscribe (RSS)
+    </a>
+  </p>
   <p class="foot-muted">Incubated by <a href="https://www.emuqi.com">MUQI Tech</a> — AIGC × Hydrogen Health × Medical Devices</p>
 </footer>
 </body>

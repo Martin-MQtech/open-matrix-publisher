@@ -149,6 +149,19 @@ a:hover { opacity: 0.82; }
     text-align: center; font-size: 13px; color: var(--faint);
 }
 .site-foot a { color: var(--muted); }
+.foot-actions { margin-top: 14px; }
+.rss-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--line-2);
+    padding: 8px 16px; border-radius: 22px;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+.rss-btn svg { width: 14px; height: 14px; fill: var(--accent); flex-shrink: 0; }
+.rss-btn:hover {
+    background: var(--surface-3); border-color: var(--accent);
+    color: var(--accent-light); opacity: 1;
+}
 .site-foot .foot-muted { margin-top: 8px; }
 
 /* ---------- Responsive ---------- */
