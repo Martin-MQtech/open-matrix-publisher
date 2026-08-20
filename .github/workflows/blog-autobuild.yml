@@ -36,3 +36,11 @@ jobs:
           git add blog/index.html blog/atom.xml blog/posts/
           git commit -m "chore(blog): rebuild static pages from _posts"
           git push
+
+      - name: Verify final state with delivery audit
+        run: |
+          python3 scripts/pre_delivery_audit.py
+          if [ $? -ne 0 ]; then
+            echo "❌ Audit failed after rebuild — check the generated pages."
+            exit 1
+          fi

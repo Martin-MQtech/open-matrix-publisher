@@ -10,6 +10,7 @@
   python3 scripts/pre_delivery_audit.py            # 全量检查（不依赖运行中的服务）
   python3 scripts/pre_delivery_audit.py --smoke    # 额外对运行中的服务做冒烟检查
   python3 scripts/pre_delivery_audit.py --verbose  # 输出通过项明细
+  python3 scripts/pre_delivery_audit.py --fix-blog # 检测到博文漂移时自动运行 build_blog.py 重建
 
 退出码: 0=全部通过, 1=存在 FAIL 项（阻断交付）
 """
@@ -271,17 +272,18 @@ if ref_exts <= whitelist:
 REPORT.section("B7 · 博客一致性（_posts ↔ index.html ↔ atom.xml ↔ 文章页）")
 BLOG_DIR_B7 = "blog"
 POSTS_SRC_B7 = os.path.join(BLOG_DIR_B7, "_posts")
-md_slugs = (
-    sorted(p[:-3] for p in os.listdir(POSTS_SRC_B7) if p.endswith(".md"))
-    if os.path.isdir(POSTS_SRC_B7)
-    else []
-)
 
-if not md_slugs:
-    if os.path.isdir(BLOG_DIR_B7):
-        REPORT.warn("blog/_posts 为空，跳过博客一致性检查")
-else:
+
+def _blog_consistency():
+    """返回 (md_slugs, blog_fails) 两元组，供初次检查与 --fix-blog 重建后复检复用。"""
+    md_slugs = (
+        sorted(p[:-3] for p in os.listdir(POSTS_SRC_B7) if p.endswith(".md"))
+        if os.path.isdir(POSTS_SRC_B7)
+        else []
+    )
     blog_fails = []
+    if not md_slugs:
+        return md_slugs, blog_fails
     try:
         atom_src = open(os.path.join(BLOG_DIR_B7, "atom.xml"), encoding="utf-8").read()
     except OSError:
@@ -318,13 +320,81 @@ else:
                 )
         else:
             blog_fails.append(f"残留页面/条目「{slug}」无对应 _posts 源文件（源已删？需重建或清理）")
+    return md_slugs, blog_fails
 
+
+FIX_BLOG = "--fix-blog" in sys.argv
+md_slugs, blog_fails = _blog_consistency()
+
+if not md_slugs:
+    if os.path.isdir(BLOG_DIR_B7):
+        REPORT.warn("blog/_posts 为空，跳过博客一致性检查")
+elif blog_fails and FIX_BLOG:
+    print("  🔧 --fix-blog: 检测到博文漂移，自动运行 build_blog.py 重建静态页…")
+    subprocess.run([sys.executable, "scripts/build_blog.py"], capture_output=True, text=True)
+    md_slugs, blog_fails = _blog_consistency()
     if blog_fails:
         for e in blog_fails:
             REPORT.fail(e)
+        REPORT.warn("--fix-blog 已重建，但仍有残留不一致（多为残留页面/条目，需人工清理）")
+    else:
+        REPORT.ok("--fix-blog 已自动重建静态页，首页/feed/文章页三处恢复一致")
+elif blog_fails:
+    for e in blog_fails:
+        REPORT.fail(e)
+else:
+    REPORT.ok(
+        f"blog/_posts 的 {len(md_slugs)} 篇博文在首页/feed/文章页三处完全一致，atom.xml 合法"
+    )
+
+# ─────────────────────────── B8 落地页平台口径 ───────────────────────────
+REPORT.section("B8 · 落地页平台口径（index.html 声明 ↔ 引擎实际列表）")
+INDEX_HTML = "index.html"
+if not os.path.exists(INDEX_HTML):
+    REPORT.fail("index.html 不存在")
+else:
+    index_src = open(INDEX_HTML, encoding="utf-8").read()
+    landing_fails = []
+
+    # 1) 数量声明：从 MCP 平台清单推导权威的 国内/海外 分档（B4 已保证四者一致）
+    mcp_src = open("mcp_server.py", encoding="utf-8").read()
+    cn_ids = set(re.findall(r'"id":\s*"([a-z_]+)"[^}]*"region":\s*"cn"', mcp_src))
+    global_ids = set(re.findall(r'"id":\s*"([a-z_]+)"[^}]*"region":\s*"global"', mcp_src))
+    expect_cn, expect_global = len(cn_ids), len(global_ids)
+
+    for m in re.finditer(r"已接入\s*(\d+)\s*(?:个|平台)", index_src):
+        n = int(m.group(1))
+        if n != expect_cn + expect_global:
+            landing_fails.append(
+                f"index.html 声称「已接入 {n} 平台」，引擎实际 {expect_cn + expect_global}"
+            )
+    for m in re.finditer(r"国内\s*(\d+)\s*\+\s*海外\s*(\d+)", index_src):
+        a, b = int(m.group(1)), int(m.group(2))
+        if (a, b) != (expect_cn, expect_global):
+            landing_fails.append(
+                f"index.html 声称「国内 {a} + 海外 {b}」，引擎实际「国内 {expect_cn} + 海外 {expect_global}」"
+            )
+
+    # 2) 网格覆盖：落地页图标网格必须覆盖引擎全部平台；多余平台需标注规划中
+    ICON_ALIAS = {"weixin_channels": "tencent", "twitter_x": "x"}
+    grid_ids = set()
+    for m in re.finditer(r"assets/platform-icons/([a-z0-9_]+)\.svg", index_src):
+        grid_ids.add(ICON_ALIAS.get(m.group(1), m.group(1)))
+    missing = sorted(backend_platforms - grid_ids)
+    for p in missing:
+        landing_fails.append(
+            f"落地页网格缺少已接入平台 {p}（需在 index.html 平台网格补充，勿让用户误以为不支持）"
+        )
+    extra = sorted(grid_ids - backend_platforms)
+    for p in extra:
+        REPORT.warn(f"落地页网格展示 {p} 但引擎未接入——若为规划中平台请加「规划中」标注，勿误导为已支持")
+
+    if landing_fails:
+        for e in landing_fails:
+            REPORT.fail(e)
     else:
         REPORT.ok(
-            f"blog/_posts 的 {len(md_slugs)} 篇博文在首页/feed/文章页三处完全一致，atom.xml 合法"
+            f"index.html 声明与网格均与引擎一致（国内 {expect_cn} + 海外 {expect_global} = {expect_cn + expect_global}）"
         )
 
 # ─────────────────────────── A4 打包产物核对 ───────────────────────────
