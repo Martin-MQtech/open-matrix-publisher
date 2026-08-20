@@ -18,6 +18,7 @@ import os
 import re
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
@@ -265,6 +266,66 @@ for ext in sorted(ref_exts):
         REPORT.fail(f"前端引用 .{ext} 但静态路由白名单未放行")
 if ref_exts <= whitelist:
     REPORT.ok(f"前端引用扩展名 {sorted(ref_exts)} 全部在静态路由白名单内")
+
+# ─────────────────────────── B7 博客一致性 ───────────────────────────
+REPORT.section("B7 · 博客一致性（_posts ↔ index.html ↔ atom.xml ↔ 文章页）")
+BLOG_DIR_B7 = "blog"
+POSTS_SRC_B7 = os.path.join(BLOG_DIR_B7, "_posts")
+md_slugs = (
+    sorted(p[:-3] for p in os.listdir(POSTS_SRC_B7) if p.endswith(".md"))
+    if os.path.isdir(POSTS_SRC_B7)
+    else []
+)
+
+if not md_slugs:
+    if os.path.isdir(BLOG_DIR_B7):
+        REPORT.warn("blog/_posts 为空，跳过博客一致性检查")
+else:
+    blog_fails = []
+    try:
+        atom_src = open(os.path.join(BLOG_DIR_B7, "atom.xml"), encoding="utf-8").read()
+    except OSError:
+        atom_src = ""
+
+    # 三处产出物各自应覆盖的博文 slug 集合
+    origin_slugs = {
+        "首页卡片": set(
+            re.findall(r'href="posts/([^"]+)\.html"',
+                       open(os.path.join(BLOG_DIR_B7, "index.html"), encoding="utf-8").read())
+        ),
+        "feed 条目": set(
+            re.findall(r"<id>[^<]*/posts/([^<]+)\.html</id>", atom_src)
+        ),
+        "文章页": {s for s in md_slugs
+                   if os.path.exists(os.path.join(BLOG_DIR_B7, "posts", s + ".html"))},
+    }
+    try:
+        ET.fromstring(atom_src)
+    except Exception as e:
+        blog_fails.append(f"atom.xml 不是合法 XML: {e}")
+
+    all_slugs = set(md_slugs)
+    for s in origin_slugs.values():
+        all_slugs |= s
+    for slug in sorted(all_slugs):
+        present = [n for n, s in origin_slugs.items() if slug in s]
+        if slug in md_slugs:
+            if len(present) < 3:
+                missing = [n for n in sorted(origin_slugs) if slug not in origin_slugs[n]]
+                blog_fails.append(
+                    f"博文「{slug}」未同步: 缺少 {'/'.join(missing)}"
+                    f"（先运行 python3 scripts/build_blog.py 重建静态页）"
+                )
+        else:
+            blog_fails.append(f"残留页面/条目「{slug}」无对应 _posts 源文件（源已删？需重建或清理）")
+
+    if blog_fails:
+        for e in blog_fails:
+            REPORT.fail(e)
+    else:
+        REPORT.ok(
+            f"blog/_posts 的 {len(md_slugs)} 篇博文在首页/feed/文章页三处完全一致，atom.xml 合法"
+        )
 
 # ─────────────────────────── A4 打包产物核对 ───────────────────────────
 APP = os.path.join("dist", "OpenMatrixPublisher.app")
