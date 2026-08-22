@@ -291,6 +291,12 @@
             display: inline-flex; align-items: center; gap: 4px;
         }
         .qr-btn:hover { color: var(--accent-2); }
+        .qr-btn.labeled {
+            border: 1px solid var(--accent-line); border-radius: 6px;
+            background: var(--accent-soft); color: var(--accent-2);
+            padding: 3px 8px; font-size: 10px; white-space: nowrap;
+        }
+        .qr-btn.labeled:hover { border-color: var(--accent); color: var(--accent-2); }
         .beta-tag {
             font-size: 9px; color: var(--muted);
             border: 1px solid var(--line-2); border-radius: 4px; padding: 0 4px; margin-left: 4px;
@@ -646,7 +652,7 @@
                     </div>
                     <div style="display:flex; align-items:center; gap:6px;">
                         <span class="pstatus" id="status-${p.id}">${p.disabled ? '待官方 API' : '…'}</span>
-                        ${p.disabled ? '' : (p.api ? `<button class="qr-btn" onclick="launchQrLogin('${p.id}', event)" title="配置 API Key"><i class="fa-solid fa-key"></i></button>` : `<button class="qr-btn" onclick="launchQrLogin('${p.id}', event)" title="扫码登录 / 刷新"><i class="fa-solid fa-qrcode"></i></button>`)}
+                        ${p.disabled ? '' : (p.api ? `<button class="qr-btn labeled" onclick="launchQrLogin('${p.id}', event)" title="配置 API Key / 应用密码"><i class="fa-solid fa-key"></i><span>配置</span></button>` : `<button class="qr-btn labeled" onclick="launchQrLogin('${p.id}', event)" title="扫码登录 / Cookie 过期后点此重新扫码"><i class="fa-solid fa-qrcode"></i><span id="qr-label-${p.id}">扫码登录</span></button>`)}
                         <span class="checkbox"><i class="fa-solid fa-check"></i></span>
                     </div>
                 `;
@@ -674,15 +680,20 @@
                 const data = await res.json();
                 const sessions = data.sessions || {};
                 let logged = 0;
+                const stateMap = {};
                 PLATFORMS.forEach(p => {
                     const pill = el('status-' + p.id);
                     if (!pill) return;
                     const s = sessions[p.id] || {};
+                    stateMap[p.id] = !!s.logged_in;
                     if (s.logged_in) { pill.className = 'pstatus logged'; pill.textContent = '已登录'; logged++; }
                     else { pill.className = 'pstatus need'; pill.textContent = '需扫码'; }
+                    const lab = el('qr-label-' + p.id);
+                    if (lab) lab.textContent = s.logged_in ? '刷新' : '扫码登录';
                 });
                 const lc = el('login-count');
                 if (lc) lc.textContent = '已登录 ' + logged + '/' + PLATFORMS.length;
+                return stateMap;
             } catch (e) { /* 引擎离线时静默 */ }
         }
 
@@ -699,8 +710,19 @@
                     await configureApiKey(platformId);
                     return;
                 }
-                alert('已在桌面打开登录窗口，请扫码登录。\n' + (data.msg || ''));
+                if (data.status === 'unsupported') {
+                    alert(data.msg || '该平台暂不支持一键扫码登录。');
+                    return;
+                }
+                alert('已在桌面打开登录窗口，请完成扫码/登录。\n扫完后卡片状态会自动更新为「已登录」。');
                 refreshSessionStatus();
+                // 登录窗口打开期间轮询状态（每 3s，最长约 3 分钟），扫码成功后自动变绿
+                let polls = 0;
+                const pollTimer = setInterval(async () => {
+                    const state = await refreshSessionStatus();
+                    if (state && state[platformId]) clearInterval(pollTimer);
+                    else if (++polls > 60) clearInterval(pollTimer);
+                }, 3000);
             } catch (e) {
                 alert('无法连接本地引擎，请先运行 start_ui.sh。');
             }
