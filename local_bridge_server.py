@@ -169,7 +169,10 @@ def health():
     sau_cookies = os.path.join(SAU_ROOT, "cookies")
     cookie_count = 0
     if os.path.isdir(sau_cookies):
-        cookie_count = len([f for f in os.listdir(sau_cookies) if f.endswith(".json")])
+        try:
+            cookie_count = len([f for f in os.listdir(sau_cookies) if f.endswith(".json")])
+        except Exception:
+            cookie_count = 0
     return jsonify({
         "status": "ok",
         "service": "open-matrix-publisher",
