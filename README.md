@@ -120,6 +120,12 @@ Open Matrix Publisher 旨在打破国内外割裂的自媒体营销现状，为�
 
 **Prerequisites**: macOS / Windows / Linux · Python 3.10+ · git.
 
+> **上传引擎依赖 (Upload Engine Dependency)**：本工具的分发引擎基于开源项目
+> [social-auto-upload (SAU)](https://github.com/dreammis/social-auto-upload)（浏览器自动化上传）。
+> `start_ui.sh` 会自动检测本机 SAU 安装；未安装时会在终端引导一键安装
+> （clone + 独立 venv + 依赖 + Chromium，约需数分钟与数百 MB 磁盘空间）。
+> 已装在自定义位置时，启动前设置 `SAU_ROOT=/path/to/social-auto-upload` 即可。
+
 **Step 1 · Clone Repository (获取代码)**
 ```bash
 git clone https://github.com/Martin-MQtech/open-matrix-publisher.git
@@ -130,7 +136,7 @@ cd open-matrix-publisher
 - **macOS / Linux**:
   ```bash
   ./start_ui.sh
-  # Automatically opens http://localhost:5001 in your browser
+  # 首次运行会自动检测/引导安装 SAU 引擎，完成后自动打开 http://localhost:5001
   ```
 - **Windows**:
   ```cmd

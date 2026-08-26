@@ -26,12 +26,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyinstaller flask pywebview patchright playwright
 
+      - name: Resolve version from VERSION file
+        run: |
+          VERSION=$(tr -d '[:space:]' < VERSION)
+          echo "APP_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Building version $VERSION"
+
       - name: Build macOS App with PyInstaller
         run: |
           pyinstaller --noconfirm --onedir --windowed \
             --name "OpenMatrixPublisher" \
             --add-data "index.html:." \
             --add-data "app.html:." \
+            --add-data "VERSION:." \
             --add-data "logo.png:." \
             --add-data "logo.svg:." \
             --add-data "favicon.ico:." \
@@ -50,7 +57,10 @@ jobs:
           ln -s /Applications dmg_stage/Applications
           hdiutil create -volname "Open Matrix Publisher" \
             -srcfolder dmg_stage -ov -format UDZO \
-            "dist/OpenMatrixPublisher-0.1.0.dmg"
+            "dist/OpenMatrixPublisher-${APP_VERSION}.dmg"
+          # 稳定别名：官网下载链接永远指向 releases/latest/download/OpenMatrixPublisher.dmg，
+          # 版本号变更无需再改 index.html
+          cp "dist/OpenMatrixPublisher-${APP_VERSION}.dmg" "dist/OpenMatrixPublisher.dmg"
 
       - name: Smoke test packaged app (real macOS boot check)
         run: |
@@ -65,7 +75,8 @@ jobs:
           name: OpenMatrixPublisher-macOS
           path: |
             dist/OpenMatrixPublisher-macOS.zip
-            dist/OpenMatrixPublisher-0.1.0.dmg
+            dist/OpenMatrixPublisher-${{ env.APP_VERSION }}.dmg
+            dist/OpenMatrixPublisher.dmg
 
       - name: Upload macOS Release Asset
         uses: softprops/action-gh-release@v1
@@ -73,7 +84,8 @@ jobs:
         with:
           files: |
             dist/OpenMatrixPublisher-macOS.zip
-            dist/OpenMatrixPublisher-0.1.0.dmg
+            dist/OpenMatrixPublisher-${{ env.APP_VERSION }}.dmg
+            dist/OpenMatrixPublisher.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -99,6 +111,7 @@ jobs:
             --name "OpenMatrixPublisher-Setup" `
             --add-data "index.html;." `
             --add-data "app.html;." `
+            --add-data "VERSION;." `
             --add-data "logo.png;." `
             --add-data "logo.svg;." `
             --add-data "favicon.ico;." `
