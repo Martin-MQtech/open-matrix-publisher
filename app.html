@@ -435,11 +435,21 @@
                     </div>
 
                     <div class="field">
-                        <label>标题</label>
-                        <input type="text" id="post-title" placeholder="一句话说清楚这条视频讲什么">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label style="margin:0;">标题</label>
+                            <span id="title-char-count" style="font-size:11.5px; color:var(--muted);">0 字</span>
+                        </div>
+                        <input type="text" id="post-title" placeholder="一句话说清楚这条视频讲什么 (建议 30 字内)">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; font-size:11px;">
+                            <span id="title-warn-tip" style="color:var(--faint);">各平台最佳标题：抖音/视频号 ≤ 30 字，B站/小红书 ≤ 80 字</span>
+                            <button class="btn text" style="font-size:11px; padding:0; color:var(--accent); border:none; background:none; cursor:pointer;" onclick="trimTitleTo30()"><i class="fa-solid fa-scissors"></i> 精简至 30 字</button>
+                        </div>
                     </div>
                     <div class="field">
-                        <label>描述</label>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label style="margin:0;">描述</label>
+                            <span id="desc-char-count" style="font-size:11.5px; color:var(--muted);">0 字</span>
+                        </div>
                         <textarea id="post-desc" placeholder="补充背景、亮点、行动引导…"></textarea>
                     </div>
                     <div class="field">
@@ -467,6 +477,16 @@
                     <div class="step-head">
                         <span class="step-num">3</span> 选择平台
                         <span class="step-hint"><span id="sel-count">已选 0 个</span> · <span id="login-count">已登录 -/<span id="login-total"></span></span></span>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; background:var(--surface-2); padding:8px 12px; border-radius:8px; border:1px solid var(--line); flex-wrap:wrap;">
+                        <button class="btn accent" style="padding:4px 10px; font-size:12px; border:none;" onclick="selectAllReadyPlatforms()"><i class="fa-solid fa-circle-check"></i> 勾选所有已就绪账号</button>
+                        <button class="btn text" style="padding:4px 8px; font-size:12px; color:var(--accent-2);" onclick="openBatchAuthModal()"><i class="fa-solid fa-user-shield"></i> 集中补录账号</button>
+                        <button class="btn" style="padding:4px 10px; font-size:12px;" onclick="clearAllSelections()"><i class="fa-solid fa-xmark"></i> 清空选中</button>
+                    </div>
+
+                    <div style="font-size:11.5px; color:var(--faint); margin-bottom:12px; line-height:1.5; background:rgba(7, 193, 96, 0.06); padding:6px 10px; border-radius:6px; border:1px solid rgba(7, 193, 96, 0.2);">
+                        <i class="fa-solid fa-shield-halved" style="color:var(--success);"></i> <strong>静默承诺：</strong> 发布开始后 100% 纯无头后台运行，绝不在您工作中途弹窗打扰。请在开始前点击【集中补录账号】完成授权。
                     </div>
 
                     <div class="platform-group">
@@ -543,6 +563,23 @@
                 <button class="btn accent" id="btn-retry-failed" style="display:none;" onclick="retryFailedPlatforms()"><i class="fa-solid fa-rotate-right"></i> 仅重试未成功平台</button>
                 <button class="btn" onclick="hideProgress()"><i class="fa-solid fa-eye-slash"></i> 后台继续</button>
                 <button class="btn primary" id="close-progress" style="display:none;" onclick="hideProgress()">完成并关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 集中授权/补录受损账号弹窗 -->
+    <div class="overlay" id="batch-auth-overlay">
+        <div class="modal" style="max-width:540px; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="margin:0;"><i class="fa-solid fa-user-shield" style="color:var(--accent-2);"></i> 集中授权与 Cookie 补录中心</h3>
+                <button class="icon-btn" onclick="hideBatchAuthModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size:12.5px; color:var(--muted); margin-bottom:14px; line-height:1.5;">
+                集中在此完成各平台的扫码或 API Key 填报。授权保存后，发布时将 <strong>100% 纯无头静默运行</strong>，绝不干扰您的正常办公。
+            </p>
+            <div id="batch-auth-list" style="max-height:300px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:14px; background:rgba(0,0,0,0.2);"></div>
+            <div class="actions" style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn primary" onclick="hideBatchAuthModal()"><i class="fa-solid fa-check"></i> 完成补录并返回</button>
             </div>
         </div>
     </div>
@@ -678,11 +715,117 @@
             el('btn-publish-text').textContent = n > 0 ? ('发布到 ' + n + ' 个平台') : '发布';
         }
 
-        function toggleCategory(cat) {
-            const list = PLATFORMS.filter(p => p.cat === cat);
-            const all = list.every(p => el('card-' + p.id).classList.contains('selected'));
-            list.forEach(p => el('card-' + p.id).classList.toggle('selected', !all));
+        function selectAllReadyPlatforms() {
+            fetch(API + '/api/status').then(r => r.json()).then(data => {
+                const sessions = data.session_status || data.sessions || {};
+                let count = 0;
+                PLATFORMS.forEach(p => {
+                    const card = el('card-' + p.id);
+                    if (!card) return;
+                    const s = sessions[p.id] || {};
+                    if (s.logged_in) {
+                        card.classList.add('selected');
+                        count++;
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                });
+                updateCount();
+                if (count === 0) {
+                    alert('目前尚无登录就绪的账号，请先点击平台卡片【扫码登录】。');
+                }
+            }).catch(() => alert('无法获取账号登录状态，请确认 start_ui.sh 已运行。'));
+        }
+
+        function clearAllSelections() {
+            PLATFORMS.forEach(p => {
+                const card = el('card-' + p.id);
+                if (card) card.classList.remove('selected');
+            });
             updateCount();
+        }
+
+        async function openBatchAuthModal() {
+            el('batch-auth-overlay').classList.add('show');
+            await renderBatchAuthList();
+        }
+
+        function hideBatchAuthModal() {
+            el('batch-auth-overlay').classList.remove('show');
+            refreshSessionStatus();
+        }
+
+        async function renderBatchAuthList() {
+            const list = el('batch-auth-list');
+            list.innerHTML = '<div style="padding:12px; color:var(--muted); text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> 正在读取账号凭证状态…</div>';
+            
+            let state = {};
+            try {
+                const res = await fetch(API + '/api/status');
+                const data = await res.json();
+                state = data.session_status || {};
+            } catch (e) { /* 忽略 */ }
+
+            list.innerHTML = '';
+            PLATFORMS.forEach(p => {
+                const info = state[p.id] || { logged_in: false, status_text: '未授权' };
+                const isOk = info.logged_in;
+                
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px;';
+                
+                const badge = isOk 
+                    ? `<span style="color:var(--success); font-weight:600;"><i class="fa-solid fa-circle-check"></i> 已授权凭证</span>`
+                    : `<span style="color:var(--warn); font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> 需扫码补录</span>`;
+                
+                const actionBtn = isOk
+                    ? `<button class="btn" style="padding:3px 8px; font-size:11.5px;" onclick="batchAuthLogin('${p.id}')"><i class="fa-solid fa-arrows-rotate"></i> 刷新</button>`
+                    : `<button class="btn accent" style="padding:4px 10px; font-size:12px;" onclick="batchAuthLogin('${p.id}')"><i class="fa-solid fa-qrcode"></i> 扫码补录</button>`;
+                
+                row.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${platformIcon(p, 16)} <strong>${p.name}</strong>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        ${badge}
+                        ${actionBtn}
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        async function batchAuthLogin(platformId) {
+            await launchQrLogin(platformId);
+            setTimeout(renderBatchAuthList, 2500);
+        }
+
+        function trimTitleTo30() {
+            const inp = el('post-title');
+            if (!inp) return;
+            inp.value = inp.value.trim().slice(0, 30);
+            updateCharCount();
+        }
+
+        function updateCharCount() {
+            const t = el('post-title') ? el('post-title').value.length : 0;
+            const d = el('post-desc') ? el('post-desc').value.length : 0;
+            const tc = el('title-char-count');
+            const dc = el('desc-char-count');
+            const tip = el('title-warn-tip');
+            if (tc) {
+                tc.textContent = t + ' 字';
+                tc.style.color = t > 30 ? 'var(--warn)' : 'var(--muted)';
+            }
+            if (dc) dc.textContent = d + ' 字';
+            if (tip) {
+                if (t > 30) {
+                    tip.innerHTML = '<span style="color:var(--warn);"><i class="fa-solid fa-triangle-exclamation"></i> 标题已超 30 字（抖音/视频号发布时自动取前 30 字）</span>';
+                } else {
+                    tip.textContent = '各平台最佳标题：抖音/视频号 ≤ 30 字，B站/小红书 ≤ 80 字';
+                    tip.style.color = 'var(--faint)';
+                }
+            }
         }
 
         async function refreshSessionStatus() {
@@ -1315,6 +1458,8 @@
         }
 
         el('btn-publish').addEventListener('click', publish);
+        if (el('post-title')) el('post-title').addEventListener('input', updateCharCount);
+        if (el('post-desc')) el('post-desc').addEventListener('input', updateCharCount);
 
         /* ── 启动 ── */
         renderPlatforms();

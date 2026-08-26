@@ -266,26 +266,22 @@ class RealPlatformUploader:
                     return {"success": False, "error": f"B站 ({rc}): {tail[-200:]}"}
 
             elif self.platform_id == "tencent":
-                # 视频号：先试 headless（Cookie 有效时可行），失败再 headed
-                for mode in ["--headless", "--headed"]:
-                    cmd_try = cmd + [mode]
-                    log(f"执行 视频号 ({mode}) 指令")
-                    try:
-                        rc, output = _run_with_progress(cmd_try, env, SAU_ROOT, 600, on_progress, task_id=task_id)
-                        tail = output[-400:]
-                        log(f"sau tencent ({mode}) 输出: {tail[-200:]}")
-                        cookie_expired = "cookie 已失效" in output or "重新登录" in output or "login" in output.lower()
-                        if cookie_expired and mode == "--headless":
-                            log("视频号 Cookie 过期，切换 headed 模式重试...")
-                            continue
-                        ok = rc == 0 or ("成功" in output and not cookie_expired)
-                        if ok:
-                            return {"success": True, "pub_id": f"sau_tencent_{int(time.time())}",
-                                    "link": creator_links["tencent"], "msg": "✅ 视频号发布成功"}
-                        else:
-                            return {"success": False, "error": "视频号 Cookie 已过期，需扫码登录"}
-                    except Exception as e:
-                        return {"success": False, "error": f"视频号异常: {str(e)}"}
+                # 视频号：严格 --headless 纯无头静默发布，禁止工作期间桌面弹窗打扰用户
+                cmd_try = cmd + ["--headless"]
+                log("执行 视频号 (--headless 纯无头) 指令")
+                try:
+                    rc, output = _run_with_progress(cmd_try, env, SAU_ROOT, 600, on_progress, task_id=task_id)
+                    tail = output[-400:]
+                    log(f"sau tencent (--headless) 输出: {tail[-200:]}")
+                    cookie_expired = "cookie 已失效" in output or "重新登录" in output or "login" in output.lower()
+                    ok = rc == 0 or ("成功" in output and not cookie_expired)
+                    if ok:
+                        return {"success": True, "pub_id": f"sau_tencent_{int(time.time())}",
+                                "link": creator_links["tencent"], "msg": "✅ 视频号发布成功"}
+                    else:
+                        return {"success": False, "error": "视频号 Cookie 已过期，请在开始前补录扫码"}
+                except Exception as e:
+                    return {"success": False, "error": f"视频号异常: {str(e)}"}
 
             else:
                 # 其余平台 (douyin/kuaishou/xiaohongshu/youtube) 走 --headless
