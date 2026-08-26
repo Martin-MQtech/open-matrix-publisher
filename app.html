@@ -1153,15 +1153,26 @@
                 }
                 showToastNotice('🚀 已为你唤起 Chrome 扫码窗口！请在弹出的系统 Chrome 中完成登录，完成后自动写盘。', 'info');
                 refreshSessionStatus();
-                // 登录窗口打开期间轮询状态（每 3s，最长约 3 分钟），扫码成功后自动变绿
+                // 登录窗口打开期间轮询状态（每 2.5s，最长约 3 分钟），扫码成功后自动全网重刷变绿
                 let polls = 0;
                 const pollTimer = setInterval(async () => {
                     const state = await refreshSessionStatus();
                     if (state && state[platformId]) {
                         clearInterval(pollTimer);
                         showToastNotice('✅ 账号凭证已捕获，登录成功！', 'success');
-                    } else if (++polls > 60) clearInterval(pollTimer);
-                }, 3000);
+                        
+                        // 实时自动更新打开中的预检/补录/看板弹窗列表
+                        if (el('confirm-overlay') && el('confirm-overlay').classList.contains('show')) {
+                            renderPreflightList();
+                        }
+                        if (el('batch-auth-overlay') && el('batch-auth-overlay').classList.contains('show')) {
+                            renderBatchAuthList();
+                        }
+                        if (el('kanban-overlay') && el('kanban-overlay').classList.contains('show')) {
+                            renderKanbanBoard();
+                        }
+                    } else if (++polls > 70) clearInterval(pollTimer);
+                }, 2500);
             } catch (e) {
                 showToastNotice('无法连接本地引擎，请确认 start_ui.sh 已运行。', 'warn');
             }
@@ -1460,8 +1471,9 @@
 
         async function preflightLogin(platformId, event) {
             if (event) event.stopPropagation();
+            const btn = event ? event.currentTarget : null;
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 扫码中…';
             await launchQrLogin(platformId);
-            setTimeout(renderPreflightList, 2000);
         }
 
         function selectOnlyLoggedOnConfirm() {
