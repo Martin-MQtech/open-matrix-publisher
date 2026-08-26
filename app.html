@@ -278,7 +278,7 @@
         .pcard.selected { border-color: var(--accent-line); background: var(--accent-soft); opacity: 1; }
         .pcard .left { display: flex; align-items: center; gap: 8px; min-width: 0; }
         .picon {
-            width: 22px; height: 22px; flex: none;
+            width: 26px; height: 26px; flex: none;
             display: flex; align-items: center; justify-content: center;
         }
         .pname { font-size: 12px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -784,7 +784,7 @@
                 
                 card.innerHTML = `
                     <div class="left">
-                        <div class="picon">${platformIcon(p, 18)}</div>
+                        <div class="picon">${platformIcon(p, 22)}</div>
                         <span class="pname" title="${p.name}">${p.name}${p.beta ? '<span class="beta-tag">测试</span>' : ''}${p.disabled ? '<span class="beta-tag off-tag">待API</span>' : ''}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:6px; flex:none;">
