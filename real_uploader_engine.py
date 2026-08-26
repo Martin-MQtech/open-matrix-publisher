@@ -155,6 +155,24 @@ def check_profile_logged_in(platform_id):
 
     return True, "✅ 已登录"
 
+def _clean_error_text(output, rc):
+    import re
+    if not output:
+        return f"引擎返回异常 (code {rc})"
+    cleaned = re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', output)
+    cleaned = re.sub(r'[\|\\/\-\<\>3]+', ' ', cleaned)
+    cleaned = re.sub(r'Playwright Team.*', '', cleaned)
+    
+    if "cookie 已失效" in cleaned or "重新登录" in cleaned or "login" in cleaned.lower() or "passport" in cleaned.lower():
+        return "Cookie 已失效，需扫码刷新"
+    if "timeout" in cleaned.lower() or "超时" in cleaned:
+        return "页面响应超时，请重试"
+    
+    lines = [l.strip() for l in cleaned.split('\n') if l.strip() and not l.strip().startswith('sau')]
+    if lines:
+        return lines[-1][:100]
+    return f"引擎错误 ({rc})"
+
 class RealPlatformUploader:
     def __init__(self, platform_id, video_path, title, desc, tags=None, cover_file=None):
         self.platform_id = platform_id
@@ -265,7 +283,7 @@ class RealPlatformUploader:
                             return {"success": True, "pub_id": f"sau_tencent_{int(time.time())}",
                                     "link": creator_links["tencent"], "msg": "✅ 视频号发布成功"}
                         else:
-                            return {"success": False, "error": f"视频号 Cookie 已过期，请在控制台点击【刷新登录】扫码"}
+                            return {"success": False, "error": "视频号 Cookie 已过期，需扫码登录"}
                     except Exception as e:
                         return {"success": False, "error": f"视频号异常: {str(e)}"}
 
@@ -285,9 +303,10 @@ class RealPlatformUploader:
                             "msg": f"✅ 成功通过 sau 引擎静默发布到 {self.platform_id}！"
                         }
                     else:
+                        clean_msg = _clean_error_text(output, rc)
                         return {
                             "success": False,
-                            "error": f"sau 发布提示 ({rc}): {tail[-200:]}"
+                            "error": f"发布失败 ({clean_msg})"
                         }
                 except Exception as e:
                     return {"success": False, "error": f"sau 执行异常: {str(e)}"}

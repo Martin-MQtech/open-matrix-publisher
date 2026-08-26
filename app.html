@@ -504,32 +504,43 @@
         Open Matrix Publisher · <a href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank">MIT 开源</a><span class="sep">·</span>由 <a href="https://www.emuqi.com" target="_blank">木齐科技 (MUQI Tech)</a> 孵化<span class="sep">·</span>Cookie 与视频均留在本机
     </footer>
 
-    <!-- 确认弹窗 -->
+    <!-- 确认发布与前置预检弹窗 -->
     <div class="overlay" id="confirm-overlay">
-        <div class="modal">
-            <h3>确认发布</h3>
-            <div class="box">
-                <div style="margin-bottom:6px;"><strong id="confirm-name"></strong></div>
-                <div style="color:var(--muted);">将发布到 <strong id="confirm-count" style="color:var(--accent);">0</strong> 个平台</div>
+        <div class="modal" style="max-width:540px; text-align:left;">
+            <h3 style="margin-top:0; margin-bottom:12px;"><i class="fa-solid fa-clipboard-check" style="color:var(--accent);"></i> 发布确认与账号预检</h3>
+            <div class="box" style="padding:12px; margin-bottom:12px;">
+                <div style="margin-bottom:6px; font-weight:600;"><i class="fa-solid fa-film"></i> <span id="confirm-name"></span></div>
+                <div style="font-size:13px; color:var(--muted);">准备分发到 <strong id="confirm-count" style="color:var(--accent);">0</strong> 个平台</div>
             </div>
-            <div class="actions">
-                <button class="btn" onclick="hideConfirm()">取消</button>
-                <button class="btn primary" onclick="confirmDispatch()">确认并开始</button>
+
+            <div style="font-size:13px; font-weight:600; margin-bottom:8px; color:var(--accent-light); display:flex; justify-content:space-between; align-items:center;">
+                <span><i class="fa-solid fa-shield-halved"></i> 账号 Session 预检状态：</span>
+                <span style="font-size:12px; color:var(--muted); font-weight:normal;">发布前已自动检测凭证</span>
+            </div>
+            <div id="preflight-list" style="max-height:220px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; margin-bottom:14px; background:rgba(0,0,0,0.2);"></div>
+
+            <div class="actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <button class="btn text" onclick="selectOnlyLoggedOnConfirm()" style="font-size:12px; color:var(--accent-2); padding:0;"><i class="fa-solid fa-filter"></i> 仅勾选已就绪平台</button>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" onclick="hideConfirm()">取消</button>
+                    <button class="btn primary" id="btn-confirm-start" onclick="confirmDispatch()"><i class="fa-solid fa-paper-plane"></i> 确认并开始发布</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- 进度弹窗 -->
     <div class="overlay" id="progress-overlay">
-        <div class="modal">
+        <div class="modal" style="max-width:560px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
                 <h3 style="margin:0;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent);"></i> 正在分发…</h3>
                 <button class="icon-btn" onclick="hideProgress()" title="关闭（任务在后台继续）"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div id="progress-list"></div>
-            <p class="note" style="text-align:left; margin-top:12px;">已开始上传的平台无法安全撤回；关闭窗口后任务会在后台继续，可在“分发记录”中查看。</p>
-            <div class="actions" style="margin-top:14px;">
+            <p class="note" style="text-align:left; margin-top:12px;">提示：可针对失败平台在弹窗内直接【扫码登录】与【重试】；关闭窗口后任务仍会在后台继续运行。</p>
+            <div class="actions" style="margin-top:14px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;">
                 <button class="btn" onclick="cancelAll()" id="btn-cancel-all"><i class="fa-solid fa-stop"></i> 取消剩余</button>
+                <button class="btn accent" id="btn-retry-failed" style="display:none;" onclick="retryFailedPlatforms()"><i class="fa-solid fa-rotate-right"></i> 仅重试未成功平台</button>
                 <button class="btn" onclick="hideProgress()"><i class="fa-solid fa-eye-slash"></i> 后台继续</button>
                 <button class="btn primary" id="close-progress" style="display:none;" onclick="hideProgress()">完成并关闭</button>
             </div>
@@ -944,21 +955,102 @@
             }
         }
 
-        /* ── 发布 ── */
+        /* ── 发布与状态复位 ── */
+        let currentDispatchState = { success: new Set(), failed: new Set() };
+
         function getSelected() {
             return PLATFORMS.filter(p => el('card-' + p.id).classList.contains('selected'));
         }
 
-        function publish() {
+        async function publish() {
             if (!currentVideo) { alert('请先选择或拖入一个视频'); return; }
             const sel = getSelected();
             if (!sel.length) { alert('请至少勾选一个平台'); return; }
             el('confirm-name').textContent = currentVideo.name;
             el('confirm-count').textContent = sel.length;
+            await renderPreflightList();
             el('confirm-overlay').classList.add('show');
         }
+
         function hideConfirm() { el('confirm-overlay').classList.remove('show'); }
-        function hideProgress() { el('progress-overlay').classList.remove('show'); }
+        function hideProgress() {
+            el('progress-overlay').classList.remove('show');
+            reconcileConsoleState();
+        }
+
+        async function renderPreflightList() {
+            const list = el('preflight-list');
+            list.innerHTML = '<div style="padding:10px; color:var(--muted); text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> 正在检测勾选账号 Session…</div>';
+            
+            let state = {};
+            try {
+                const res = await fetch(API + '/api/status');
+                const data = await res.json();
+                state = data.session_status || {};
+            } catch (e) { /* 忽略 */ }
+            
+            const sel = getSelected();
+            list.innerHTML = '';
+            let hasUnlogged = false;
+            
+            sel.forEach(p => {
+                const info = state[p.id] || { logged_in: false, status_text: '未授权' };
+                const isOk = info.logged_in;
+                if (!isOk) hasUnlogged = true;
+                
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:6px 10px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px;';
+                row.id = 'preflight-row-' + p.id;
+                
+                const badge = isOk 
+                    ? `<span style="color:var(--success); font-weight:600;"><i class="fa-solid fa-circle-check"></i> 就绪</span>`
+                    : `<span style="color:var(--danger); font-weight:600;"><i class="fa-solid fa-circle-xmark"></i> ${escapeHtml(info.status_text || '需扫码')}</span>`;
+                
+                const actionBtn = isOk
+                    ? ''
+                    : `<button class="btn accent" style="padding:2px 8px; font-size:12px;" onclick="preflightLogin('${p.id}', event)"><i class="fa-solid fa-qrcode"></i> 扫码登录</button>`;
+                
+                row.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${platformIcon(p, 16)} <strong>${p.name}</strong>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        ${badge}
+                        ${actionBtn}
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+
+            const startBtn = el('btn-confirm-start');
+            if (hasUnlogged) {
+                startBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> 仍尝试发布 (含待登录平台)';
+            } else {
+                startBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> 确认并开始发布';
+            }
+        }
+
+        async function preflightLogin(platformId, event) {
+            if (event) event.stopPropagation();
+            await launchQrLogin(platformId);
+            setTimeout(renderPreflightList, 2000);
+        }
+
+        function selectOnlyLoggedOnConfirm() {
+            fetch(API + '/api/status').then(r => r.json()).then(data => {
+                const state = data.session_status || {};
+                PLATFORMS.forEach(p => {
+                    const card = el('card-' + p.id);
+                    const isLogged = state[p.id] && state[p.id].logged_in;
+                    if (card) {
+                        if (isLogged) card.classList.add('selected');
+                        else card.classList.remove('selected');
+                    }
+                });
+                updateCounts();
+                renderPreflightList();
+            });
+        }
 
         function confirmDispatch() {
             hideConfirm();
@@ -974,9 +1066,14 @@
             const list = el('progress-list');
             const closeBtn = el('close-progress');
             const cancelAllBtn = el('btn-cancel-all');
+            const retryFailedBtn = el('btn-retry-failed');
+            
             dispatchCtl = { cancelled: false, taskIds: {} };
+            currentDispatchState = { success: new Set(), failed: new Set() };
+            
             overlay.classList.add('show');
             closeBtn.style.display = 'none';
+            retryFailedBtn.style.display = 'none';
             cancelAllBtn.style.display = 'inline-flex';
             list.innerHTML = '';
 
@@ -1006,6 +1103,7 @@
                 if (dispatchCtl.cancelled) {
                     const st = el('status-' + p.id + '-p');
                     if (st) st.innerHTML = '<span style="color:var(--faint);">已跳过</span>';
+                    currentDispatchState.failed.add(p.id);
                     continue;
                 }
                 try {
@@ -1025,28 +1123,36 @@
                     if (res.status === 409 || data.status === 'blocked_duplicate') {
                         st.innerHTML = '<span style="color:var(--accent-2);">已发布过 · 防重拦截</span>';
                         fill.style.width = '100%';
+                        currentDispatchState.success.add(p.id);
                         continue;
                     }
                     if (data.task_id) {
                         dispatchCtl.taskIds[p.id] = data.task_id;
                         await new Promise(r => trackTask(p, data.task_id, r));
                     } else {
-                        st.innerHTML = '<span style="color:var(--danger);">' + (data.msg || data.error || '启动失败') + '</span>';
+                        st.innerHTML = '<span style="color:var(--danger);">' + escapeHtml(data.msg || data.error || '启动失败') + '</span>';
+                        currentDispatchState.failed.add(p.id);
                     }
                 } catch (e) {
                     const st = el('status-' + p.id + '-p');
                     if (st) st.innerHTML = '<span style="color:var(--danger);">请求失败</span>';
+                    currentDispatchState.failed.add(p.id);
                 }
             }
 
             cancelAllBtn.style.display = 'none';
             closeBtn.style.display = 'inline-flex';
+            if (currentDispatchState.failed.size > 0) {
+                retryFailedBtn.style.display = 'inline-flex';
+            }
             refreshSessionStatus();
             loadHistory();
+            reconcileConsoleState();
         }
 
         async function cancelTask(platformId) {
             const tid = dispatchCtl.taskIds[platformId];
+            currentDispatchState.failed.add(platformId);
             if (!tid) return;
             try {
                 await fetch(API + '/api/cancel-task', {
@@ -1085,26 +1191,127 @@
 
                     if (info.status === 'completed') {
                         clearInterval(timer);
-                        st.innerHTML = '<span style="color:var(--success);">' + info.stage + '</span>';
+                        st.innerHTML = '<span style="color:var(--success);">' + escapeHtml(info.stage) + '</span>';
                         fill.style.width = '100%';
+                        currentDispatchState.success.add(p.id);
                         done();
                     } else if (info.status === 'cancelled') {
                         clearInterval(timer);
                         st.innerHTML = '<span style="color:var(--faint);">已取消</span>';
                         fill.style.width = '100%';
                         fill.style.background = 'var(--faint)';
+                        currentDispatchState.failed.add(p.id);
                         done();
                     } else if (info.status === 'failed') {
                         clearInterval(timer);
-                        st.innerHTML = '<span style="color:var(--danger);">' + (info.error || info.stage || '失败') + '</span>';
+                        const errMsg = escapeHtml(info.error || info.stage || '失败');
+                        const isCookieErr = errMsg.includes('Cookie') || errMsg.includes('登录');
+                        
+                        let fixAction = '';
+                        if (isCookieErr) {
+                            fixAction = ` <button class="btn accent" style="padding:2px 8px; font-size:12px; margin-left:6px;" onclick="progressInModalLogin('${p.id}')"><i class="fa-solid fa-qrcode"></i> 补扫码</button>`;
+                        }
+                        const retryAction = ` <button class="btn" style="padding:2px 8px; font-size:12px; margin-left:4px;" onclick="retrySinglePlatform('${p.id}')"><i class="fa-solid fa-rotate-right"></i> 重试</button>`;
+                        
+                        st.innerHTML = `<span style="color:var(--danger);">${errMsg}</span>${fixAction}${retryAction}`;
                         fill.style.width = '100%';
+                        fill.style.background = 'var(--danger)';
+                        currentDispatchState.failed.add(p.id);
                         done();
                     }
                 } catch (e) {
                     clearInterval(timer);
+                    currentDispatchState.failed.add(p.id);
                     done();
                 }
             }, 500);
+        }
+
+        async function progressInModalLogin(platformId) {
+            await launchQrLogin(platformId);
+            const st = el('status-' + platformId + '-p');
+            if (st) {
+                st.innerHTML = `<span style="color:var(--accent-light);">已唤起扫码窗口…</span> <button class="btn primary" style="padding:2px 8px; font-size:12px;" onclick="retrySinglePlatform('${platformId}')"><i class="fa-solid fa-rotate-right"></i> 扫完重试此平台</button>`;
+            }
+        }
+
+        async function retrySinglePlatform(platformId) {
+            const p = PLATFORMS.find(x => x.id === platformId);
+            if (!p || !currentVideo) return;
+            const st = el('status-' + p.id + '-p');
+            const fill = el('fill-' + p.id);
+            if (st) st.innerHTML = '<span style="color:var(--muted);">正在单独重试…</span>';
+            if (fill) { fill.style.width = '0%'; fill.style.background = 'var(--accent)'; }
+
+            const title = el('post-title').value.trim() || currentVideo.name;
+            const desc = el('post-desc').value.trim();
+            const tags = parseTags();
+
+            try {
+                const res = await fetch(API + '/api/start-upload-task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        platform_id: p.id,
+                        video_file: currentVideo.path,
+                        title, desc, tags,
+                        force: true
+                    })
+                });
+                const data = await res.json();
+                if (data.task_id) {
+                    dispatchCtl.taskIds[p.id] = data.task_id;
+                    await new Promise(r => trackTask(p, data.task_id, r));
+                } else {
+                    if (st) st.innerHTML = `<span style="color:var(--danger);">${escapeHtml(data.msg || data.error || '启动失败')}</span>`;
+                    currentDispatchState.failed.add(p.id);
+                }
+            } catch (e) {
+                if (st) st.innerHTML = '<span style="color:var(--danger);">请求失败</span>';
+                currentDispatchState.failed.add(p.id);
+            }
+            reconcileConsoleState();
+        }
+
+        async function retryFailedPlatforms() {
+            const sel = getSelected();
+            const failedList = sel.filter(p => currentDispatchState.failed.has(p.id));
+            if (!failedList.length) {
+                alert('勾选平台中没有需要重试的失败项！');
+                return;
+            }
+            el('btn-retry-failed').style.display = 'none';
+            for (const p of failedList) {
+                await retrySinglePlatform(p.id);
+            }
+        }
+
+        function reconcileConsoleState() {
+            if (!currentDispatchState.success.size && !currentDispatchState.failed.size) return;
+            PLATFORMS.forEach(p => {
+                const card = el('card-' + p.id);
+                if (!card) return;
+                let badge = card.querySelector('.dispatch-badge');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'dispatch-badge';
+                    badge.style.cssText = 'position:absolute; bottom:6px; right:8px; font-size:10px; padding:1px 6px; border-radius:4px; font-weight:600;';
+                    card.style.position = 'relative';
+                    card.appendChild(badge);
+                }
+                if (currentDispatchState.success.has(p.id)) {
+                    card.classList.remove('selected');
+                    badge.style.background = 'rgba(7, 193, 96, 0.2)';
+                    badge.style.color = 'var(--success)';
+                    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> 本次已发';
+                } else if (currentDispatchState.failed.has(p.id)) {
+                    card.classList.add('selected');
+                    badge.style.background = 'rgba(230, 70, 70, 0.2)';
+                    badge.style.color = 'var(--danger)';
+                    badge.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> 待重试';
+                }
+            });
+            updateCounts();
         }
 
         el('btn-publish').addEventListener('click', publish);
