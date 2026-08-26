@@ -97,9 +97,9 @@
         .engine-dot.off::before { background: var(--warn); }
 
         /* ── 布局 ── */
-        .shell { max-width: 1060px; margin: 0 auto; padding: 32px 24px 60px; }
+        .shell { max-width: 1280px; margin: 0 auto; padding: 32px 24px 60px; }
 
-        .page-head { margin-bottom: 28px; }
+        .page-head { margin-bottom: 24px; }
         .page-head h1 {
             font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', serif;
             font-size: 30px;
@@ -109,8 +109,8 @@
         }
         .page-head p { color: var(--muted); font-size: 13.5px; }
 
-        .workspace { display: grid; grid-template-columns: 1fr 400px; gap: 20px; align-items: start; }
-        @media (max-width: 940px) { .workspace { grid-template-columns: 1fr; } }
+        .workspace { display: grid; grid-template-columns: 440px 1fr; gap: 24px; align-items: start; }
+        @media (max-width: 1024px) { .workspace { grid-template-columns: 1fr; } }
 
         .panel {
             background: var(--surface);
@@ -775,14 +775,19 @@
                 card.className = 'pcard' + (p.disabled ? ' disabled' : '');
                 card.id = 'card-' + p.id;
                 card.onclick = () => { if (p.disabled) return; card.classList.toggle('selected'); updateCount(); };
+                
+                const actionBtn = p.disabled 
+                    ? '' 
+                    : `<button class="qr-btn labeled" id="qr-btn-${p.id}" onclick="launchQrLogin('${p.id}', event)" title="${p.api ? '配置 Key' : '扫码登录'}"><i class="fa-solid ${p.api ? 'fa-key' : 'fa-qrcode'}"></i><span id="qr-label-${p.id}">${p.api ? '配置' : '扫码'}</span></button>`;
+                
                 card.innerHTML = `
                     <div class="left">
-                        <div class="picon">${platformIcon(p)}</div>
-                        <span class="pname">${p.name}${p.beta ? '<span class="beta-tag">测试中</span>' : ''}${p.disabled ? '<span class="beta-tag off-tag">暂不支持</span>' : ''}</span>
+                        <div class="picon">${platformIcon(p, 18)}</div>
+                        <span class="pname" title="${p.name}">${p.name}${p.beta ? '<span class="beta-tag">测试</span>' : ''}${p.disabled ? '<span class="beta-tag off-tag">待API</span>' : ''}</span>
                     </div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <span class="pstatus" id="status-${p.id}">${p.disabled ? '待官方 API' : '…'}</span>
-                        ${p.disabled ? '' : (p.api ? `<button class="qr-btn labeled" onclick="launchQrLogin('${p.id}', event)" title="配置 API Key / 应用密码"><i class="fa-solid fa-key"></i><span>配置</span></button>` : `<button class="qr-btn labeled" onclick="launchQrLogin('${p.id}', event)" title="扫码登录 / Cookie 过期后点此重新扫码"><i class="fa-solid fa-qrcode"></i><span id="qr-label-${p.id}">扫码登录</span></button>`)}
+                    <div style="display:flex; align-items:center; gap:6px; flex:none;">
+                        <span class="pstatus" id="status-${p.id}">${p.disabled ? '待支持' : '…'}</span>
+                        ${actionBtn}
                         <span class="checkbox"><i class="fa-solid fa-check"></i></span>
                     </div>
                 `;
@@ -962,15 +967,19 @@
             try {
                 const res = await fetch(API + '/api/status');
                 const data = await res.json();
-                state = data.session_status || {};
+                state = data.session_status || data.sessions || {};
             } catch (e) { /* 忽略 */ }
 
             list.innerHTML = '';
             
-            // 精准靶向：默认只展示未登录/凭证失效的受损账号
-            const targetPlatforms = showAll 
-                ? PLATFORMS 
-                : PLATFORMS.filter(p => !state[p.id] || !state[p.id].logged_in);
+            // 靶向筛选：仅过滤非 API、非禁用的受损未登录账号
+            const damagedPlatforms = PLATFORMS.filter(p => {
+                if (p.disabled || p.api) return false;
+                const s = state[p.id] || {};
+                return !s.logged_in;
+            });
+
+            const targetPlatforms = showAll ? PLATFORMS : damagedPlatforms;
 
             if (!targetPlatforms.length) {
                 list.innerHTML = `
@@ -988,7 +997,7 @@
                 const hintHeader = document.createElement('div');
                 hintHeader.style.cssText = 'padding:6px 10px; margin-bottom:8px; font-size:12px; color:var(--accent-2); background:rgba(232, 137, 46, 0.1); border-radius:6px; display:flex; justify-content:space-between; align-items:center;';
                 hintHeader.innerHTML = `
-                    <span><i class="fa-solid fa-filter"></i> 智能过滤：仅展示待补录的 <strong>${targetPlatforms.length}</strong> 个账号</span>
+                    <span><i class="fa-solid fa-bullseye"></i> 靶向受损账号：列表精准仅展示待补录的 <strong>${targetPlatforms.length}</strong> 个账号</span>
                     <button class="btn text" style="font-size:11px; padding:0; color:var(--muted);" onclick="renderBatchAuthList(true)">显示全量 20 平台</button>
                 `;
                 list.appendChild(hintHeader);
@@ -1059,22 +1068,25 @@
             try {
                 const res = await fetch(API + '/api/status');
                 const data = await res.json();
-                const sessions = data.sessions || {};
+                const sessions = data.session_status || data.sessions || {};
                 let logged = 0, needCount = 0;
                 const stateMap = {};
                 PLATFORMS.forEach(p => {
                     const pill = el('status-' + p.id);
+                    const btn = el('qr-btn-' + p.id);
                     if (!pill) return;
                     const s = sessions[p.id] || {};
                     stateMap[p.id] = !!s.logged_in;
                     if (s.logged_in) {
-                        pill.className = 'pstatus logged'; pill.textContent = '已登录'; logged++;
+                        pill.className = 'pstatus logged'; pill.innerHTML = '<span style="color:var(--success);">🟢 已登录</span>'; logged++;
+                        if (btn) btn.style.display = 'none'; // 隐藏已登录卡片上的扫码按键，消除拥挤
                     } else {
-                        pill.className = 'pstatus need'; pill.textContent = '需扫码';
+                        pill.className = 'pstatus need'; pill.innerHTML = p.api ? '<span style="color:var(--warn);">🔑 需Key</span>' : '<span style="color:var(--warn);">🟡 需扫码</span>';
                         if (!p.disabled && !p.api) needCount++;
+                        if (btn) btn.style.display = 'inline-flex';
                     }
                     const lab = el('qr-label-' + p.id);
-                    if (lab) lab.textContent = s.logged_in ? '重新扫码/刷新' : '扫码登录';
+                    if (lab) lab.textContent = s.logged_in ? '刷新' : '扫码';
                 });
                 const lc = el('login-count');
                 if (lc) lc.textContent = '已登录 ' + logged + '/' + PLATFORMS.length;
