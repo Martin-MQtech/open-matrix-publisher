@@ -259,6 +259,7 @@ def get_status():
         "status": "running",
         "credentials": creds,
         "sessions": session_status,
+        "session_status": session_status,
         "last_dispatch": history.get("last_dispatch"),
         "published_map": published_map
     })

@@ -1419,17 +1419,19 @@
 
         async function renderPreflightList() {
             const list = el('preflight-list');
-            list.innerHTML = '<div style="padding:10px; color:var(--muted); text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> 正在检测勾选账号 Session…</div>';
+            if (!list || !list.children.length) {
+                if (list) list.innerHTML = '<div style="padding:10px; color:var(--muted); text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> 正在检测勾选账号 Session…</div>';
+            }
             
             let state = {};
             try {
                 const res = await fetch(API + '/api/status');
                 const data = await res.json();
-                state = data.session_status || {};
+                state = data.session_status || data.sessions || {};
             } catch (e) { /* 忽略 */ }
             
             const sel = getSelected();
-            list.innerHTML = '';
+            if (list) list.innerHTML = '';
             let hasUnlogged = false;
             
             sel.forEach(p => {

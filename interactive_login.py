@@ -269,7 +269,28 @@ async def login_platform(platform_key):
             try:
                 # 检查窗口是否被用户手动全部关闭
                 if len(context.pages) == 0:
-                    print("⚠️ 浏览器窗口已被用户手动关闭")
+                    print("⚠️ 浏览器窗口已关闭，提取并保存已捕获凭据...")
+                    try:
+                        state = await context.storage_state()
+                        cookies = state.get("cookies", [])
+                        cookie_map = {c.get("name"): c.get("value", "") for c in cookies if len(c.get("value", "")) > 0}
+                        if any(k in cookie_map for k in info.get("auth_cookies", [])) or platform_key == "tencent":
+                            for target_dir in [SAU_COOKIES, LOCAL_COOKIES]:
+                                os.makedirs(target_dir, exist_ok=True)
+                                for cf in info["cookie_files"]:
+                                    target_path = os.path.join(target_dir, cf)
+                                    with open(target_path, "w", encoding="utf-8") as f:
+                                        json.dump(state, f, indent=2, ensure_ascii=False)
+                                    print(f"✅ 窗口关闭时自动追溯保存至: {target_path}")
+                            if platform_key == "tencent":
+                                tdir = os.path.join(SAU_ROOT, "cookies", "tencent_uploader")
+                                os.makedirs(tdir, exist_ok=True)
+                                tpath = os.path.join(tdir, "default")
+                                with open(tpath, "w", encoding="utf-8") as f:
+                                    json.dump(state, f, indent=2, ensure_ascii=False)
+                                print(f"✅ 视频号 Cookie 已追溯保存至: {tpath}")
+                    except Exception as ex:
+                        print("窗口关闭追溯保存异常:", ex)
                     break
 
                 # 获取所有打开页面的 URL（支持 Google 登录弹窗等子页面）
@@ -295,54 +316,55 @@ async def login_platform(platform_key):
                     for u in active_urls
                 )
 
-                # 专属平台严格判定规则
+                # 专属平台精准登录成功判定规则
                 is_logged_in = False
                 
                 if platform_key in ["tiktok", "tk"]:
-                    # TikTok: 必须持有 sessionid_ss 或 sid_tt，且不能还在 Google/Apple OAuth 中间页
-                    has_tk_session = ("sessionid_ss" in cookie_map and len(cookie_map["sessionid_ss"]) > 10) or \
-                                     ("sid_tt" in cookie_map and len(cookie_map["sid_tt"]) > 10) or \
-                                     ("sessionid" in cookie_map and len(cookie_map["sessionid"]) > 10)
-                    is_logged_in = has_tk_session and (not in_oauth_page or "tiktok.com/@" in main_url or "tiktok.com/foryou" in main_url or "tiktok.com/upload" in main_url)
+                    has_tk_session = ("sessionid_ss" in cookie_map and len(cookie_map["sessionid_ss"]) > 5) or \
+                                     ("sid_tt" in cookie_map and len(cookie_map["sid_tt"]) > 5) or \
+                                     ("sessionid" in cookie_map and len(cookie_map["sessionid"]) > 5)
+                    is_logged_in = has_tk_session and (not in_oauth_page or "tiktok.com" in main_url)
 
                 elif platform_key == "zhihu":
-                    is_logged_in = "z_c0" in cookie_map and len(cookie_map["z_c0"]) > 10 and "signin" not in main_url.lower()
+                    is_logged_in = "z_c0" in cookie_map and len(cookie_map["z_c0"]) > 5
 
                 elif platform_key == "tencent":
-                    is_logged_in = "channels.weixin.qq.com/platform" in main_url
+                    # 视频号：只要进入 channels.weixin.qq.com 且包含 sessionid 或 wxuin 即视为扫码成功
+                    has_wx_token = any(k in cookie_map and len(str(cookie_map[k])) > 5 for k in ["sessionid", "wxuin", "pass_ticket", "session_key"])
+                    is_logged_in = "channels.weixin.qq.com" in main_url and (has_wx_token or "platform" in main_url or "post/create" in main_url)
 
                 elif platform_key in ["x", "twitter"]:
-                    is_logged_in = "auth_token" in cookie_map and len(cookie_map["auth_token"]) > 15 and "flow/login" not in main_url
+                    is_logged_in = "auth_token" in cookie_map and len(cookie_map["auth_token"]) > 10
 
                 elif platform_key == "facebook":
-                    is_logged_in = "c_user" in cookie_map and len(cookie_map["c_user"]) > 4 and "login" not in main_url.lower()
+                    is_logged_in = "c_user" in cookie_map and len(cookie_map["c_user"]) > 4
 
                 elif platform_key == "linkedin":
-                    is_logged_in = "li_at" in cookie_map and len(cookie_map["li_at"]) > 15 and "login" not in main_url.lower()
+                    is_logged_in = "li_at" in cookie_map and len(cookie_map["li_at"]) > 10
 
                 elif platform_key == "instagram":
-                    is_logged_in = "sessionid" in cookie_map and len(cookie_map["sessionid"]) > 10 and "accounts/login" not in main_url.lower()
+                    is_logged_in = "sessionid" in cookie_map and len(cookie_map["sessionid"]) > 5
 
                 elif platform_key == "youtube":
-                    is_logged_in = has_auth_token and "studio.youtube.com" in main_url and "accounts.google" not in main_url
+                    is_logged_in = has_auth_token or ("studio.youtube.com" in main_url and "accounts.google" not in main_url)
 
                 elif platform_key == "bilibili":
-                    is_logged_in = "SESSDATA" in cookie_map and len(cookie_map["SESSDATA"]) > 10 and "passport" not in main_url.lower()
+                    is_logged_in = "SESSDATA" in cookie_map and len(cookie_map["SESSDATA"]) > 5
 
                 elif platform_key == "weibo":
-                    is_logged_in = "SUB" in cookie_map and len(cookie_map["SUB"]) > 15 and "login" not in main_url.lower()
+                    is_logged_in = "SUB" in cookie_map and len(cookie_map["SUB"]) > 5
 
                 elif platform_key == "toutiao":
-                    is_logged_in = ("LOGIN_A" in cookie_map or "sessionid" in cookie_map) and "profile_v4" in main_url
+                    is_logged_in = ("LOGIN_A" in cookie_map or "sessionid" in cookie_map or "toutiao" in main_url) and "login" not in main_url.lower()
 
                 elif platform_key == "xiaohongshu":
-                    is_logged_in = "web_session" in cookie_map and len(cookie_map["web_session"]) > 10 and "login" not in main_url.lower()
+                    is_logged_in = "web_session" in cookie_map and len(cookie_map["web_session"]) > 5
 
                 elif platform_key == "kuaishou":
-                    is_logged_in = "kuaishou.server.web_st" in cookie_map and len(cookie_map["kuaishou.server.web_st"]) > 10
+                    is_logged_in = "kuaishou.server.web_st" in cookie_map and len(cookie_map["kuaishou.server.web_st"]) > 5
 
                 elif platform_key == "douyin":
-                    is_logged_in = ("sessionid_ss" in cookie_map or "sessionid" in cookie_map) and "login" not in main_url.lower()
+                    is_logged_in = ("sessionid_ss" in cookie_map or "sessionid" in cookie_map) and len(str(cookie_map.get("sessionid_ss", cookie_map.get("sessionid", "")))) > 5
 
                 else:
                     is_logged_in = has_auth_token and not in_oauth_page
@@ -350,7 +372,7 @@ async def login_platform(platform_key):
                 if is_logged_in:
                     print(f"🎉 检测到【{info['name']}】已成功完成登录！捕获到核心会话凭据。")
                     print(f"📍 当前最终页面: {main_url}")
-                    await asyncio.sleep(3)  # 等待所有 Cookie 充分写盘
+                    await asyncio.sleep(1)  # 快速写盘
                     state = await context.storage_state()
 
                     # 保存 Cookie 到 SAU 和 本地 两个目录的所有目标文件名
@@ -362,9 +384,7 @@ async def login_platform(platform_key):
                                 json.dump(state, f, indent=2, ensure_ascii=False)
                             print(f"✅ Cookie 已安全持久化保存至: {target_path}")
 
-                    # 视频号特例：SAU 上传器实际读取 cookies/tencent_uploader/default，
-                    # 而默认 cookie_files 只写 tencent_default.json，故此处额外同步一份，
-                    # 否则登录成功但上传器仍报 cookie 失效。
+                    # 视频号特例：同步保存至 cookies/tencent_uploader/default
                     if platform_key == "tencent":
                         tdir = os.path.join(SAU_ROOT, "cookies", "tencent_uploader")
                         os.makedirs(tdir, exist_ok=True)
