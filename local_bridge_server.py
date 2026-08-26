@@ -8,6 +8,17 @@ from url_downloader import download_remote_video, cleanup_temp_video, is_remote_
 
 app = Flask(__name__)
 
+def _read_app_version():
+    """版本号单一来源：项目根 VERSION 文件（打包态在 _MEIPASS 内）。"""
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    try:
+        with open(os.path.join(base, "VERSION"), "r", encoding="utf-8") as f:
+            return f.read().strip() or "0.0.0"
+    except Exception:
+        return "0.0.0"
+
+APP_VERSION = _read_app_version()
+
 # Serve cover images statically (simplest approach: dedicated route)
 @app.route("/covers/<filename>")
 def serve_cover(filename):
@@ -96,15 +107,17 @@ def load_history():
     return {"records": [], "last_dispatch": {}}
 
 def save_history(history_data):
-    """Atomic write with lock to prevent concurrent threads from clobbering."""
+    """Atomic write with lock to prevent concurrent threads from clobbering. Limit to latest 10 records."""
     with HISTORY_FILE_LOCK:
+        if isinstance(history_data.get("records"), list) and len(history_data["records"]) > 10:
+            history_data["records"] = history_data["records"][-10:]
         tmp = HISTORY_FILE + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(history_data, f, indent=2, ensure_ascii=False)
         os.replace(tmp, HISTORY_FILE)
 
 def record_history_result(dispatch_id, platform_id, title, video_file, success, pub_id="", link="", finish_time=""):
-    """Thread-safe: load -> update (find-or-create session record) -> save."""
+    """Thread-safe: load -> update (find-or-create session record) -> save (keep latest 10)."""
     with HISTORY_FILE_LOCK:
         hist = load_history()  # re-read under lock to get fresh state
         matching = None
@@ -127,6 +140,11 @@ def record_history_result(dispatch_id, platform_id, title, video_file, success, 
                 "pub_id": pub_id, "link": link, "finish_time": finish_time,
             }
         matching["last_updated"] = finish_time
+        
+        # 始终锁定保留最近 10 条记录
+        if len(hist.get("records", [])) > 10:
+            hist["records"] = hist["records"][-10:]
+
         hist["last_dispatch"] = {
             "timestamp": finish_time,
             "dispatch_id": dispatch_id,
@@ -176,6 +194,7 @@ def health():
     return jsonify({
         "status": "ok",
         "service": "open-matrix-publisher",
+        "version": APP_VERSION,
         "sau_available": sau_available,
         "sau_root": SAU_ROOT,
         "cookie_count": cookie_count,
@@ -213,9 +232,18 @@ def cancel_task():
     })
     return jsonify({"status": "cancelled", "killed": killed})
 
+import re as _re
+
+# CORS 白名单：本服务暴露的是分发引擎与平台 Cookie，禁止任意网页跨域调用。
+# 仅放行本机来源（http(s)://localhost:* / http(s)://127.0.0.1:* / file://）。
+_ALLOWED_ORIGIN_RE = _re.compile(r"^(https?://(localhost|127\.0\.0\.1)(:\d+)?|file://)$")
+
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
+    origin = request.headers.get("Origin", "")
+    if origin and _ALLOWED_ORIGIN_RE.match(origin):
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Vary"] = "Origin"
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
@@ -702,5 +730,9 @@ def serve_static(filename):
     abort(404)
 
 if __name__ == "__main__":
-    print("🚀 启动 Open Matrix Publisher Web 控制台: http://localhost:5001")
-    app.run(host="0.0.0.0", port=5001, debug=False)
+    # 安全默认：仅绑定回环地址，避免把带平台 Cookie 的分发引擎暴露到局域网。
+    # 确需局域网访问时显式设置 OMP_HOST=0.0.0.0；端口用 OMP_PORT 覆盖（默认 5001）。
+    host = os.environ.get("OMP_HOST", "127.0.0.1")
+    port = int(os.environ.get("OMP_PORT", "5001"))
+    print(f"🚀 启动 Open Matrix Publisher Web 控制台: http://localhost:{port}")
+    app.run(host=host, port=port, debug=False)
