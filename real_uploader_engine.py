@@ -141,17 +141,50 @@ def check_profile_logged_in(platform_id):
         except Exception:
             return False, "🔑 需配置 API Key"
 
-    # 特殊平台深度 Cookie Token 校验
-    if platform_id == "zhihu":
-        try:
-            with open(found_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            cookies = data.get("cookies", [])
-            has_zc0 = any(c.get("name") == "z_c0" for c in cookies)
-            if not has_zc0:
-                return False, "🔑 需扫码登录 (缺少 z_c0 密钥)"
-        except Exception:
+    # 深度 Cookie Token 完整性与过期与否全面排查（实事求是，绝不假冒已登录）
+    try:
+        with open(found_file, "r", encoding="utf-8") as f:
+            content = json.load(f)
+        cookies = content.get("cookies", []) if isinstance(content, dict) else []
+        if not cookies:
             return False, "🔑 需扫码登录"
+            
+        now = time.time()
+        # 过滤已过期的 Cookie (expires <= 0 视为 session cookie，或未过期)
+        valid_cookies = [c for c in cookies if c.get("expires", 0) <= 0 or c.get("expires", 0) > now]
+        cookie_map = {c.get("name"): c.get("value") for c in valid_cookies if c.get("name")}
+        
+        if platform_id == "tencent":
+            has_token = any(k in cookie_map and len(str(cookie_map[k])) > 5 for k in ["sessionid", "pass_ticket", "wxuin", "session_key"])
+            if not has_token:
+                return False, "🔑 Cookie 已失效 (需扫码)"
+                
+        elif platform_id == "douyin":
+            has_token = any(k in cookie_map and len(str(cookie_map[k])) > 5 for k in ["sessionid_ss", "sessionid"])
+            if not has_token:
+                return False, "🔑 Cookie 已失效 (需扫码)"
+                
+        elif platform_id == "kuaishou":
+            if "kuaishou.server.web_st" not in cookie_map:
+                return False, "🔑 Cookie 已失效 (需扫码)"
+                
+        elif platform_id == "xiaohongshu":
+            if "web_session" not in cookie_map:
+                return False, "🔑 Cookie 已失效 (需扫码)"
+                
+        elif platform_id == "bilibili":
+            if "SESSDATA" not in cookie_map:
+                return False, "🔑 Cookie 已失效 (需扫码)"
+                
+        elif platform_id == "weibo":
+            if "SUB" not in cookie_map:
+                return False, "🔑 Cookie 已失效 (需扫码)"
+                
+        elif platform_id == "zhihu":
+            if "z_c0" not in cookie_map:
+                return False, "🔑 Cookie 已失效 (需扫码)"
+    except Exception:
+        return False, "🔑 凭证读取失败"
 
     return True, "✅ 已登录"
 
