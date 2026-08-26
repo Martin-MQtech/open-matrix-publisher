@@ -480,6 +480,17 @@
                         <span class="step-hint"><span id="sel-count">已选 0 个</span> · <span id="login-count">已登录 -/<span id="login-total"></span></span></span>
                     </div>
 
+                    <!-- 🚀 品牌主橙色核心发布 CTA 区域（提升至顶部焦点位置，选完即发无须滚屏） -->
+                    <div class="publish-box" style="margin-top:0; margin-bottom:16px;">
+                        <button class="btn primary block" id="btn-publish" style="padding:13px 20px; font-size:15px; font-weight:700; letter-spacing:0.02em; box-shadow:0 4px 20px rgba(232, 137, 46, 0.35);">
+                            <i class="fa-solid fa-paper-plane" style="font-size:16px;"></i> <span id="btn-publish-text">一键静默分发</span>
+                        </button>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:11.5px; color:var(--faint);">
+                            <span><i class="fa-solid fa-shield-halved" style="color:var(--success);"></i> 100% 纯无头后台静默分发，绝不弹窗打扰</span>
+                            <span>发布后可到创作者后台确认</span>
+                        </div>
+                    </div>
+
                     <!-- 控制工具栏：语义明确划分为【账号维护】与【快速勾选】组合 -->
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; background:var(--surface-2); padding:6px 10px; border-radius:10px; border:1px solid var(--line-2);">
                         <!-- 左组：凭证补录与维护 -->
@@ -500,10 +511,6 @@
                         </div>
                     </div>
 
-                    <div style="font-size:11.5px; color:var(--faint); margin-bottom:12px; line-height:1.5; background:rgba(7, 193, 96, 0.06); padding:6px 10px; border-radius:6px; border:1px solid rgba(7, 193, 96, 0.2);">
-                        <i class="fa-solid fa-shield-halved" style="color:var(--success);"></i> <strong>静默承诺：</strong> 发布开始后 100% 纯无头后台运行，绝不在您工作中途弹窗打扰。请在开始前点击【集中补录账号】完成授权。
-                    </div>
-
                     <div class="platform-group">
                         <span><i class="fa-solid fa-flag" style="color:var(--accent-2);"></i> 国内 · <span id="cn-count"></span></span>
                         <span class="toggle" onclick="toggleCategory('cn')">全选 / 清空</span>
@@ -516,11 +523,6 @@
                     </div>
                     <div class="platform-grid" id="global-grid"></div>
                 </section>
-
-                <div class="publish-box">
-                    <button class="btn primary block" id="btn-publish"><i class="fa-solid fa-paper-plane"></i> <span id="btn-publish-text">发布</span></button>
-                    <p class="note">发布后请到各平台创作者后台人工确认审核状态</p>
-                </div>
             </div>
         </div>
 
