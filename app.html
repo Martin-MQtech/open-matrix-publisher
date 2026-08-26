@@ -97,35 +97,35 @@
         .engine-dot.off::before { background: var(--warn); }
 
         /* ── 布局 ── */
-        .shell { max-width: 1280px; margin: 0 auto; padding: 32px 24px 60px; }
+        .shell { max-width: 1080px; margin: 0 auto; padding: 28px 20px 50px; }
 
-        .page-head { margin-bottom: 24px; }
+        .page-head { margin-bottom: 20px; }
         .page-head h1 {
             font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', serif;
-            font-size: 30px;
+            font-size: 28px;
             font-weight: 600;
             letter-spacing: -0.01em;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
-        .page-head p { color: var(--muted); font-size: 13.5px; }
+        .page-head p { color: var(--muted); font-size: 13px; }
 
-        .workspace { display: grid; grid-template-columns: 440px 1fr; gap: 24px; align-items: start; }
-        @media (max-width: 1024px) { .workspace { grid-template-columns: 1fr; } }
+        .workspace { display: grid; grid-template-columns: 460px 1fr; gap: 20px; align-items: start; }
+        @media (max-width: 960px) { .workspace { grid-template-columns: 1fr; } }
 
         .panel {
             background: var(--surface);
             border: 1px solid var(--line);
             border-radius: 14px;
-            padding: 20px;
+            padding: 18px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 12px 32px rgba(0,0,0,0.14);
         }
-        .col-main { display: flex; flex-direction: column; gap: 20px; }
+        .col-main { display: flex; flex-direction: column; gap: 18px; }
 
         .step-head {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             font-size: 14px;
             font-weight: 600;
         }
