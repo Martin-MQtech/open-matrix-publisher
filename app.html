@@ -389,6 +389,7 @@
             </div>
         </div>
         <div class="topbar-right">
+            <button class="btn text" style="color:var(--accent-2); font-size:12.5px; padding:4px 10px; background:var(--surface-2); border:1px solid var(--line-2);" onclick="openKanbanModal()"><i class="fa-solid fa-table-columns"></i> 账号健康看板</button>
             <span class="engine-dot" id="engine-status">检测引擎中…</span>
             <a class="link" href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
             <a class="link" href="https://www.emuqi.com" target="_blank"><i class="fa-solid fa-flask"></i> 木齐科技</a>
@@ -580,6 +581,69 @@
             <div id="batch-auth-list" style="max-height:300px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:14px; background:rgba(0,0,0,0.2);"></div>
             <div class="actions" style="display:flex; justify-content:flex-end; gap:10px;">
                 <button class="btn primary" onclick="hideBatchAuthModal()"><i class="fa-solid fa-check"></i> 完成补录并返回</button>
+    <!-- 矩阵账号健康度看板弹窗 -->
+    <div class="overlay" id="kanban-overlay">
+        <div class="modal" style="max-width:860px; width:92vw; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h3 style="margin:0;"><i class="fa-solid fa-table-columns" style="color:var(--accent-2);"></i> 矩阵账号凭证健康看板</h3>
+                <button class="icon-btn" onclick="hideKanbanModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <p style="font-size:12.5px; color:var(--muted); margin-bottom:14px; line-height:1.5;">
+                直观掌控所有矩阵账号凭证状态。您可以给予自己完全选择的权利：<strong>已就绪直接发</strong>，<strong>受损账号可选择性【扫码补录】或点击【忽略跳过】（不补不发）</strong>。
+            </p>
+
+            <!-- 统计 Counter Bar -->
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:16px;">
+                <div style="background:var(--surface-2); padding:10px 14px; border-radius:8px; border:1px solid rgba(7, 193, 96, 0.3);">
+                    <div style="font-size:11px; color:var(--muted);">🟢 凭证就绪 (无需弹窗·纯无头)</div>
+                    <div style="font-size:20px; font-weight:700; color:var(--success);" id="kanban-ready-count">0</div>
+                </div>
+                <div style="background:var(--surface-2); padding:10px 14px; border-radius:8px; border:1px solid rgba(232, 137, 46, 0.3);">
+                    <div style="font-size:11px; color:var(--muted);">🟡 需补录/已失效 (可选择补或忽略)</div>
+                    <div style="font-size:20px; font-weight:700; color:var(--warn);" id="kanban-need-count">0</div>
+                </div>
+                <div style="background:var(--surface-2); padding:10px 14px; border-radius:8px; border:1px solid var(--line);">
+                    <div style="font-size:11px; color:var(--muted);">⚪️ 选项/API拓展平台</div>
+                    <div style="font-size:20px; font-weight:700; color:var(--muted);" id="kanban-opt-count">0</div>
+                </div>
+            </div>
+
+            <!-- 三栏 Kanban Columns -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:14px; max-height:380px; overflow-y:auto; padding-right:4px;">
+                <!-- 栏1: 就绪账号 -->
+                <div style="background:rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:10px; padding:12px;">
+                    <div style="font-weight:600; font-size:13px; margin-bottom:10px; color:var(--success);">
+                        🟢 凭证有效 (静默无头发)
+                    </div>
+                    <div id="kanban-col-ready" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+
+                <!-- 栏2: 受损/需补录账号 (给予自由抉择) -->
+                <div style="background:rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:10px; padding:12px;">
+                    <div style="font-weight:600; font-size:13px; margin-bottom:10px; color:var(--warn); display:flex; justify-content:space-between; align-items:center;">
+                        <span>🟡 凭证失效 (选择补录/跳过)</span>
+                    </div>
+                    <div id="kanban-col-need" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+
+                <!-- 栏3: 扩展与API账号 -->
+                <div style="background:rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:10px; padding:12px;">
+                    <div style="font-weight:600; font-size:13px; margin-bottom:10px; color:var(--muted);">
+                        ⚪️ API/拓展平台
+                    </div>
+                    <div id="kanban-col-opt" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+            </div>
+
+            <div class="actions" style="margin-top:16px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:12px; color:var(--muted);">
+                    提示：在此给不打算使用的失效平台点【忽略跳过】，可隐藏干扰并同步主界面。
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" onclick="hideKanbanModal()">关闭</button>
+                    <button class="btn primary" onclick="applyKanbanPlan()"><i class="fa-solid fa-check-double"></i> 将此看板配置同步至控制台</button>
+                </div>
             </div>
         </div>
     </div>
@@ -743,6 +807,123 @@
                 if (card) card.classList.remove('selected');
             });
             updateCount();
+        }
+
+        /* ── 矩阵账号凭证健康看板 ── */
+        let kanbanPlanState = { ignored: new Set() };
+
+        async function openKanbanModal() {
+            el('kanban-overlay').classList.add('show');
+            await renderKanbanBoard();
+        }
+
+        function hideKanbanModal() {
+            el('kanban-overlay').classList.remove('show');
+        }
+
+        async function renderKanbanBoard() {
+            let state = {};
+            try {
+                const res = await fetch(API + '/api/status');
+                const data = await res.json();
+                state = data.session_status || {};
+            } catch (e) { /* 忽略 */ }
+
+            const colReady = el('kanban-col-ready');
+            const colNeed = el('kanban-col-need');
+            const colOpt = el('kanban-col-opt');
+            if (!colReady || !colNeed || !colOpt) return;
+            
+            colReady.innerHTML = '';
+            colNeed.innerHTML = '';
+            colOpt.innerHTML = '';
+
+            let readyCount = 0, needCount = 0, optCount = 0;
+
+            PLATFORMS.forEach(p => {
+                const info = state[p.id] || { logged_in: false, status_text: '未授权' };
+                const isOk = info.logged_in;
+                const isIgnored = kanbanPlanState.ignored.has(p.id);
+
+                const card = document.createElement('div');
+                card.style.cssText = 'background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12.5px; display:flex; justify-content:space-between; align-items:center;';
+
+                if (p.disabled || p.api) {
+                    optCount++;
+                    card.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            ${platformIcon(p, 14)} <span>${p.name}</span>
+                        </div>
+                        <span style="font-size:11px; color:var(--muted);">${p.disabled ? '待官方 API' : '需 API Key'}</span>
+                    `;
+                    colOpt.appendChild(card);
+                } else if (isOk) {
+                    readyCount++;
+                    card.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            ${platformIcon(p, 14)} <strong>${p.name}</strong>
+                        </div>
+                        <span style="color:var(--success); font-size:11px; font-weight:600;"><i class="fa-solid fa-circle-check"></i> 就绪</span>
+                    `;
+                    colReady.appendChild(card);
+                } else {
+                    needCount++;
+                    card.style.borderColor = isIgnored ? 'var(--line)' : 'rgba(232, 137, 46, 0.4)';
+                    card.style.opacity = isIgnored ? '0.45' : '1';
+                    
+                    const action = isIgnored
+                        ? `<button class="btn" style="padding:2px 6px; font-size:11px;" onclick="unignoreKanbanPlatform('${p.id}')">恢复</button>`
+                        : `<button class="btn accent" style="padding:2px 6px; font-size:11px;" onclick="batchAuthLogin('${p.id}')"><i class="fa-solid fa-qrcode"></i> 补录</button>
+                           <button class="btn text" style="padding:2px 4px; font-size:11px; color:var(--muted);" onclick="ignoreKanbanPlatform('${p.id}')" title="跳过此平台，本次不补也不发">忽略</button>`;
+                    
+                    card.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            ${platformIcon(p, 14)} <span style="${isIgnored ? 'text-decoration:line-through; color:var(--muted);' : ''}">${p.name}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            ${action}
+                        </div>
+                    `;
+                    colNeed.appendChild(card);
+                }
+            });
+
+            el('kanban-ready-count').textContent = readyCount;
+            el('kanban-need-count').textContent = needCount;
+            el('kanban-opt-count').textContent = optCount;
+        }
+
+        function ignoreKanbanPlatform(platformId) {
+            kanbanPlanState.ignored.add(platformId);
+            renderKanbanBoard();
+        }
+
+        function unignoreKanbanPlatform(platformId) {
+            kanbanPlanState.ignored.delete(platformId);
+            renderKanbanBoard();
+        }
+
+        function applyKanbanPlan() {
+            fetch(API + '/api/status').then(r => r.json()).then(data => {
+                const state = data.session_status || {};
+                PLATFORMS.forEach(p => {
+                    const card = el('card-' + p.id);
+                    if (!card) return;
+                    const isOk = state[p.id] && state[p.id].logged_in;
+                    const isIgnored = kanbanPlanState.ignored.has(p.id);
+                    
+                    if (isIgnored) {
+                        card.classList.remove('selected');
+                        card.style.opacity = '0.35';
+                    } else {
+                        card.style.opacity = '1';
+                        if (isOk) card.classList.add('selected');
+                        else card.classList.remove('selected');
+                    }
+                });
+                updateCount();
+                hideKanbanModal();
+            });
         }
 
         async function openBatchAuthModal() {
