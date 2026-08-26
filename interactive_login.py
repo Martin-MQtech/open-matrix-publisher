@@ -227,14 +227,26 @@ async def login_platform(platform_key):
     except ImportError:
         from playwright.async_api import async_playwright
 
+    chrome_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    exec_path = chrome_path if sys.platform == "darwin" and os.path.exists(chrome_path) else None
+
     async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=False,
-            args=[
+        launch_kwargs = {
+            "headless": False,
+            "args": [
                 "--disable-blink-features=AutomationControlled",
                 "--start-maximized"
             ]
-        )
+        }
+        if exec_path:
+            launch_kwargs["executable_path"] = exec_path
+
+        try:
+            browser = await p.chromium.launch(**launch_kwargs)
+        except Exception as launch_err:
+            if "executable_path" in launch_kwargs:
+                del launch_kwargs["executable_path"]
+            browser = await p.chromium.launch(**launch_kwargs)
         context = await browser.new_context(
             viewport={"width": 1400, "height": 900},
             user_agent=CHROME_UA

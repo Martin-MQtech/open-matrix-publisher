@@ -555,7 +555,7 @@
         <div class="modal" style="max-width:560px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
                 <h3 style="margin:0;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--accent);"></i> 正在分发…</h3>
-                <button class="icon-btn" onclick="hideProgress()" title="关闭（任务在后台继续）"><i class="fa-solid fa-xmark"></i></button>
+                <button class="btn text" onclick="hideProgress()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭返回</button>
             </div>
             <div id="progress-list"></div>
             <p class="note" style="text-align:left; margin-top:12px;">提示：可针对失败平台在弹窗内直接【扫码登录】与【重试】；关闭窗口后任务仍会在后台继续运行。</p>
@@ -573,7 +573,7 @@
         <div class="modal" style="max-width:540px; text-align:left;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <h3 style="margin:0;"><i class="fa-solid fa-user-shield" style="color:var(--accent-2);"></i> 集中授权与 Cookie 补录中心</h3>
-                <button class="icon-btn" onclick="hideBatchAuthModal()"><i class="fa-solid fa-xmark"></i></button>
+                <button class="btn text" onclick="hideBatchAuthModal()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭返回</button>
             </div>
             <p style="font-size:12.5px; color:var(--muted); margin-bottom:14px; line-height:1.5;">
                 集中在此完成各平台的扫码或 API Key 填报。授权保存后，发布时将 <strong>100% 纯无头静默运行</strong>，绝不干扰您的正常办公。
@@ -581,12 +581,16 @@
             <div id="batch-auth-list" style="max-height:300px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:14px; background:rgba(0,0,0,0.2);"></div>
             <div class="actions" style="display:flex; justify-content:flex-end; gap:10px;">
                 <button class="btn primary" onclick="hideBatchAuthModal()"><i class="fa-solid fa-check"></i> 完成补录并返回</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 矩阵账号健康度看板弹窗 -->
     <div class="overlay" id="kanban-overlay">
         <div class="modal" style="max-width:860px; width:92vw; text-align:left;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
                 <h3 style="margin:0;"><i class="fa-solid fa-table-columns" style="color:var(--accent-2);"></i> 矩阵账号凭证健康看板</h3>
-                <button class="icon-btn" onclick="hideKanbanModal()"><i class="fa-solid fa-xmark"></i></button>
+                <button class="btn text" onclick="hideKanbanModal()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭返回</button>
             </div>
             
             <p style="font-size:12.5px; color:var(--muted); margin-bottom:14px; line-height:1.5;">
@@ -1032,8 +1036,30 @@
             } catch (e) { /* 引擎离线时静默 */ }
         }
 
+        function showToastNotice(msg, type='info') {
+            let toast = el('toast-notify');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast-notify';
+                toast.style.cssText = 'position:fixed; top:20px; right:20px; z-index:999; padding:12px 18px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 6px 24px rgba(0,0,0,0.5); display:flex; align-items:center; gap:8px; transition:all 0.3s ease;';
+                document.body.appendChild(toast);
+            }
+            toast.style.background = type === 'success' ? '#1c2e1f' : '#2a2214';
+            toast.style.border = type === 'success' ? '1px solid var(--success)' : '1px solid var(--accent)';
+            toast.style.color = type === 'success' ? 'var(--success)' : 'var(--accent-2)';
+            toast.innerHTML = `<i class="fa-solid fa-bullhorn"></i> ${escapeHtml(msg)}`;
+            toast.style.display = 'flex';
+            toast.style.opacity = '1';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.style.display = 'none', 300);
+            }, 6000);
+        }
+
         async function launchQrLogin(platformId, event) {
             if (event) event.stopPropagation();
+            const lab = el('qr-label-' + platformId);
+            if (lab) lab.textContent = '⏳ 已打开 Chrome...';
             try {
                 const res = await fetch(API + '/api/launch-login', {
                     method: 'POST',
@@ -1046,20 +1072,22 @@
                     return;
                 }
                 if (data.status === 'unsupported') {
-                    alert(data.msg || '该平台暂不支持一键扫码登录。');
+                    showToastNotice(data.msg || '该平台暂不支持一键扫码登录。', 'warn');
                     return;
                 }
-                alert('已在桌面打开登录窗口，请完成扫码/登录。\n扫完后卡片状态会自动更新为「已登录」。');
+                showToastNotice('🚀 已为你唤起 Chrome 扫码窗口！请在弹出的系统 Chrome 中完成登录，完成后自动写盘。', 'info');
                 refreshSessionStatus();
                 // 登录窗口打开期间轮询状态（每 3s，最长约 3 分钟），扫码成功后自动变绿
                 let polls = 0;
                 const pollTimer = setInterval(async () => {
                     const state = await refreshSessionStatus();
-                    if (state && state[platformId]) clearInterval(pollTimer);
-                    else if (++polls > 60) clearInterval(pollTimer);
+                    if (state && state[platformId]) {
+                        clearInterval(pollTimer);
+                        showToastNotice('✅ 账号凭证已捕获，登录成功！', 'success');
+                    } else if (++polls > 60) clearInterval(pollTimer);
                 }, 3000);
             } catch (e) {
-                alert('无法连接本地引擎，请先运行 start_ui.sh。');
+                showToastNotice('无法连接本地引擎，请确认 start_ui.sh 已运行。', 'warn');
             }
         }
 
