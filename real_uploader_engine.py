@@ -204,7 +204,11 @@ def check_profile_logged_in(platform_id):
                 return False, "🔑 Cookie 已失效 (需扫码)"
                 
         elif platform_id == "kuaishou":
-            if "kuaishou.server.web_st" not in cookie_map:
+            # 与 interactive_login.py 判定对齐：快手改版后登录态主要落在 passToken
+            # （旧 web_st 不总是下发），任一信号成立即视为有效登录。
+            has_token = any(k in cookie_map and len(str(cookie_map[k])) > 5
+                            for k in ("kuaishou.server.web_st", "passToken", "kuaishou.server.web_ph"))
+            if not has_token:
                 return False, "🔑 Cookie 已失效 (需扫码)"
                 
         elif platform_id == "xiaohongshu":

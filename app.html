@@ -1622,7 +1622,8 @@
                 }
                 showToastNotice('🚀 已为你唤起 Chrome 扫码窗口！请在弹出的系统 Chrome 中完成登录，完成后自动写盘。', 'info');
                 refreshSessionStatus();
-                // 登录窗口打开期间轮询状态（每 2.5s，最长约 3 分钟），扫码成功后自动全网重刷变绿
+                // 登录窗口打开期间轮询状态（每 2.5s，最长 6 分钟 ≥ 后端登录脚本 5 分钟超时），
+                // 扫码成功后自动全网重刷变绿；此前 3 分钟上限会导致扫码稍慢的用户错过变绿时机
                 let polls = 0;
                 const pollTimer = setInterval(async () => {
                     const state = await refreshSessionStatus();
@@ -1640,7 +1641,7 @@
                         if (el('kanban-overlay') && el('kanban-overlay').classList.contains('show')) {
                             renderKanbanBoard();
                         }
-                    } else if (++polls > 70) clearInterval(pollTimer);
+                    } else if (++polls > 144) clearInterval(pollTimer); // 144 × 2.5s = 6 分钟
                 }, 2500);
             } catch (e) {
                 showToastNotice(_netErrorMsg(e), 'warn');
