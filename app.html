@@ -1043,7 +1043,10 @@
     </div>
 
     <script>
-        const API = 'http://localhost:5001';
+        // 同源相对路径：页面从 127.0.0.1:5001 加载就打 127.0.0.1，从 localhost 打 localhost。
+        // 千万不要写死 http://localhost:5001 —— 与 127.0.0.1 页面混用会变成跨域请求，
+        // 每个调用都要走 CORS 预检，且 localhost/127.0.0.1 代理规则不同时会间歇性 Failed to fetch。
+        const API = '';
 
         const PLATFORMS = [
             { id: "tencent",    name: "视频号",  cat: "cn",     color: "#07c160", mono: "视" },
@@ -1640,7 +1643,7 @@
                     } else if (++polls > 70) clearInterval(pollTimer);
                 }, 2500);
             } catch (e) {
-                showToastNotice('无法连接本地引擎，请确认 start_ui.sh 已运行。', 'warn');
+                showToastNotice(_netErrorMsg(e), 'warn');
             }
         }
 
@@ -2229,12 +2232,32 @@
             el('batch-login-overlay').style.display = 'none';
             if (_batchPollTimer) { clearInterval(_batchPollTimer); _batchPollTimer = null; }
         }
+        // 带自动重试的 fetch：偶发闪断/扩展拦截时自动再试一次，降低随机失败
+        async function fetchWithRetry(url, opts = {}, retries = 1) {
+            try {
+                return await fetch(url, opts);
+            } catch (e) {
+                if (retries <= 0) throw e;
+                await new Promise(r => setTimeout(r, 1500));
+                return fetchWithRetry(url, opts, retries - 1);
+            }
+        }
+
+        // 网络错误的人类可诊断提示（Failed to fetch 常见三类原因）
+        function _netErrorMsg(e) {
+            const m = (e && e.message) || String(e);
+            if (/failed to fetch/i.test(m)) {
+                return '请求失败：本地引擎无响应。常见原因：\n① 本地服务未运行（重启 start_ui.sh 或桌面客户端）\n② 浏览器扩展拦截（uBlock/uMatrix 等请放行 127.0.0.1）\n③ 刚好撞上服务重启的几秒空窗（已自动重试过一次）';
+            }
+            return '请求失败：' + m;
+        }
+
         async function startBatchLogin() {
             const checked = Array.from(el('batch-login-list').querySelectorAll('input[type=checkbox]:checked'));
             const pids = checked.map(c => c.dataset.pid);
             if (!pids.length) { showToastNotice('请至少勾选一个平台', 'warn'); return; }
             try {
-                const res = await fetch(API + '/api/launch-batch-login', {
+                const res = await fetchWithRetry(API + '/api/launch-batch-login', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ platform_ids: pids })
                 });
@@ -2245,14 +2268,14 @@
                     el('batch-login-start').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 进行中…';
                     el('batch-login-progress').style.display = 'block';
                     el('batch-login-progress').textContent = `已开始 ${data.count} 个平台，按顺序扫码…`;
-                    showToastNotice(`已开始批量扫码 ${data.count} 个平台`, 'info');
+                    showToastNotice(`已开始批量扫码 ${data.count} 个平台，浏览器窗口将逐个弹出`, 'info');
                     if (_batchPollTimer) clearInterval(_batchPollTimer);
                     _batchPollTimer = setInterval(pollBatchLogin, 2500);
                 } else {
                     showToastNotice('启动失败：' + (data.error || res.status), 'error');
                 }
             } catch (e) {
-                showToastNotice('请求失败：' + (e.message || e), 'error');
+                showToastNotice(_netErrorMsg(e), 'error');
             }
         }
         async function pollBatchLogin() {
