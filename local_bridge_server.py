@@ -380,7 +380,7 @@ def bootstrap_status():
                 except Exception:
                     pass
     # 仅提示，不阻塞 ready
-    logged_domestic = sum(1 for k in platform_login if k in {"douyin", "tencent", "bilibili", "kuaishou", "xhs", "weibo", "toutiao", "zhihu", "baijiahao", "fanqie"})
+    logged_domestic = sum(1 for k in platform_login if k in {"douyin", "tencent", "bilibili", "kuaishou", "xhs", "weibo", "toutiao", "zhihu", "baijiahao", "haokan"})
     logged_intl = sum(1 for k in platform_login if k in {"x", "twitter", "linkedin", "instagram", "facebook", "tk", "tiktok"})
     checks.append({
         "id": "platform_coverage",
@@ -601,7 +601,7 @@ def get_status():
     # ~/.config/codex_video_dispatch/ 目录，对登录检测毫无作用。纯读文件即可。
     creds = load_credentials()
     session_status = {}
-    all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "baijiahao", "fanqie", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok", "devto", "wordpress", "telegram", "pinterest"]
+    all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "baijiahao", "haokan", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok", "devto", "wordpress", "telegram", "pinterest"]
     
     for pid in all_platforms:
         is_logged, msg = check_profile_logged_in(pid)
@@ -715,7 +715,7 @@ def launch_login():
     platform_id = data.get("platform_id", "zhihu")
     plat_info = LOGIN_PLATFORMS.get(platform_id, {})
     if not plat_info:
-        # 未接入一键扫码登录的平台（如百家号/番茄）：如实告知，不启动错误流程
+        # 未接入一键扫码登录的平台（如百家号/好看视频）：如实告知，不启动错误流程
         return jsonify({
             "status": "unsupported",
             "platform_id": platform_id,

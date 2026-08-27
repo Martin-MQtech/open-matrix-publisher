@@ -25,7 +25,7 @@
 | 弹窗抢占前台、打扰日常工作 🤯 | **前台 0 干扰，凭证落盘，后台静默无感分发** |
 | 标题文字死板复制易重合 🤖 | **AI 动态适应各平台字数限制与话题格式** |
 
-目前支持 **抖音、快手、小红书、B站、微信视频号、知乎、微博、头条、百家号、番茄、YouTube、TikTok、X、LinkedIn、Instagram、Facebook、Dev.to、WordPress、Telegram、Pinterest** 共 20 个平台（国内 10 + 海外 10，其中 LinkedIn 暂不支持）！
+目前支持 **抖音、快手、小红书、B站、微信视频号、知乎、微博、头条、百家号、好看视频、YouTube、TikTok、X、LinkedIn、Instagram、Facebook、Dev.to、WordPress、Telegram、Pinterest** 共 20 个平台（国内 10 + 海外 10，其中 LinkedIn 暂不支持）！
 
 ---
 
@@ -55,7 +55,7 @@ Today, I’m thrilled to open-source **Open Matrix Publisher (全域矩阵)**—
 ---
 
 ### ⚡ Key Innovations:
-1. 🔓 **100% Free & Unlimited**: Native support for 16 domestic & global platforms (Douyin, Kuaishou, Xiaohongshu, Bilibili, WeChat Channels, Zhihu, Weibo, Toutiao, Baijiahao, Fanqie, YouTube, TikTok, X, LinkedIn, Instagram, Facebook).
+1. 🔓 **100% Free & Unlimited**: Native support for 16 domestic & global platforms (Douyin, Kuaishou, Xiaohongshu, Bilibili, WeChat Channels, Zhihu, Weibo, Toutiao, Baijiahao, Haokan, YouTube, TikTok, X, LinkedIn, Instagram, Facebook).
 2. 🛠️ **Reactive JS Event Setter**: Solves Vue/React controlled form button deadlocks at the DOM level.
 3. 🛡️ **Non-Intrusive Engine**: Log in once, and all uploads run silently in the background without stealing your screen focus.
 4. 🤖 **AI Copy Adapter**: Dynamic title & hashtag restructuring for platform character limits.
@@ -89,7 +89,7 @@ Say goodbye to expensive subscription traps & form button deadlocks!
 ---
 
 ### 2/4 💡 What makes it different?
-• **100% Free & Unlimited**: Supports 16 platforms (Douyin, Kuaishou, Xiaohongshu, Bilibili, WeChat Channels, Weibo, Toutiao, Zhihu, Baijiahao, Fanqie, YouTube, TikTok, X, LinkedIn, Instagram, Facebook)
+• **100% Free & Unlimited**: Supports 16 platforms (Douyin, Kuaishou, Xiaohongshu, Bilibili, WeChat Channels, Weibo, Toutiao, Zhihu, Baijiahao, Haokan, YouTube, TikTok, X, LinkedIn, Instagram, Facebook)
 • **Native DOM Event Injection**: Fixes React/Vue form lockups
 • **Zero-Interference**: Background silent execution
 • **AI Copy Adaptor**: Dynamic hashtag & limit matching

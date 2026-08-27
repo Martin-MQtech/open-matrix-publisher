@@ -20,7 +20,7 @@ ALL_SUPPORTED_PLATFORMS = [
     {"id": "zhihu", "name": "知乎", "region": "cn"},
     {"id": "xiaohongshu", "name": "小红书", "region": "cn"},
     {"id": "baijiahao", "name": "百家号", "region": "cn"},
-    {"id": "fanqie", "name": "番茄视频", "region": "cn"},
+    {"id": "haokan", "name": "好看视频", "region": "cn"},
     {"id": "youtube", "name": "YouTube", "region": "global"},
     {"id": "facebook", "name": "Facebook", "region": "global"},
     {"id": "x", "name": "X (Twitter)", "region": "global"},

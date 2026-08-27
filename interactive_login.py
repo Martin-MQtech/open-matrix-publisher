@@ -94,13 +94,14 @@ PLATFORMS = {
         "success_domains": ["baijiahao.baidu.com"],
         "exclude_keywords": ["login", "passport"]
     },
-    "fanqie": {
-        "name": "番茄视频",
-        "url": "https://pugc.yueduwuxian.com/fqvideo/login",
-        "cookie_files": ["fanqie_default.json"],
-        "auth_cookies": ["sessionid", "sessionid_ss"],
-        "success_domains": ["pugc.yueduwuxian.com"],
-        "exclude_keywords": ["login"]
+    "haokan": {
+        "name": "好看视频",
+        "url": "https://haokan.baidu.com/",
+        "cookie_files": ["haokan_default.json"],
+        # 百度账号体系：登录态主要在 BDUSS / BAIDUID；与百家号同源（baidu.com）
+        "auth_cookies": ["BDUSS", "BAIDUID", "BDUSS_BFESS", "BAIDU_SAFETS"],
+        "success_domains": ["haokan.baidu.com", "baijiahao.baidu.com"],
+        "exclude_keywords": ["login", "passport"]
     },
 
     # ── API-key 平台（免费官方 API，无浏览器登录，前端走「配置 Key」）──

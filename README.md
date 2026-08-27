@@ -49,7 +49,7 @@
 
 ### 🌟 Key Highlights:
 1. **20 Platform Matrix (国内 10 · 国际 10)**:
-   - **Domestic (🇨🇳)**: WeChat Channels (视频号), Douyin (抖音), Bilibili (B站), Kuaishou (快手), RED (小红书), Weibo (微博), Toutiao (今日头条), Zhihu (知乎), Baijiahao (百家号), Fanqie (番茄视频).
+   - **Domestic (🇨🇳)**: WeChat Channels (视频号), Douyin (抖音), Bilibili (B站), Kuaishou (快手), RED (小红书), Weibo (微博), Toutiao (今日头条), Zhihu (知乎), Baijiahao (百家号), Haokan (好看视频).
    - **Global (🌏)**: YouTube / Shorts, TikTok, Instagram Reels, Facebook Video, X (Twitter), LinkedIn, Dev.to, WordPress, Telegram, Pinterest, and expanding candidates (Google Blogger, Substack, Meta Threads, Rumble).
 2. **100% Local & Privacy-First**:
    - All cookies, tokens, and videos stay strictly on your local machine. No cloud tracking, zero data leaks.
@@ -89,7 +89,7 @@ Open Matrix Publisher 旨在打破国内外割裂的自媒体营销现状，为�
 | **今日头条** (Toutiao) | 自定义适配器 | 账号密码 / 扫码 | ✅ 已接入 (Ready) |
 | **知乎** (Zhihu) | 自定义适配器 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
 | **百家号** (Baijiahao) | 自定义适配器 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
-| **番茄视频** (Fanqie) | 自定义适配器 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
+| **好看视频** (Haokan) | 自定义适配器 | 扫码 (Scan QR) | ✅ 已接入 (Ready) |
 
 ### 🌏 海外与扩展阵列 (10 Global + Extended Candidate Platforms)
 

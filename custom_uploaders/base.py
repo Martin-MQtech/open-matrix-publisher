@@ -71,7 +71,8 @@ except ImportError:
         "kuaishou": ["kuaishou.server.web_st"],
         "tencent": ["sessionid", "wxuin"],
         "baijiahao": ["BDUSS", "BAIDUID"],
-        "fanqie": ["sessionid", "sessionid_ss"]
+        "fanqie": ["sessionid", "sessionid_ss"],   # 兼容老 cookie 文件
+        "haokan": ["BDUSS", "BAIDUID", "BDUSS_BFESS", "BAIDU_SAFETS"]
     }
 
 

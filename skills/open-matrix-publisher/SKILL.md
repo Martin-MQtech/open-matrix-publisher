@@ -1,6 +1,6 @@
 ---
 name: open-matrix-publisher
-description: Open Matrix Publisher (全域矩阵) 智能体发布技能。支持 16 大国内与海外主流视频与社交媒体平台（视频号、抖音、B站、快手、小红书、微博、头条、知乎、百家号、番茄、YouTube、TikTok、Instagram、Facebook、X、LinkedIn）一键静默并发发布与账号状态检测。
+description: Open Matrix Publisher (全域矩阵) 智能体发布技能。支持 16 大国内与海外主流视频与社交媒体平台（视频号、抖音、B站、快手、小红书、微博、头条、知乎、百家号、好看视频、YouTube、TikTok、Instagram、Facebook、X、LinkedIn）一键静默并发发布与账号状态检测。
 ---
 
 # Open Matrix Publisher 智能体分发技能

@@ -43,7 +43,7 @@ PLATFORM_DOMAINS = {
     "bilibili":   ["bilibili.com"],
     "kuaishou":   ["kuaishou.com"],
     "baijiahao":  ["baidu.com"],
-    "fanqie":     ["yueduwuxian.com", "fanqienovel.com"],
+    "haokan":     ["haokan.baidu.com", "baidu.com"],
 }
 
 # 输出目录：SAU + 本地持久目录

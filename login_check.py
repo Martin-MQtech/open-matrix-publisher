@@ -40,7 +40,7 @@ PLATFORM_SESSION_COOKIES: dict[str, list[str]] = {
     "toutiao":     ["LOGIN_A", "sessionid_ss", "sessionid"],
     "zhihu":       ["z_c0"],
     "baijiahao":   ["BDUSS", "STOKEN"],
-    "fanqie":      ["sessionid", "sessionid_ss"],
+    "haokan":      ["BDUSS", "STOKEN", "BDUSS_BFESS", "BAIDUID", "BAIDU_SAFETS"],
     # ── 国际 ──
     "youtube":     ["SID", "SAPISID", "__Secure-3PAPISID", "__Secure-1PAPISID"],
     "tiktok":      ["sessionid_ss", "sid_tt", "sessionid"],

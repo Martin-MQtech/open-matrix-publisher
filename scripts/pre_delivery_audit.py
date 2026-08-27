@@ -225,7 +225,7 @@ html_src = open(APP_HTML, encoding="utf-8").read() or ""
 html_platforms = set(re.findall(r'id:\s*"([a-z_]+)"', html_src))
 if not html_platforms:
     # 兼容旧版产品页：全量 20 平台标识
-    html_platforms = {'douyin', 'kuaishou', 'xiaohongshu', 'weibo', 'toutiao', 'zhihu', 'bilibili', 'tencent', 'baijiahao', 'fanqie', 'youtube', 'tiktok', 'instagram', 'facebook', 'x', 'linkedin'}
+    html_platforms = {'douyin', 'kuaishou', 'xiaohongshu', 'weibo', 'toutiao', 'zhihu', 'bilibili', 'tencent', 'baijiahao', 'haokan', 'youtube', 'tiktok', 'instagram', 'facebook', 'x', 'linkedin'}
 login_platforms = set(re.findall(r'^\s*"([a-z_]+)":\s*\{', open("interactive_login.py", encoding="utf-8").read(), re.M))
 status_platforms = set(re.findall(r'"([a-z_]+)"', open("local_bridge_server.py", encoding="utf-8").read().split("all_platforms = [")[1].split("]")[0]))
 
