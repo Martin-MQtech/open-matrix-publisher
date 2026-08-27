@@ -25,8 +25,22 @@ def data_dir():
 
 
 def sau_root():
-    """SAU 安装根目录：优先环境变量 SAU_ROOT，默认 ~/social-auto-upload（自动展开用户主目录）。"""
-    return os.path.expanduser(os.environ.get("SAU_ROOT", "~/social-auto-upload"))
+    """SAU 安装根目录。
+
+    解析顺序：
+    1. 显式环境变量 SAU_ROOT（用户自定义/调试用）
+    2. PyInstaller 打包内嵌 _MEIPASS/social-auto-upload（开箱即用）
+    3. 默认 ~/social-auto-upload（开发态：用户手动 git clone 的）
+    """
+    env = os.environ.get("SAU_ROOT")
+    if env and os.path.isdir(env):
+        return os.path.abspath(env)
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        bundled = os.path.join(meipass, "social-auto-upload")
+        if os.path.isdir(bundled):
+            return bundled
+    return os.path.expanduser(env or "~/social-auto-upload")
 
 
 def venv_bin(root=None):

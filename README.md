@@ -9,6 +9,20 @@
 > 专为传统国际贸易 B2B 工厂、跨境电商 DTC 品牌与全球化创作者打造的 AI 原生全域社媒分发与营销中枢。  
 > An AI-Native multi-domain distribution hub empowering B2B factories, cross-border DTC brands, and global content creators.
 
+---
+
+> **🙏 如果这个工具帮你省了时间，赞助我们 ¥50 帮我们买服务器、测更多平台！**
+> 
+> 你的赞助 = 我能多测 3 个国际平台 = 你未来能多发 3 个平台。
+> 
+> | 微信赞赏 | GitHub Sponsors | 爱发电 |
+> | :---: | :---: | :---: |
+> | ![WeChat Pay](https://img.shields.io/badge/微信-赞助作者-07C160?logo=wechat&logoColor=white) | [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-@Martin--MQtech-ea4aaa?logo=github-sponsors&logoColor=white)](https://github.com/sponsors/Martin-MQtech) | [![Afdian](https://img.shields.io/badge/爱发电-赞助作者-946ce6?logo=afdian&logoColor=white)](https://afdian.com/a/martin-mqtech) |
+> 
+> *所有赞助资金公示于 [SPONSORS.md](SPONSORS.md)。100% 用于：服务器费 / API 测试账号 / 国际化翻译。*
+
+---
+
 [![GitHub Stars](https://img.shields.io/github/stars/Martin-MQtech/open-matrix-publisher?style=social)](https://github.com/Martin-MQtech/open-matrix-publisher)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB)](https://python.org)

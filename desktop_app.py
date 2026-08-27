@@ -9,6 +9,40 @@ import webbrowser
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, PROJECT_DIR)
 
+
+def _resolve_sau_root():
+    """定位 SAU（social-auto-upload）目录。
+
+    优先级：OMP_BUNDLED_SAU env > 打包内嵌 > 项目同级 > 默认 ~/social-auto-upload。
+    打包态（PyInstaller）下，SAU 的 conf/uploader/utils 等子目录会被打进 _MEIPASS，
+    我们把它的父目录也注册到 SAU_ROOT。
+    """
+    env = os.environ.get("SAU_ROOT")
+    if env and os.path.isdir(env):
+        return os.path.abspath(env)
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        bundled = os.path.join(meipass, "social-auto-upload")
+        if os.path.isdir(bundled):
+            os.environ["SAU_ROOT"] = bundled
+            return bundled
+    sibling = os.path.join(os.path.dirname(PROJECT_DIR), "social-auto-upload")
+    if os.path.isdir(sibling):
+        os.environ["SAU_ROOT"] = sibling
+        return sibling
+    default = os.path.expanduser("~/social-auto-upload")
+    if os.path.isdir(default):
+        os.environ["SAU_ROOT"] = default
+        return default
+    return default  # 即便不存在也返回默认路径，UI 会引导用户
+
+
+# 启动时尽早确定 SAU_ROOT
+_sau_root = _resolve_sau_root()
+# 把 SAU 根目录加进 sys.path，让 SAU 的 conf/uploader/utils 子包可被 import
+if _sau_root and os.path.isdir(_sau_root) and _sau_root not in sys.path:
+    sys.path.insert(0, _sau_root)
+
 def start_backend():
     """Start local Flask bridge server via waitress (prod)."""
     from local_bridge_server import app

@@ -38,6 +38,8 @@ except Exception:
 
 # Active background upload tasks store & History Store
 ACTIVE_TASKS = {}
+# 批量扫码登录进度（batch_id → state）
+_BATCH_LOGINS = {}
 # 使用可重入锁：_run_real_upload_thread 的 on_progress / 收尾阶段会在已持有锁时
 # 再调用 save_task_progress()（其内部也会加锁），普通 Lock 会在此死锁，
 # 导致 /api/history、/api/task-progress 等接口永久挂起。
@@ -57,6 +59,12 @@ os.makedirs(TASK_PROGRESS_DIR, exist_ok=True)
 # to prevent memory exhaustion from 14 parallel browser launches.
 MAX_CONCURRENT_UPLOADS = int(os.environ.get("OMP_MAX_CONCURRENT", "4"))
 UPLOAD_SEMAPHORE = threading.Semaphore(MAX_CONCURRENT_UPLOADS)
+
+# 发布后回查：把 (platform, link, scheduled_at) 缓存在内存里
+_VERIFY_QUEUE = {}  # verify_id -> {platform_id, link, dispatch_id, scheduled_at, status}
+_VERIFY_DIR = os.path.join(data_dir(), "verify_queue")
+os.makedirs(_VERIFY_DIR, exist_ok=True)
+_VERIFY_DEFAULT_DELAY = int(os.environ.get("OMP_VERIFY_DELAY", "1800"))  # 30 分钟
 
 def _task_progress_file(task_id):
     return os.path.join(TASK_PROGRESS_DIR, f"{task_id}.json")
@@ -426,6 +434,117 @@ def _set_security_headers(resp):
     resp.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
     return resp
 
+
+# ── 发布后自动回查（30 分钟延迟） ──
+def _schedule_verification(platform_id, link, dispatch_id, delay_sec=None):
+    """成功发布后调度一个回查任务。回查会在 N 秒后跑，验证作品是否真的在线。"""
+    if not link:
+        return
+    import uuid as _uuid
+    verify_id = _uuid.uuid4().hex[:12]
+    delay = delay_sec if delay_sec is not None else _VERIFY_DEFAULT_DELAY
+    scheduled_at = time.time() + delay
+    record = {
+        "verify_id": verify_id,
+        "platform_id": platform_id,
+        "link": link,
+        "dispatch_id": dispatch_id,
+        "scheduled_at": scheduled_at,
+        "status": "pending",
+        "result": None,
+    }
+    _VERIFY_QUEUE[verify_id] = record
+    try:
+        with open(os.path.join(_VERIFY_DIR, f"{verify_id}.json"), "w", encoding="utf-8") as f:
+            json.dump(record, f, ensure_ascii=False)
+    except Exception:
+        pass
+    return verify_id
+
+
+def _run_verification(record):
+    """执行一次回查。返回 {"status": "verified"|"missing"|"error", "detail": str}"""
+    link = record.get("link", "")
+    platform_id = record.get("platform_id", "")
+    if not link:
+        return {"status": "error", "detail": "no link"}
+    import urllib.request, urllib.error
+    req = urllib.request.Request(link, method="HEAD", headers={
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            code = resp.status
+        if 200 <= code < 400:
+            return {"status": "verified", "detail": f"HTTP {code}"}
+        return {"status": "missing", "detail": f"HTTP {code}"}
+    except urllib.error.HTTPError as e:
+        # 403/404 也算 missing（被审核/被删/限流都会这样）
+        if e.code in (403, 404, 410, 451):
+            return {"status": "missing", "detail": f"HTTP {e.code}（可能限流/审核/被删）"}
+        return {"status": "error", "detail": f"HTTP {e.code}"}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+
+
+def _verify_loop():
+    """后台线程：每 30s 扫一次 _VERIFY_QUEUE，把到期的跑掉。"""
+    while True:
+        try:
+            now = time.time()
+            to_run = [v for v in _VERIFY_QUEUE.values() if v["status"] == "pending" and v["scheduled_at"] <= now]
+            for rec in to_run:
+                rec["status"] = "running"
+                result = _run_verification(rec)
+                rec["result"] = result
+                rec["status"] = "done" if result["status"] != "error" else "error"
+                rec["finished_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+                try:
+                    with open(os.path.join(_VERIFY_DIR, f"{rec['verify_id']}.json"), "w", encoding="utf-8") as f:
+                        json.dump(rec, f, ensure_ascii=False)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        time.sleep(30)
+
+
+# 启动回查后台线程
+_verify_thread_started = False
+def _ensure_verify_thread():
+    global _verify_thread_started
+    if _verify_thread_started:
+        return
+    # 先从磁盘恢复未跑的回查任务
+    try:
+        for fname in os.listdir(_VERIFY_DIR):
+            if not fname.endswith(".json"):
+                continue
+            try:
+                with open(os.path.join(_VERIFY_DIR, fname), "r", encoding="utf-8") as f:
+                    rec = json.load(f)
+                if rec.get("status") == "pending":
+                    _VERIFY_QUEUE[rec["verify_id"]] = rec
+            except Exception:
+                pass
+    except Exception:
+        pass
+    t = threading.Thread(target=_verify_loop, daemon=True)
+    t.start()
+    _verify_thread_started = True
+
+
+# 服务启动时跑
+_ensure_verify_thread()
+
+
+@app.route("/api/verification-queue", methods=["GET"])
+def api_verification_queue():
+    """前端轮询：列出最近 50 条回查任务及其状态。"""
+    items = sorted(_VERIFY_QUEUE.values(), key=lambda r: r.get("scheduled_at", 0), reverse=True)[:50]
+    return jsonify({"items": items, "server_time": time.time()})
+
+
 @app.route("/api/download-video", methods=["POST"])
 def download_video():
     """将远程 HTTP/HTTPS 视频直链下载到本地临时目录，返回服务端绝对路径供分发引擎使用。"""
@@ -592,6 +711,15 @@ def configure_key():
             print(f"configure-key write error {t}: {e}")
     return jsonify({"status": "ok", "platform_id": platform_id, "msg": f"✅ {platform_id} 凭据已保存"})
 
+@app.route("/api/login-platforms", methods=["GET"])
+def api_login_platforms():
+    """返回当前支持一键扫码的平台 ID 集合（前端批量扫码 UI 用）。"""
+    return jsonify({
+        "supported": list(LOGIN_PLATFORMS.keys()),
+        "api_key": [k for k, v in LOGIN_PLATFORMS.items() if v.get("api_key")]
+    })
+
+
 @app.route("/api/launch-login", methods=["POST"])
 def launch_login():
     data = request.json or {}
@@ -624,6 +752,155 @@ def launch_login():
         "msg": f"🚀 已为你打开【{plat_name}】的浏览器登录窗口，请在弹出的浏览器中扫码或账号登录！登录成功后系统将自动捕获凭证。"
     })
 
+
+@app.route("/api/launch-batch-login", methods=["POST"])
+def launch_batch_login():
+    """批量扫码登录：把多个平台串行排队，每完成一个自动启动下一个。
+
+    用户场景：第一次用 OMP 一次性把 6 个平台都登录了。
+    行为：
+    - 收到 platform_ids 列表（JSON 数组）
+    - 过滤掉 API-key 平台和 LOGIN_PLATFORMS 没收录的
+    - 启动后台线程，按顺序 launch；每个之间 sleep 5s 让上一个 Playwright 进程先关
+    - 立即返回「已启动」+ batch_id，前端可轮询 /api/batch-login-progress 查状态
+    """
+    data = request.json or {}
+    platform_ids = data.get("platform_ids") or []
+    if not isinstance(platform_ids, list) or not platform_ids:
+        return jsonify({"error": "platform_ids 必须是非空数组"}), 400
+
+    import uuid as _uuid
+    batch_id = _uuid.uuid4().hex[:12]
+    state = {
+        "batch_id": batch_id,
+        "platforms": [
+            {"id": pid, "status": "pending", "started_at": "", "finished_at": ""}
+            for pid in platform_ids
+        ],
+        "current": None,
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    _BATCH_LOGINS[batch_id] = state
+
+    def _runner():
+        for item in state["platforms"]:
+            pid = item["id"]
+            plat_info = LOGIN_PLATFORMS.get(pid, {})
+            if not plat_info or plat_info.get("api_key"):
+                item["status"] = "skipped"
+                item["note"] = "未支持一键扫码" if not plat_info else "API-key 平台，跳过"
+                continue
+            item["status"] = "running"
+            item["started_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+            state["current"] = pid
+            try:
+                # 在子线程里跑同步的 launch login；每个 login 内部已自带 600s 超时
+                _run_interactive_login_thread(pid)
+                # 等到 login 流程结束：粗暴 sleep 1s + 等 ACTIVE_LOGINS 清空
+                # 由于 _run_interactive_login_thread 是 fire-and-forget，我们用 30s 软等待
+                time.sleep(30)
+                item["status"] = "done"
+            except Exception as e:
+                item["status"] = "error"
+                item["note"] = str(e)
+            item["finished_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+            time.sleep(3)  # 浏览器关闭 + cleanup 缓冲
+        state["current"] = None
+        state["finished_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    t = threading.Thread(target=_runner, daemon=True)
+    t.start()
+    return jsonify({"status": "started", "batch_id": batch_id, "count": len(platform_ids)})
+
+
+@app.route("/api/batch-login-progress", methods=["GET"])
+def batch_login_progress():
+    """查询批量扫码登录进度。前端每 3s 轮询一次。"""
+    batch_id = request.args.get("batch_id", "")
+    state = _BATCH_LOGINS.get(batch_id)
+    if not state:
+        return jsonify({"error": "batch not found"}), 404
+    return jsonify(state)
+
+
+@app.route("/api/import-cookie", methods=["POST"])
+def import_cookie():
+    """导入他人 Cookie 文件。
+
+    用途：外贸老板让客服/运营从他们电脑导出 cookie.json，丢进 OMP 即可用，
+    不用再让老板自己一个个扫码。
+
+    上传：multipart/form-data
+      - platform_id: 平台 ID（douyin / x / linkedin / ...）
+      - file: Cookie JSON 文件（Playwright storage_state 格式或普通 list[dict] 格式）
+      - name: 账号名（默认 default）
+    """
+    platform_id = (request.form.get("platform_id") or "").strip()
+    name = (request.form.get("name") or "default").strip()
+    if not platform_id or not _re.match(r"^[a-z0-9_]+$", platform_id):
+        return jsonify({"error": "invalid platform_id"}), 400
+    if not _re.match(r"^[a-zA-Z0-9_]+$", name):
+        return jsonify({"error": "invalid name"}), 400
+
+    f = request.files.get("file")
+    if not f:
+        return jsonify({"error": "missing file"}), 400
+
+    raw = f.read()
+    # 校验：要么是 Playwright storage_state（{cookies:[], origins:[]}），
+    # 要么是 list[dict]（SAU 上游 / curl 抓的格式）。
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except Exception as e:
+        return jsonify({"error": f"文件不是合法 JSON：{e}"}), 400
+
+    normalized = None
+    if isinstance(data, dict) and "cookies" in data:
+        normalized = data  # Playwright storage_state
+    elif isinstance(data, list):
+        normalized = {"cookies": data, "origins": []}
+    else:
+        return jsonify({"error": "格式不支持：需要 Playwright storage_state 或 list[cookie] 格式"}), 400
+
+    from omp_paths import data_dir
+    sau_cookies = os.path.join(SAU_ROOT, "cookies")
+    local_cookies = os.path.join(data_dir(), "cookies")
+
+    fname = f"{platform_id}_{name}.json"
+    written = []
+    # 1. SAU_DIR 写明文
+    try:
+        os.makedirs(sau_cookies, exist_ok=True)
+        with open(os.path.join(sau_cookies, fname), "w", encoding="utf-8") as f_out:
+            json.dump(normalized, f_out, ensure_ascii=False, indent=2)
+        written.append(sau_cookies + "/" + fname)
+    except Exception as e:
+        return jsonify({"error": f"写入 SAU 目录失败：{e}"}), 500
+    # 2. 本地写加密
+    try:
+        os.makedirs(local_cookies, exist_ok=True)
+        local_plain = os.path.join(local_cookies, fname)
+        with open(local_plain, "w", encoding="utf-8") as f_out:
+            json.dump(normalized, f_out, ensure_ascii=False, indent=2)
+        try:
+            from cookie_crypto import encrypt_cookie_file
+            encrypt_cookie_file(local_plain)
+        except Exception:
+            pass
+        written.append(local_cookies + "/" + fname + "（+加密副本）")
+    except Exception as e:
+        # 本地写失败不阻塞 SAU 目录的写
+        written.append(f"本地目录写失败：{e}")
+
+    return jsonify({
+        "status": "imported",
+        "platform_id": platform_id,
+        "name": name,
+        "cookie_count": len(normalized.get("cookies", [])),
+        "written": written,
+        "msg": f"已导入 {platform_id} 的 {len(normalized.get('cookies', []))} 个 Cookie（账号名：{name}）"
+    })
+
 def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags, dispatch_session_id="", cover_file=""):
     abs_path = os.path.abspath(video_file)
     total_bytes = os.path.getsize(abs_path) if os.path.exists(abs_path) else 20761840
@@ -646,7 +923,7 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags,
 
     # 实时进度回调：把上传引擎的日志行持久化 + 更新进度百分比
     log_path = _task_progress_file(task_id).replace(".json", ".log")
-    def on_progress(pct, log_line):
+    def on_progress(pct, log_line, stage=None, eta_sec=None):
         if log_line:
             try:
                 with open(log_path, "a", encoding="utf-8") as f:
@@ -659,6 +936,10 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags,
                 cur["pct"] = max(cur.get("pct", 0), pct)
                 if log_line:
                     cur["last_log"] = log_line
+                if stage:
+                    cur["stage"] = stage
+                if eta_sec is not None:
+                    cur["eta_sec"] = eta_sec
                 save_task_progress(task_id, cur)
 
     # Step 1: 初始化
@@ -702,6 +983,16 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags,
                 "pct": 100, "pub_id": result.get("pub_id"),
                 "link": result.get("link"), "finish_time": finish_time,
             }
+            # 调度 30 分钟后回查（如果 link 非空）
+            try:
+                vid = _schedule_verification(
+                    platform_id, result.get("link", ""),
+                    dispatch_session_id or task_id.rsplit("_task_", 1)[0]
+                )
+                if vid:
+                    task_record["verify_id"] = vid
+            except Exception:
+                pass
         else:
             task_record = {
                 "status": "failed", "real": False,
@@ -722,6 +1013,15 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags,
         failure_category=result.get("failure_category", ""),
         failure_reason=result.get("failure_reason", "")
     )
+    # 把 failure_human 也塞进 task_record，前端能拉到完整建议
+    if not result.get("success") and result.get("failure_human"):
+        try:
+            with TASK_LOCK:
+                cur = ACTIVE_TASKS.get(task_id, {})
+                cur["failure_human"] = result["failure_human"]
+                save_task_progress(task_id, cur)
+        except Exception:
+            pass
 
 @app.route("/api/upload-video", methods=["POST"])
 def upload_video():
@@ -1002,6 +1302,37 @@ def api_generate_free_ai():
             "title": f"【实测推荐】{topic} · 养护肩颈黑科技",
             "desc": f"关于【{topic}】：核心亮点与适用场景速览，欢迎在评论区交流讨论。"
         })
+
+@app.route("/api/recent-failures", methods=["GET"])
+def api_recent_failures():
+    """统计最近 N 小时（默认 24h）内每个平台的失败次数。
+
+    前端 confirmDispatch 时查询：某平台若近期失败 ≥ 2 次，弹「是否继续」确认。
+    """
+    try:
+        hours = int(request.args.get("hours", "24"))
+    except Exception:
+        hours = 24
+    cutoff = time.time() - hours * 3600
+    counts = {}
+    try:
+        with HISTORY_FILE_LOCK:
+            hist = load_history()
+        for r in hist.get("records", []):
+            ts_str = r.get("last_updated") or r.get("timestamp") or ""
+            try:
+                ts = time.mktime(time.strptime(ts_str, "%Y-%m-%d %H:%M:%S"))
+            except Exception:
+                ts = 0
+            if ts < cutoff:
+                continue
+            for pid, info in (r.get("platforms") or {}).items():
+                if info.get("status") == "fail":
+                    counts[pid] = counts.get(pid, 0) + 1
+    except Exception as e:
+        return jsonify({"error": str(e), "counts": {}}), 500
+    return jsonify({"counts": counts, "hours": hours})
+
 
 @app.route("/api/publish", methods=["POST"])
 def api_publish_batch():

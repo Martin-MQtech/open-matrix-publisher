@@ -684,6 +684,7 @@
                     <div class="step-head">
                         <span class="step-num">3</span> 选择平台
                         <span class="step-hint"><span id="sel-count">已选 0 个</span> · <span id="login-count">已登录 -/<span id="login-total"></span></span></span>
+                        <span class="step-hint" style="cursor:pointer; margin-left:10px;" onclick="openImportCookieModal()" title="从客服/运营电脑导入 Cookie，免去逐个扫码"><i class="fa-solid fa-file-import"></i> 导入 Cookie</span>
                     </div>
 
                     <!-- 🚀 品牌主橙色核心发布 CTA 区域（提升至顶部焦点位置，选完即发无须滚屏） -->
@@ -720,12 +721,14 @@
                     <div class="platform-group">
                         <span><i class="fa-solid fa-flag" style="color:var(--accent-2);"></i> 国内 · <span id="cn-count"></span></span>
                         <span class="toggle" onclick="toggleCategory('cn')">全选 / 清空</span>
+                        <span class="toggle" onclick="openBatchLoginModal('cn')" title="批量打开扫码窗口，一次性把要登录的平台都扫一遍"><i class="fa-solid fa-qrcode"></i> 批量扫码</span>
                     </div>
                     <div class="platform-grid" id="cn-grid"></div>
 
                     <div class="platform-group">
                         <span><i class="fa-solid fa-globe" style="color:var(--accent-2);"></i> 海外 · <span id="global-count"></span></span>
                         <span class="toggle" onclick="toggleCategory('global')">全选 / 清空</span>
+                        <span class="toggle" onclick="openBatchLoginModal('global')" title="批量打开扫码窗口"><i class="fa-solid fa-qrcode"></i> 批量扫码</span>
                     </div>
                     <div class="platform-grid" id="global-grid"></div>
                 </section>
@@ -864,6 +867,63 @@
                     <button class="btn" onclick="recheckBootstrap()"><i class="fa-solid fa-rotate"></i> 重新检测</button>
                     <button class="btn primary" onclick="skipBootstrap()">我已知晓，开始使用</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量扫码登录弹窗 -->
+    <div class="overlay" id="batch-login-overlay" style="display:none; align-items:center; justify-content:center;">
+        <div class="modal" style="max-width:560px; width:92vw; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="margin:0; font-size:16px; color:var(--accent);"><i class="fa-solid fa-qrcode"></i> 批量扫码登录</h3>
+                <button class="btn text" onclick="hideBatchLoginModal()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭</button>
+            </div>
+            <div style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+                勾选要登录的平台，点「开始批量扫码」会**逐个打开浏览器**，每个完成/超时后自动下一个。整体预计 5-15 分钟。
+            </div>
+            <div id="batch-login-list" style="max-height:340px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:12px; background:rgba(0,0,0,0.2);"></div>
+            <div id="batch-login-progress" style="display:none; margin-bottom:12px; font-size:12.5px;"></div>
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+                <button class="btn" onclick="hideBatchLoginModal()">取消</button>
+                <button class="btn primary" id="batch-login-start" onclick="startBatchLogin()"><i class="fa-solid fa-play"></i> 开始批量扫码</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入 Cookie 弹窗 -->
+    <div class="overlay" id="import-cookie-overlay" style="display:none; align-items:center; justify-content:center;">
+        <div class="modal" style="max-width:520px; width:92vw; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="margin:0; font-size:16px; color:var(--accent);"><i class="fa-solid fa-file-import"></i> 导入他人 Cookie</h3>
+                <button class="btn text" onclick="hideImportCookieModal()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭</button>
+            </div>
+            <div style="font-size:12.5px; color:var(--muted); margin-bottom:12px; line-height:1.6;">
+                <strong style="color:var(--ink-2);">💡 适用场景：</strong> 让客服/运营从他们电脑导出 cookie 文件，丢给你直接用，<strong>免去逐个扫码</strong>。<br>
+                <strong style="color:var(--ink-2);">📦 支持格式：</strong> Playwright <code style="background:var(--surface-2); padding:1px 4px; border-radius:3px;">storage_state</code> JSON（含 <code style="background:var(--surface-2); padding:1px 4px; border-radius:3px;">cookies</code> 字段）或直接的 <code style="background:var(--surface-2); padding:1px 4px; border-radius:3px;">list[cookie]</code> 数组。
+            </div>
+            <div style="background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.25); border-radius:6px; padding:8px 10px; margin-bottom:12px; font-size:11.5px; line-height:1.6;">
+                <strong style="color:#fbbf24;"><i class="fa-brands fa-chrome"></i> Chrome 怎么导出？</strong><br>
+                ① 装 <strong>Cookie Editor</strong> 浏览器扩展（免费）→ ② 打开已登录的目标平台 → ③ 点 🧁 Cookie Editor → ④ Export → JSON → ⑤ 上传到这个弹窗。<br>
+                <a href="https://github.com/Martin-MQtech/open-matrix-publisher/blob/main/docs/CHROME_COOKIE_HELPER.md" target="_blank" style="color:var(--accent-2); text-decoration:underline;">📖 查看完整图文教程（含 3 种方法）</a>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+                <div>
+                    <label style="font-size:12px; color:var(--muted);">平台</label>
+                    <select id="import-cookie-platform" style="width:100%; padding:6px 8px; background:var(--surface-2); border:1px solid var(--line-2); border-radius:6px; color:var(--ink);"></select>
+                </div>
+                <div>
+                    <label style="font-size:12px; color:var(--muted);">账号名（默认 default）</label>
+                    <input id="import-cookie-name" value="default" style="width:100%; padding:6px 8px; background:var(--surface-2); border:1px solid var(--line-2); border-radius:6px; color:var(--ink);">
+                </div>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:12px; color:var(--muted);">Cookie JSON 文件</label>
+                <input type="file" id="import-cookie-file" accept=".json,application/json" style="display:block; width:100%; padding:6px; background:var(--surface-2); border:1px solid var(--line-2); border-radius:6px; color:var(--ink); font-size:12px;">
+            </div>
+            <div id="import-cookie-result" style="display:none; margin-bottom:12px; padding:8px 10px; border-radius:6px; font-size:12.5px;"></div>
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+                <button class="btn" onclick="hideImportCookieModal()">取消</button>
+                <button class="btn primary" onclick="submitImportCookie()"><i class="fa-solid fa-upload"></i> 导入</button>
             </div>
         </div>
     </div>
@@ -1042,6 +1102,28 @@
         let dispatchCtl = { cancelled: false, taskIds: {} };
 
         function el(id) { return document.getElementById(id); }
+
+        // 把秒数格式化为 "1 分 23 秒" / "12 秒"
+        function formatEta(sec) {
+            if (sec == null || isNaN(sec) || sec < 0) return '';
+            sec = Math.round(sec);
+            if (sec < 60) return `${sec} 秒`;
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            if (m < 60) return s > 0 ? `${m} 分 ${s} 秒` : `${m} 分钟`;
+            const h = Math.floor(m / 60);
+            const mm = m % 60;
+            return `${h} 小时 ${mm} 分`;
+        }
+
+        // 把字节数格式化为 "1.8 GB" / "234 MB"
+        function formatBytes(n) {
+            if (n == null || isNaN(n)) return '';
+            if (n < 1024) return `${n} B`;
+            if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+            if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
+            return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
+        }
 
         /* ── 平台计数动态化：平台列表增长时自动跟随（不硬编码数量） ── */
         (function initPlatformCounts() {
@@ -1595,6 +1677,106 @@
             return _METRIC_LABELS[key] || key;
         }
 
+        // 把失败分类渲染成「人类语言 + 三个可能原因 + 三个操作」
+        const _FAILURE_HUMAN_FRONTEND = {
+            'login_failed': {
+                blame: '你的平台账号登录状态过期了',
+                reasons: [
+                    '上次登录过了太久（多数平台 7-30 天会过期）',
+                    '账号在别的设备上修改了密码',
+                    '平台风控系统认为当前 Cookie 有风险'
+                ],
+                actions: [
+                    '点 🗑️ 清 Cookie 重扫，用账号重新扫码登录',
+                    '用 📥 导入 Cookie 让客服/运营给你导一份新的',
+                    '看右上 🎯 环境检测，确认代理和 Playwright 都没问题'
+                ]
+            },
+            'video_format_unsupported': {
+                blame: '平台不接受这个视频文件的编码或封装',
+                reasons: [
+                    '视频用了 H.265/HEVC（部分平台只支持 H.264）',
+                    '封装是 MKV/MOV/AVI 而不是 MP4',
+                    '音频编码是 AC3/DTS 而不是 AAC'
+                ],
+                actions: [
+                    '用 HandBrake（免费）转码：H.264 + AAC + MP4 容器',
+                    '把分辨率压到 1080p 以内（部分平台限 4K）',
+                    '文件大小压到 800MB 以下（YouTube 限速更友好）'
+                ]
+            },
+            'network_timeout': {
+                blame: 'OMP 没能成功连上平台服务器或中途断了',
+                reasons: [
+                    '你的代理软件（Clash/V2Ray 等）没开或端口不对',
+                    '视频文件太大（>500MB）上传中途被限速',
+                    '平台服务器在维护或你所在地区网络不稳'
+                ],
+                actions: [
+                    '看右上 🎯 环境检测，X / YouTube / TikTok 三个域名都通才能发国际',
+                    '换更稳定的代理节点（美国/日本/新加坡优先）',
+                    '把视频压到 200MB 以下再发'
+                ]
+            },
+            'platform_error': {
+                blame: '平台拒绝了你的请求或触发了它的风控',
+                reasons: [
+                    '近期发布太频繁被限流（每个平台每天有上限）',
+                    '平台要求短信/邮箱二次验证',
+                    '视频内容触发了审核（标题/标签敏感词）'
+                ],
+                actions: [
+                    '等 1-2 小时再发（多数限流会自动解除）',
+                    '改标题和标签，避免营销词（"最""第一""限时"）',
+                    '去平台 App 手动发一次，验证账号状态'
+                ]
+            },
+            'file_error': {
+                blame: 'OMP 找不到你的视频文件或没权限读',
+                reasons: [
+                    '视频文件被移动、删除或重命名了',
+                    '文件权限不足（macOS 隔离子系统）',
+                    '文件路径含特殊字符（空格、中文）'
+                ],
+                actions: [
+                    '重新上传视频文件到 OMP',
+                    '把视频放在 ~/Movies 或 ~/Downloads 等无空格路径',
+                    '看终端是否弹"无法访问"的 macOS 权限请求'
+                ]
+            },
+            'unknown': {
+                blame: '遇到了一个不常见的失败原因',
+                reasons: [
+                    '可能是 SAU 上游变更了上传逻辑',
+                    '可能是平台上线了新反爬虫机制',
+                    '可能是网络抖动导致的中途异常'
+                ],
+                actions: [
+                    '点 📋 复制日志，把失败摘要发到 GitHub issue',
+                    '等几分钟后点 🔁 重试一次',
+                    '看右上 🎯 环境检测，排除基础设施问题'
+                ]
+            }
+        };
+        function _renderFailureHuman(cat) {
+            const info = _FAILURE_HUMAN_FRONTEND[cat] || _FAILURE_HUMAN_FRONTEND['unknown'];
+            const colorMap = {
+                login_failed: '#f87171', video_format_unsupported: '#fbbf24',
+                network_timeout: '#60a5fa', platform_error: '#f87171',
+                file_error: '#fbbf24', unknown: '#9ca3af'
+            };
+            const color = colorMap[cat] || '#9ca3af';
+            const reasons = info.reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('');
+            const actions = info.actions.map(a => `<li>${escapeHtml(a)}</li>`).join('');
+            return `<div class="metrics-block" style="flex-direction:column; align-items:stretch; gap:6px; background:rgba(0,0,0,0.2); border-color:rgba(255,255,255,0.05);">
+                <div style="color:${color}; font-weight:600;"><i class="fa-solid fa-circle-info"></i> ${escapeHtml(info.blame)}</div>
+                <div style="font-size:11px; color:var(--muted);"><strong style="color:var(--ink-2);">可能原因：</strong></div>
+                <ul style="margin:0; padding-left:18px; font-size:11.5px; line-height:1.6; color:var(--ink-2);">${reasons}</ul>
+                <div style="font-size:11px; color:var(--muted); margin-top:4px;"><strong style="color:var(--ink-2);">建议操作：</strong></div>
+                <ul style="margin:0; padding-left:18px; font-size:11.5px; line-height:1.6; color:var(--accent-2);">${actions}</ul>
+            </div>`;
+        }
+
         // 触发浏览器下载（用于 JSON / CSV 导出）
         function _triggerBrowserDownload(blob, filename) {
             const url = URL.createObjectURL(blob);
@@ -1857,7 +2039,10 @@
                     const cat = info.failure_category || '';
                     const catLabel = cat ? _failureCategoryLabel(cat) : '';
                     const badge = isOk
-                        ? `<span style="color:var(--success); font-weight:600; font-size:12px;"><i class="fa-solid fa-circle-check"></i> 发布成功</span>`
+                        ? `<span style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+                             <span style="color:var(--success); font-weight:600; font-size:12px;"><i class="fa-solid fa-circle-check"></i> 发布成功</span>
+                             <span class="verify-status-${pid}" style="font-size:10.5px; color:var(--muted);">⏱ 30 分钟后回查…</span>
+                           </span>`
                         : `<span style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
                              <span style="color:var(--danger); font-weight:600; font-size:12px;"><i class="fa-solid fa-circle-xmark"></i> 失败 · ${escapeHtml(catLabel)}</span>
                              <span style="font-size:10.5px; color:var(--muted); text-align:right; max-width:200px; word-break:break-all;" title="${escapeHtml(info.failure_reason || '')}">${escapeHtml((info.failure_reason || '').slice(0, 80))}</span>
@@ -1882,13 +2067,7 @@
                     const metricKeys = Object.keys(metrics).filter(k => metrics[k] !== null && metrics[k] !== undefined && metrics[k] !== '');
                     const metricsBlock = (isOk && metricKeys.length)
                         ? `<div class="metrics-block">${metricKeys.map(k => `<span><i class="fa-solid fa-chart-line"></i>${escapeHtml(_metricLabel(k))}：${escapeHtml(metrics[k])}</span>`).join('')}</div>`
-                        : (!isOk && cat === 'login_failed'
-                            ? `<div class="metrics-block" style="background:rgba(248,113,113,0.06); border-color:rgba(248,113,113,0.15);"><span style="color:#f87171;"><i class="fa-solid fa-key"></i>建议：重新扫码登录或导入 Cookie</span></div>`
-                            : (!isOk && cat === 'video_format_unsupported'
-                                ? `<div class="metrics-block" style="background:rgba(251,191,36,0.06); border-color:rgba(251,191,36,0.15);"><span style="color:#fbbf24;"><i class="fa-solid fa-file-video"></i>建议：用 HandBrake 转 H.264 + AAC + MP4 容器</span></div>`
-                                : (!isOk && cat === 'network_timeout'
-                                    ? `<div class="metrics-block" style="background:rgba(96,165,250,0.06); border-color:rgba(96,165,250,0.15);"><span style="color:#60a5fa;"><i class="fa-solid fa-wifi"></i>建议：检查代理 / 网络 / 视频大小（&gt;500MB 易超时）</span></div>`
-                                    : '')));
+                        : (!isOk ? _renderFailureHuman(cat) : '');
 
                     card.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1908,6 +2087,42 @@
             }
 
             el('history-detail-overlay').classList.add('show');
+            // 拉取回查状态并刷新 success 卡片的小 chip
+            refreshVerificationChips(r);
+        }
+
+        async function refreshVerificationChips(historyRecord) {
+            try {
+                const res = await fetch(API + '/api/verification-queue');
+                const data = await res.json();
+                const items = data.items || [];
+                const plats = Object.entries(historyRecord.platforms || {});
+                plats.forEach(([pid, info]) => {
+                    if (!(info.status === 'success' && info.real)) return;
+                    const link = info.link;
+                    if (!link) return;
+                    // 找到对应的回查项
+                    const v = items.find(x => x.platform_id === pid && x.link === link);
+                    const chipEl = document.querySelector('.verify-status-' + pid);
+                    if (!chipEl) return;
+                    if (!v) {
+                        chipEl.textContent = '⏱ 待调度回查…';
+                        chipEl.style.color = 'var(--muted)';
+                    } else if (v.status === 'pending' || v.status === 'running') {
+                        chipEl.textContent = '⏱ 30 分钟后回查…';
+                        chipEl.style.color = 'var(--muted)';
+                    } else if (v.status === 'done' && v.result?.status === 'verified') {
+                        chipEl.textContent = '✅ 已在线（自动回查通过）';
+                        chipEl.style.color = '#9cc08f';
+                    } else if (v.status === 'done' && v.result?.status === 'missing') {
+                        chipEl.textContent = `⚠️ 自动回查未找到（${v.result?.detail || '可能被审核/限流'}）`;
+                        chipEl.style.color = '#f87171';
+                    } else {
+                        chipEl.textContent = `❓ 回查失败：${v.result?.detail || ''}`;
+                        chipEl.style.color = '#fbbf24';
+                    }
+                });
+            } catch (e) { /* 容忍失败 */ }
         }
 
         function hideHistoryDetailModal() {
@@ -1930,6 +2145,146 @@
             updateCharCount();
             hideHistoryDetailModal();
             showToastNotice('已回填此历史记录的标题、描述和标签！', 'success');
+        }
+
+        /* ── 批量扫码登录 ── */
+        let _batchLoginId = null;
+        let _batchPollTimer = null;
+        let _batchCategory = 'cn';
+        let _supportedLoginPlatforms = null;  // 启动时从 /api/login-platforms 拉一次
+
+        async function _loadSupportedLoginPlatforms() {
+            try {
+                const res = await fetch(API + '/api/login-platforms');
+                const data = await res.json();
+                _supportedLoginPlatforms = new Set(data.supported || []);
+            } catch (e) {
+                _supportedLoginPlatforms = new Set();
+            }
+        }
+
+        function openBatchLoginModal(category) {
+            _batchCategory = category;
+            const list = el('batch-login-list');
+            const plats = PLATFORMS.filter(p => (category === 'cn' ? p.type === 'cn' : p.type === 'global'));
+            // 默认只勾选「未登录 + 一键扫码可支持」的平台（LOGIN_PLATFORMS 收录的）
+            list.innerHTML = plats.map(p => {
+                const supported = _supportedLoginPlatforms && _supportedLoginPlatforms.has(p.id);
+                const checked = (supported && !p.loggedIn) ? 'checked' : '';
+                const disabled = supported ? '' : 'disabled';
+                const note = !supported ? '需手动 / API Key' : (p.loggedIn ? '已登录 ✓' : '未登录');
+                return `<label style="display:flex; align-items:center; gap:8px; padding:6px 8px; cursor:pointer; border-radius:4px;" onmouseover="this.style.background='rgba(232,137,46,0.06)'" onmouseout="this.style.background=''">
+                    <input type="checkbox" data-pid="${p.id}" ${checked} ${disabled}>
+                    <span style="flex:1;">${platformIcon(p, 14)} ${escapeHtml(p.name)}</span>
+                    <span style="font-size:10.5px; color:var(--muted);">${note}</span>
+                </label>`;
+            }).join('');
+            el('batch-login-progress').style.display = 'none';
+            el('batch-login-start').disabled = false;
+            el('batch-login-start').innerHTML = '<i class="fa-solid fa-play"></i> 开始批量扫码';
+            el('batch-login-overlay').style.display = 'flex';
+            el('batch-login-overlay').classList.add('show');
+        }
+        function hideBatchLoginModal() {
+            el('batch-login-overlay').classList.remove('show');
+            el('batch-login-overlay').style.display = 'none';
+            if (_batchPollTimer) { clearInterval(_batchPollTimer); _batchPollTimer = null; }
+        }
+        async function startBatchLogin() {
+            const checked = Array.from(el('batch-login-list').querySelectorAll('input[type=checkbox]:checked'));
+            const pids = checked.map(c => c.dataset.pid);
+            if (!pids.length) { showToastNotice('请至少勾选一个平台', 'warn'); return; }
+            try {
+                const res = await fetch(API + '/api/launch-batch-login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ platform_ids: pids })
+                });
+                const data = await res.json();
+                if (data.status === 'started') {
+                    _batchLoginId = data.batch_id;
+                    el('batch-login-start').disabled = true;
+                    el('batch-login-start').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 进行中…';
+                    el('batch-login-progress').style.display = 'block';
+                    el('batch-login-progress').textContent = `已开始 ${data.count} 个平台，按顺序扫码…`;
+                    showToastNotice(`已开始批量扫码 ${data.count} 个平台`, 'info');
+                    if (_batchPollTimer) clearInterval(_batchPollTimer);
+                    _batchPollTimer = setInterval(pollBatchLogin, 2500);
+                } else {
+                    showToastNotice('启动失败：' + (data.error || res.status), 'error');
+                }
+            } catch (e) {
+                showToastNotice('请求失败：' + (e.message || e), 'error');
+            }
+        }
+        async function pollBatchLogin() {
+            if (!_batchLoginId) return;
+            try {
+                const res = await fetch(API + '/api/batch-login-progress?batch_id=' + _batchLoginId);
+                const data = await res.json();
+                if (!res.ok) return;
+                const done = data.platforms.filter(p => p.status === 'done').length;
+                const skip = data.platforms.filter(p => p.status === 'skipped').length;
+                const running = data.platforms.filter(p => p.status === 'running').length;
+                const total = data.platforms.length;
+                const lines = [
+                    `进度：${done} 已完成 / ${running} 进行中 / ${skip} 跳过 / ${total} 总计`,
+                    data.current ? `当前：${data.current}` : '（无）',
+                    data.finished_at ? `✓ 全部完成于 ${data.finished_at}` : ''
+                ].filter(Boolean);
+                el('batch-login-progress').innerHTML = lines.join('<br>');
+                if (data.finished_at) {
+                    clearInterval(_batchPollTimer);
+                    _batchPollTimer = null;
+                    el('batch-login-start').disabled = false;
+                    el('batch-login-start').innerHTML = '<i class="fa-solid fa-rotate"></i> 再来一批';
+                    showToastNotice(`批量扫码完成：${done} 成功 / ${skip} 跳过`, done > 0 ? 'success' : 'info');
+                    // 刷新平台登录态
+                    setTimeout(() => location.reload(), 1500);
+                }
+            } catch (e) { /* 容忍单次失败 */ }
+        }
+
+        /* ── 导入 Cookie ── */
+        function openImportCookieModal() {
+            const sel = el('import-cookie-platform');
+            sel.innerHTML = PLATFORMS.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${p.id})</option>`).join('');
+            el('import-cookie-file').value = '';
+            el('import-cookie-result').style.display = 'none';
+            el('import-cookie-overlay').style.display = 'flex';
+            el('import-cookie-overlay').classList.add('show');
+        }
+        function hideImportCookieModal() {
+            el('import-cookie-overlay').classList.remove('show');
+            el('import-cookie-overlay').style.display = 'none';
+        }
+        async function submitImportCookie() {
+            const platformId = el('import-cookie-platform').value;
+            const name = el('import-cookie-name').value.trim() || 'default';
+            const fileInput = el('import-cookie-file');
+            if (!fileInput.files || !fileInput.files[0]) {
+                showToastNotice('请选择 Cookie JSON 文件', 'warn'); return;
+            }
+            const fd = new FormData();
+            fd.append('platform_id', platformId);
+            fd.append('name', name);
+            fd.append('file', fileInput.files[0]);
+            try {
+                const res = await fetch(API + '/api/import-cookie', { method: 'POST', body: fd });
+                const data = await res.json();
+                const result = el('import-cookie-result');
+                result.style.display = 'block';
+                if (res.ok && data.status === 'imported') {
+                    result.style.cssText = 'background:rgba(156,192,143,0.1); border:1px solid rgba(156,192,143,0.3); color:var(--success);';
+                    result.innerHTML = `✅ ${escapeHtml(data.msg)}<br><small style="color:var(--muted);">已写入：${data.written.map(escapeHtml).join('<br>')}</small>`;
+                    showToastNotice(`已导入 ${platformId} 的 ${data.cookie_count} 个 Cookie`, 'success');
+                } else {
+                    result.style.cssText = 'background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); color:var(--danger);';
+                    result.innerHTML = `❌ ${escapeHtml(data.error || '导入失败')}`;
+                    showToastNotice('导入失败：' + (data.error || res.status), 'error');
+                }
+            } catch (e) {
+                showToastNotice('请求失败：' + (e.message || e), 'error');
+            }
         }
 
         async function retryFromHistory(platformId) {
@@ -2005,13 +2360,22 @@
                 video.src = src;
                 video.style.display = 'block';
                 dropEmpty.style.display = 'none';
-                
+
                 // Update meta immediately
                 const meta = el('video-meta');
                 if (meta) {
                     meta.style.display = 'flex';
+                    let sizeChip = '';
+                    // 大文件提示：>500MB 提醒用户，>2GB 强提醒
+                    if (size != null && size > 2 * 1024 * 1024 * 1024) {
+                        sizeChip = `<span style="color:#f87171; font-weight:600;" title="超过 2GB 极易上传失败（YouTube/TikTok 限速、SAU 内存溢出等）">⚠️ ${formatBytes(size)} 建议压到 800MB 以下</span>`;
+                    } else if (size != null && size > 500 * 1024 * 1024) {
+                        sizeChip = `<span style="color:#fbbf24;" title=">500MB 上传较慢，弱网环境易超时">⚠️ ${formatBytes(size)}</span>`;
+                    } else {
+                        sizeChip = `<span style="color:var(--faint);">${formatBytes(size)}</span>`;
+                    }
                     meta.innerHTML = `<i class="fa-solid fa-film"></i> <span>${escapeHtml(name)}</span>` +
-                        (size != null ? `<span style="color:var(--faint);">${formatBytes(size)}</span>` : '') +
+                        sizeChip +
                         `<span class="ok"><i class="fa-solid fa-circle-check"></i> 已就绪</span>`;
                 }
             }
@@ -2133,7 +2497,7 @@
 
         function hideConfirm() { el('confirm-overlay').classList.remove('show'); }
 
-        function renderMatrixCard(p, initialStatus = 'waiting', stageText = '等待中…', pct = 0, isRealOk = false, link = '', errorMsg = '') {
+        function renderMatrixCard(p, initialStatus = 'waiting', stageText = '等待中…', pct = 0, isRealOk = false, link = '', errorMsg = '', etaSec = null) {
             let card = el('matrix-card-' + p.id);
             const list = el('progress-list');
             if (!card) {
@@ -2176,7 +2540,7 @@
                     <div id="badge-${p.id}">${badgeHtml}</div>
                 </div>
                 <div class="matrix-card-stage" id="stage-${p.id}">
-                    ${escapeHtml(stageText)}
+                    ${escapeHtml(stageText)}${etaSec != null && initialStatus === 'running' ? ` <span style="font-size:10.5px; color:var(--accent-2); margin-left:4px;">⏱ 预计还剩 ${formatEta(etaSec)}</span>` : ''}
                 </div>
                 <div class="progress-track" style="height:5px;">
                     <div class="progress-fill" id="fill-${p.id}" style="width:${pct}%; ${initialStatus === 'failed' ? 'background:var(--danger);' : ''}"></div>
@@ -2360,7 +2724,31 @@
             await launchQrLogin(platformId);
         }
 
-        function confirmDispatch() { hideConfirm(); startDispatch(); }
+        async function confirmDispatch() {
+            // 失败前预警：勾选平台若近 24h 内失败 ≥2 次，弹窗确认
+            const selected = getSelected();
+            if (selected.length > 0) {
+                try {
+                    const res = await fetch(API + '/api/recent-failures?hours=24');
+                    const data = await res.json();
+                    const flagged = selected.filter(p => (data.counts?.[p.id] || 0) >= 2);
+                    if (flagged.length > 0) {
+                        const names = flagged.map(p => p.name).join('、');
+                        const proceed = confirm(
+                            `⚠️ 失败前预警\n\n以下平台近 24 小时内已失败 ≥2 次：\n${names}\n\n` +
+                            `建议先排查（看右上 🎯 环境检测 / 重扫 Cookie），否则可能继续失败。\n\n` +
+                            `继续发布吗？`
+                        );
+                        if (!proceed) {
+                            // 用户取消，回到弹窗（不隐藏）
+                            return;
+                        }
+                    }
+                } catch (e) { /* 网络问题不阻断 */ }
+            }
+            hideConfirm();
+            startDispatch();
+        }
 
         function parseTags() { return el('post-tags').value.split(/[,，、]/).map(s => s.trim()).filter(Boolean); }
 
@@ -2452,7 +2840,13 @@
                     const actionsEl = el('actions-' + p.id);
 
                     if (info.pct !== undefined && fill) fill.style.width = info.pct + '%';
-                    if (info.stage && st) st.textContent = info.stage;
+                    if (info.stage && st) {
+                        const eta = info.eta_sec;
+                        st.innerHTML = escapeHtml(info.stage) +
+                            (eta != null && eta > 0 && info.status === 'running'
+                                ? ` <span style="font-size:10.5px; color:var(--accent-2); margin-left:4px;">⏱ 预计还剩 ${formatEta(eta)}</span>`
+                                : '');
+                    }
                     
                     if (info.status === 'completed') {
                         clearInterval(timer);
@@ -2629,6 +3023,8 @@
         renderPlatforms();
         loadHistory();
         checkEngine();
+        // 异步加载支持的扫码平台（给批量扫码 UI 用）
+        _loadSupportedLoginPlatforms();
         // Bootstrap Wizard：首次启动 / 不健康时弹引导
         runBootstrapCheck({ auto: true });
         

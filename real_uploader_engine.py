@@ -24,12 +24,19 @@ def cancel_running_task(task_id):
             return False
     return False
 
-def _run_with_progress(cmd, env, cwd, timeout, on_progress=None, task_id=None):
+def _run_with_progress(cmd, env, cwd, timeout, on_progress=None, task_id=None, current_stage="上传中"):
     """运行子进程并实时回传进度与日志行。
-    on_progress(pct, log_line) —— pct 为推断进度(0-90)，log_line 为最新一行日志(可为None)。
+
+    on_progress(pct, log_line, stage, eta_sec)：
+        - pct: 推断进度 (0-90)
+        - log_line: 最新一行日志（可为 None）
+        - stage: 当前阶段（"登录中" / "打开创作中心" / "上传视频" / "填文案" / "点发布"）
+        - eta_sec: 预计剩余秒数（None 表示暂无足够数据）
+
     返回 (returncode, combined_output)。
-    Windows 兼容: 使用 universal_newlines=True (text=True) 统一换行符处理。
-    task_id: 传入后会把子进程注册到 _RUNNING_PROCS，供取消接口 kill。"""
+    Windows 兼容：使用 universal_newlines=True (text=True) 统一换行符处理。
+    task_id: 传入后会把子进程注册到 _RUNNING_PROCS，供取消接口 kill。
+    """
     import subprocess as sp, time, sys
     try:
         proc = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.STDOUT, text=True,
@@ -44,6 +51,12 @@ def _run_with_progress(cmd, env, cwd, timeout, on_progress=None, task_id=None):
     pct = 40
     last_tick = time.time()
     last_output_time = time.time()
+    start_time = time.time()
+    # ETA: 用近 30s 内的速率推算 (pct_delta / time_delta)
+    eta_sec = None
+    last_pct_for_eta = pct
+    last_time_for_eta = start_time
+    detected_stage = current_stage
     while True:
         line = proc.stdout.readline() if proc.stdout else ""
         if not line and proc.poll() is not None:
@@ -54,21 +67,44 @@ def _run_with_progress(cmd, env, cwd, timeout, on_progress=None, task_id=None):
             if line:
                 logs.append(line)
                 low = line.lower()
-                if "upload" in low or "上传" in line:
-                    pct = max(pct, 55)
-                elif "progress" in low or "进度" in line or "%" in line:
+                # 阶段识别
+                if any(k in low for k in ["login", "登录", "扫码", "二维码"]):
+                    detected_stage = "登录中"
+                    pct = max(pct, 50)
+                elif any(k in low for k in ["open ", "navigate", "打开", "进入", "goto"]):
+                    detected_stage = "打开创作中心"
+                    pct = max(pct, 60)
+                elif "upload" in low or "上传" in line:
+                    detected_stage = "上传视频"
                     pct = max(pct, 70)
-                elif "publish" in low or "发布" in line or "成功" in line:
+                elif "progress" in low or "进度" in line or "%" in line:
+                    detected_stage = "上传视频（实时进度）"
+                    pct = max(pct, 78)
+                elif any(k in low for k in ["title", "tag", "desc", "标题", "标签", "描述"]):
+                    detected_stage = "填文案/标签"
                     pct = max(pct, 85)
+                elif "publish" in low or "发布" in line or "成功" in line:
+                    detected_stage = "点发布"
+                    pct = max(pct, 92)
+                # ETA 计算
+                now = time.time()
+                if pct > last_pct_for_eta and (now - last_time_for_eta) > 1:
+                    dpct = pct - last_pct_for_eta
+                    dt = now - last_time_for_eta
+                    rate = dpct / dt if dt > 0 else 0
+                    if rate > 0 and pct < 95:
+                        eta_sec = int((95 - pct) / rate)
+                    last_pct_for_eta = pct
+                    last_time_for_eta = now
                 if on_progress:
-                    try: on_progress(pct, line)
+                    try: on_progress(pct, line, detected_stage, eta_sec)
                     except Exception: pass
         now = time.time()
         if now - last_tick > 4:
             pct = min(pct + 2, 90)
             last_tick = now
             if on_progress:
-                try: on_progress(pct, None)
+                try: on_progress(pct, None, detected_stage, eta_sec)
                 except Exception: pass
         # 超过 timeout 秒无输出 → 进程可能卡死，主动 kill
         if timeout and (now - last_output_time) > timeout:
@@ -82,6 +118,9 @@ def _run_with_progress(cmd, env, cwd, timeout, on_progress=None, task_id=None):
             return -1, "\n".join(logs[-800:])
     rc = proc.wait()
     _RUNNING_PROCS.pop(task_id, None)
+    if on_progress and rc == 0:
+        try: on_progress(100, "完成", "发布完成", 0)
+        except Exception: pass
     return rc, "\n".join(logs[-800:])
 
 # 凭证文件：打包态下 __file__ 指向临时解压目录会丢数据，统一走 data_dir() 持久目录
@@ -206,6 +245,151 @@ def _clean_error_text(output, rc):
         return lines[-1][:100]
     return f"引擎错误 ({rc})"
 
+def _classify_failure(output, rc):
+    """Classify failure into categories for better error handling."""
+    import re
+    if not output:
+        return "unknown"
+
+    cleaned = re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', output)
+    cleaned = re.sub(r'[\|\\/\-\<\>3]+', ' ', cleaned)
+    cleaned = re.sub(r'Playwright Team.*', '', cleaned)
+    cleaned_lower = cleaned.lower()
+
+    # Login/authentication failures
+    if any(keyword in cleaned_lower for keyword in ["cookie 已失效", "重新登录", "login", "passport", "auth", "signin", "未登录", "session expired", "token invalid", "401", "403"]):
+        return "login_failed"
+
+    # Video format/codec issues
+    if any(keyword in cleaned_lower for keyword in ["format", "codec", "分辨率", "视频格式", "不支持", "invalid format", "unsupported format", "h264", "h.264", "aac"]):
+        return "video_format_unsupported"
+
+    # Network/timeout issues
+    if any(keyword in cleaned_lower for keyword in ["timeout", "超时", "network", "连接", "connection", "timed out", "net::err", "proxy", "err_proxy", "err_tunnel", "err_internet_disconnected", "err_connection", "err_name_not_resolved"]):
+        return "network_timeout"
+
+    # Platform-specific restrictions/limits
+    if any(keyword in cleaned_lower for keyword in ["限制", "限额", "配额", "quota", "limit", "频繁", "太快", "过于频繁", "rate limit", "too many", "风控", "verify", "验证码", "captcha"]):
+        return "platform_error"
+
+    # File/access issues
+    if any(keyword in cleaned_lower for keyword in ["文件不存在", "file not found", "无法访问", "access denied", "permission", "no such file", "eacces", "eperm"]):
+        return "file_error"
+
+    # Browser/automation 错误
+    if any(keyword in cleaned_lower for keyword in ["browser", "chromium", "playwright", "patchright", "executable", "launch"]):
+        return "platform_error"
+
+    # Default to unknown
+    return "unknown"
+
+
+# 把分类 + 原始输出翻译成「用户能看懂的语言 + 三个可能原因 + 三个操作」
+_FAILURE_HUMAN = {
+    "login_failed": {
+        "label": "登录已失效",
+        "blame": "你的平台账号登录状态过期了",
+        "reasons": [
+            "上次登录过了太久（多数平台 7-30 天会过期）",
+            "账号在别的设备上修改了密码",
+            "平台风控系统认为当前 Cookie 有风险"
+        ],
+        "actions": [
+            "点 🗑️ 清 Cookie 重扫，用账号重新扫码登录",
+            "用 📥 导入 Cookie 让客服/运营给你导一份新的",
+            "看右上 🎯 环境检测，确认代理和 Playwright 都没问题"
+        ]
+    },
+    "video_format_unsupported": {
+        "label": "视频格式不被支持",
+        "blame": "平台不接受这个视频文件的编码或封装",
+        "reasons": [
+            "视频用了 H.265/HEVC（部分平台只支持 H.264）",
+            "封装是 MKV/MOV/AVI 而不是 MP4",
+            "音频编码是 AC3/DTS 而不是 AAC"
+        ],
+        "actions": [
+            "用 HandBrake（免费）转码：H.264 + AAC + MP4 容器",
+            "把分辨率压到 1080p 以内（部分平台限 4K）",
+            "文件大小压到 800MB 以下（YouTube 限速更友好）"
+        ]
+    },
+    "network_timeout": {
+        "label": "网络连接超时",
+        "blame": "OMP 没能成功连上平台服务器或中途断了",
+        "reasons": [
+            "你的代理软件（Clash/V2Ray 等）没开或端口不对",
+            "视频文件太大（>500MB）上传中途被限速",
+            "平台服务器在维护或你所在地区网络不稳"
+        ],
+        "actions": [
+            "看右上 🎯 环境检测，X / YouTube / TikTok 三个域名都通才能发国际",
+            "换更稳定的代理节点（美国/日本/新加坡优先）",
+            "把视频压到 200MB 以下再发"
+        ]
+    },
+    "platform_error": {
+        "label": "平台侧错误",
+        "blame": "平台拒绝了你的请求或触发了它的风控",
+        "reasons": [
+            "近期发布太频繁被限流（每个平台每天有上限）",
+            "平台要求短信/邮箱二次验证",
+            "视频内容触发了审核（标题/标签敏感词）"
+        ],
+        "actions": [
+            "等 1-2 小时再发（多数限流会自动解除）",
+            "改标题和标签，避免营销词（'最''第一''限时'）",
+            "去平台 App 手动发一次，验证账号状态"
+        ]
+    },
+    "file_error": {
+        "label": "文件读取失败",
+        "blame": "OMP 找不到你的视频文件或没权限读",
+        "reasons": [
+            "视频文件被移动、删除或重命名了",
+            "文件权限不足（macOS 隔离子系统）",
+            "文件路径含特殊字符（空格、中文）"
+        ],
+        "actions": [
+            "重新上传视频文件到 OMP",
+            "把视频放在 ~/Movies 或 ~/Downloads 等无空格路径",
+            "看终端是否弹『无法访问』的 macOS 权限请求"
+        ]
+    },
+    "unknown": {
+        "label": "未分类错误",
+        "blame": "遇到了一个不常见的失败原因",
+        "reasons": [
+            "可能是 SAU 上游变更了上传逻辑",
+            "可能是平台上线了新反爬虫机制",
+            "可能是网络抖动导致的中途异常"
+        ],
+        "actions": [
+            "点 📋 复制日志，把失败摘要发到 GitHub issue",
+            "等几分钟后点 🔁 重试一次",
+            "看右上 🎯 环境检测，排除基础设施问题"
+        ]
+    }
+}
+
+
+def _humanize_failure(category, output=None):
+    """返回 {"label", "blame", "reasons": [...], "actions": [...]}。"""
+    cat = category or "unknown"
+    info = _FAILURE_HUMAN.get(cat, _FAILURE_HUMAN["unknown"])
+    out = dict(info)
+    # 从原始输出里抓「最关键一句」给 blame 兜底
+    if output:
+        import re
+        cleaned = re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', output)
+        cleaned = re.sub(r'[\|\\/\-\<\>3]+', ' ', cleaned)
+        lines = [l.strip() for l in cleaned.splitlines() if l.strip() and 'Playwright' not in l]
+        if lines:
+            # 找最长的「有意义的」一行作为摘录
+            longest = max(lines, key=len)[:200]
+            out["excerpt"] = longest
+    return out
+
 class RealPlatformUploader:
     def __init__(self, platform_id, video_path, title, desc, tags=None, cover_file=None):
         self.platform_id = platform_id
@@ -218,9 +402,19 @@ class RealPlatformUploader:
         self.tags = tags or []
 
     def execute_upload(self, on_progress=None, log_file=None, task_id=None):
-        """执行上传。on_progress(pct, log_line) 用于实时进度回传；
+        """执行上传。on_progress(pct, log_line, stage, eta_sec) 用于实时进度回传；
         log_file 若提供，引擎每一步的关键事件也会写入该文件以便排错。
-        task_id 传入后，引擎会把正在运行的子进程注册到取消注册表。"""
+        task_id 传入后，引擎会把正在运行的子进程注册到取消注册表。
+        返回 dict：成功 {"success": True, ...}，失败 {"success": False, "error": ..., "failure_category": ..., "failure_human": {...}}。
+        """
+        try:
+            r = self._execute_upload_impl(on_progress, log_file, task_id)
+        except Exception as e:
+            r = {"success": False, "error": f"引擎未捕获异常: {e}"}
+        # 自动 enrich 失败分类和人类语言建议
+        return _enrich_failure(r)
+
+    def _execute_upload_impl(self, on_progress, log_file, task_id):
         def log(msg):
             line = f"[{datetime.now().strftime('%H:%M:%S')}] {msg}"
             print(line)  # 仍输出到控制台
@@ -416,3 +610,17 @@ class RealPlatformUploader:
                 return {"success": False, "error": f"自定义上传器异常: {str(e)}"}
 
         return {"success": False, "error": f"未知平台: {self.platform_id}"}
+
+    # ↑ 这里是原 execute_upload 主体结束。所有失败 result 走 _enrich_failure 自动补分类和人类语言。
+
+
+def _enrich_failure(result):
+    """给失败的 result dict 补上 failure_category / failure_human / failure_excerpt。"""
+    if result.get("success"):
+        return result
+    err = result.get("error", "") or ""
+    cat = _classify_failure(err, result.get("rc", -1))
+    human = _humanize_failure(cat, err)
+    result["failure_category"] = cat
+    result["failure_human"] = human
+    return result

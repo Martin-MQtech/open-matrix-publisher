@@ -26,6 +26,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyinstaller flask pywebview patchright playwright
 
+      - name: Bundle SAU (social-auto-upload) into DMG
+        # 把 SAU 整套源码 + .venv 一起塞进 DMG，开箱即用，免去用户 git clone。
+        # 体积换体验：用户首次启动不再需要手动配置 SAU_ROOT。
+        run: |
+          if [ ! -d "social-auto-upload" ]; then
+            git clone --depth 1 https://github.com/dreamlin0317/social-auto-upload.git
+          else
+            echo "social-auto-upload/ already present, skipping clone"
+          fi
+          # 给 SAU 装一份独立 venv（不打进 .app 的 Python 解释器，但保留其 site-packages）
+          python -m venv social-auto-upload/.venv || true
+          source social-auto-upload/.venv/bin/activate
+          pip install --upgrade pip
+          # SAU requirements：uiautomator2 / schedule / tenacity / oss2 / filetype / loguru ...
+          if [ -f social-auto-upload/requirements.txt ]; then
+            pip install -r social-auto-upload/requirements.txt || true
+          fi
+          # patchright 浏览器是 SAU 也需要的（patches playwright for stealth）
+          python -m patchright install chromium || true
+          deactivate
+
       - name: Resolve version from VERSION file
         run: |
           VERSION=$(tr -d '[:space:]' < VERSION)
@@ -46,6 +67,16 @@ jobs:
             --add-data "interactive_login.py:." \
             --add-data "custom_uploaders:custom_uploaders" \
             --add-data "vendor/fontawesome:vendor/fontawesome" \
+            --add-data "social-auto-upload/conf:social-auto-upload/conf" \
+            --add-data "social-auto-upload/uploader:social-auto-upload/uploader" \
+            --add-data "social-auto-upload/utils:social-auto-upload/utils" \
+            --add-data "social-auto-upload/myUtils:social-auto-upload/myUtils" \
+            --add-data "social-auto-upload/img:social-auto-upload/img" \
+            --add-data "social-auto-upload/requirements.txt:social-auto-upload" \
+            --hidden-import "uiautomator2" \
+            --hidden-import "tenacity" \
+            --hidden-import "loguru" \
+            --hidden-import "filetype" \
             --icon "icon.icns" \
             desktop_app.py
           cd dist && zip -r "OpenMatrixPublisher-macOS.zip" "OpenMatrixPublisher.app"
@@ -119,6 +150,16 @@ jobs:
             --add-data "interactive_login.py;." `
             --add-data "custom_uploaders;custom_uploaders" `
             --add-data "vendor/fontawesome;vendor/fontawesome" `
+            --add-data "social-auto-upload/conf;social-auto-upload/conf" `
+            --add-data "social-auto-upload/uploader;social-auto-upload/uploader" `
+            --add-data "social-auto-upload/utils;social-auto-upload/utils" `
+            --add-data "social-auto-upload/myUtils;social-auto-upload/myUtils" `
+            --add-data "social-auto-upload/img;social-auto-upload/img" `
+            --add-data "social-auto-upload/requirements.txt;social-auto-upload" `
+            --hidden-import "uiautomator2" `
+            --hidden-import "tenacity" `
+            --hidden-import "loguru" `
+            --hidden-import "filetype" `
             --icon "icon.ico" `
             desktop_app.py
 

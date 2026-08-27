@@ -1,0 +1,7 @@
+# GitHub 赞助配置：仓库右上角自动出现 Sponsor 按钮
+# 用户点击后跳转到对应赞助渠道
+github: [Martin-MQtech]
+open_collective: martin-mqtech
+ko_fi: martinmqtech
+tidelift: open-matrix-publisher
+custom: ['https://afdian.com/a/martin-mqtech', 'https://github.com/Martin-MQtech/open-matrix-publisher/blob/main/SPONSORS.md']
