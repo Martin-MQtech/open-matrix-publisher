@@ -595,12 +595,10 @@ def after_request(response):
 
 @app.route("/api/status", methods=["GET"])
 def get_status():
-    try:
-        if sync_all_platforms:
-            sync_all_platforms()
-    except Exception as e:
-        print("Syncing cookies warning:", e)
-
+    # 注意：这里绝不能跑 sync_all_platforms()（旧项目遗留的 Chrome cookie 提取）。
+    # 它会读本机 Chrome 加密 Cookie 库并访问 macOS 钥匙串，被前端 2.5s 轮询放大后
+    # 造成扫码窗口反复闪烁、抢占前台（用户实测复现）。且其产物写入与 OMP 无关的
+    # ~/.config/codex_video_dispatch/ 目录，对登录检测毫无作用。纯读文件即可。
     creds = load_credentials()
     session_status = {}
     all_platforms = ["tencent", "douyin", "bilibili", "kuaishou", "weibo", "toutiao", "zhihu", "xiaohongshu", "baijiahao", "fanqie", "youtube", "facebook", "x", "linkedin", "instagram", "tiktok", "devto", "wordpress", "telegram", "pinterest"]

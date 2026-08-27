@@ -34,7 +34,7 @@ PLATFORMS = {
         "name": "快手",
         "url": "https://cp.kuaishou.com/article/publish/video",
         "cookie_files": ["kuaishou_default.json"],
-        "auth_cookies": ["kuaishou.server.web_st"],
+        "auth_cookies": ["kuaishou.server.web_st", "passToken", "kuaishou.server.web_ph"],
         "success_domains": ["cp.kuaishou.com"],
         "exclude_keywords": ["login", "pass"]
     },
@@ -261,11 +261,11 @@ async def login_platform(platform_key):
         print(f"⏳ 正在等待你在浏览器中完成【{info['name']}】登录...")
         print(f"（提示：检测到真正登录成功进入后台后，系统将自动捕获凭证并持久化保存）\n")
 
-        deadline = time.time() + 600  # 10分钟超时时间
+        deadline = time.time() + 300  # 5分钟超时（原 10 分钟过长：扫码成功但检测不到时会抢前台 10 分钟）
         login_success = False
 
         while time.time() < deadline:
-            await asyncio.sleep(2)
+            await asyncio.sleep(3)
             try:
                 # 检查窗口是否被用户手动全部关闭
                 if len(context.pages) == 0:
@@ -361,7 +361,13 @@ async def login_platform(platform_key):
                     is_logged_in = "web_session" in cookie_map and len(cookie_map["web_session"]) > 5
 
                 elif platform_key == "kuaishou":
-                    is_logged_in = "kuaishou.server.web_st" in cookie_map and len(cookie_map["kuaishou.server.web_st"]) > 5
+                    # 快手改版后登录态主要落在 passToken + userId（旧 web_st 已不总是下发），
+                    # 任一信号成立即视为登录成功，避免扫码完成后窗口不关、抢占前台 10 分钟。
+                    has_ks_token = any(
+                        k in cookie_map and len(str(cookie_map[k])) > 5
+                        for k in ("kuaishou.server.web_st", "passToken", "kuaishou.server.web_ph")
+                    )
+                    is_logged_in = has_ks_token and "login" not in main_url.lower() and "pass" not in main_url.lower()
 
                 elif platform_key == "douyin":
                     is_logged_in = ("sessionid_ss" in cookie_map or "sessionid" in cookie_map) and len(str(cookie_map.get("sessionid_ss", cookie_map.get("sessionid", "")))) > 5
@@ -392,6 +398,22 @@ async def login_platform(platform_key):
                         with open(tpath, "w", encoding="utf-8") as f:
                             json.dump(state, f, indent=2, ensure_ascii=False)
                         print(f"✅ 视频号 Cookie 已同步至上传器目录: {tpath}")
+
+                    # 在浏览器里显示成功提示页，让用户明确看到"已捕获，窗口即将自动关闭"，
+                    # 而不是窗口凭空消失（用户此前会误以为异常）。
+                    try:
+                        await page.set_content(
+                            f"<div style='display:flex;flex-direction:column;align-items:center;"
+                            f"justify-content:center;height:100vh;font-family:system-ui;"
+                            f"background:#141414;color:#f5b25a;font-size:22px;'>"
+                            f"<div style='font-size:48px;margin-bottom:16px;'>✅</div>"
+                            f"<div>【{info['name']}】登录成功，凭证已捕获保存</div>"
+                            f"<div style='color:#888;font-size:14px;margin-top:10px;'>本窗口将在 3 秒后自动关闭，可放心关闭</div>"
+                            f"</div>"
+                        )
+                    except Exception:
+                        pass
+                    await asyncio.sleep(3)
 
                     login_success = True
                     break
