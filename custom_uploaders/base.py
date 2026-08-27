@@ -50,24 +50,29 @@ CHROME_UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
              "(KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36")
 
 # 各平台用于判定"已登录"的会话 cookie 名
-SESSION_COOKIES: dict[str, list[str]] = {
-    "x": ["auth_token", "ct0"],
-    "twitter": ["auth_token", "ct0"],
-    "linkedin": ["li_at"],
-    "instagram": ["sessionid"],
-    "facebook": ["c_user", "xs"],
-    "tk": ["sid_tt", "sessionid_ss", "tt_csrf_token"],
-    "tiktok": ["sid_tt", "sessionid_ss", "tt_csrf_token"],
-    "zhihu": ["z_c0"],
-    "weibo": ["SUB", "SUBP"],
-    "douyin": ["sessionid", "sessionid_ss"],
-    "toutiao": ["LOGIN_A"],
-    "bilibili": ["SESSDATA", "bili_jct"],
-    "kuaishou": ["kuaishou.server.web_st"],
-    "tencent": ["sessionid", "wxuin"],
-    "baijiahao": ["BDUSS", "BAIDUID"],
-    "fanqie": ["sessionid", "sessionid_ss"]
-}
+# 唯一权威来源：login_check.py（本模块与 interactive_login.py / real_uploader_engine.py
+# 三处判定已统一收敛，改判定请改 login_check.py，不要在此各自为政）
+try:
+    from login_check import PLATFORM_SESSION_COOKIES as SESSION_COOKIES
+except ImportError:
+    SESSION_COOKIES = {
+        "x": ["auth_token", "ct0"],
+        "twitter": ["auth_token", "ct0"],
+        "linkedin": ["li_at"],
+        "instagram": ["sessionid"],
+        "facebook": ["c_user", "xs"],
+        "tk": ["sid_tt", "sessionid_ss", "tt_csrf_token"],
+        "tiktok": ["sid_tt", "sessionid_ss", "tt_csrf_token"],
+        "zhihu": ["z_c0"],
+        "weibo": ["SUB", "SUBP"],
+        "douyin": ["sessionid", "sessionid_ss"],
+        "toutiao": ["LOGIN_A"],
+        "bilibili": ["SESSDATA", "bili_jct"],
+        "kuaishou": ["kuaishou.server.web_st"],
+        "tencent": ["sessionid", "wxuin"],
+        "baijiahao": ["BDUSS", "BAIDUID"],
+        "fanqie": ["sessionid", "sessionid_ss"]
+    }
 
 
 def account_file(platform: str, name: str = "default") -> Path:
