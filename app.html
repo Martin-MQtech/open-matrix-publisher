@@ -313,6 +313,77 @@
         }
         .pcard.selected .checkbox { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
+        /* ── 场景预设与快速筛选 ── */
+        .preset-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 4px 2px;
+            margin-bottom: 12px;
+        }
+        .preset-chip {
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            color: var(--ink-2);
+            padding: 5px 11px;
+            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.15s ease;
+        }
+        .preset-chip:hover {
+            border-color: var(--line-2);
+            background: var(--surface-3);
+            color: var(--ink);
+        }
+        .preset-chip.active {
+            background: rgba(232, 137, 46, 0.15);
+            border-color: var(--accent);
+            color: var(--accent-2);
+            font-weight: 600;
+        }
+
+        /* ── 统一授权向导 Tab ── */
+        .auth-tab-bar {
+            display: flex;
+            gap: 6px;
+            border-bottom: 1px solid var(--line-2);
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+        }
+        .auth-tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--muted);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .auth-tab-btn:hover {
+            color: var(--ink);
+            background: var(--surface-2);
+        }
+        .auth-tab-btn.active {
+            color: var(--accent-2);
+            background: rgba(232, 137, 46, 0.12);
+            border-color: rgba(232, 137, 46, 0.35);
+            font-weight: 600;
+        }
+
         /* ── 发布 ── */
         .publish-box { margin-top: 20px; }
         .publish-box .note { font-size: 11px; color: var(--faint); margin-top: 10px; text-align: center; }
@@ -589,7 +660,7 @@
         </div>
         <div class="topbar-right">
             <button class="btn text" id="topbar-dispatch-btn" style="display:none; color:var(--accent); font-size:12px; padding:4px 10px; background:rgba(232, 137, 46, 0.12); border:1px solid var(--accent-line);" onclick="showProgressModal()"><i class="fa-solid fa-spinner fa-spin"></i> <span id="topbar-dispatch-text">分发中 (0/0)</span></button>
-            <button class="btn text" style="color:var(--accent-2); font-size:12.5px; padding:4px 10px; background:var(--surface-2); border:1px solid var(--line-2);" onclick="openKanbanModal()"><i class="fa-solid fa-table-columns"></i> 账号健康看板</button>
+            <button class="btn text" style="color:var(--accent-2); font-size:12.5px; font-weight:600; padding:5px 12px; background:rgba(232, 137, 46, 0.12); border:1px solid var(--accent-line); border-radius:8px;" onclick="openAuthConciergeModal()"><i class="fa-solid fa-key" style="color:var(--accent);"></i> 账号管理中心 <span id="topbar-auth-badge" style="font-size:11px; background:var(--surface); border:1px solid var(--line-2); color:var(--ink-2); padding:1px 6px; border-radius:10px; margin-left:4px;">14/20</span></button>
             <span class="engine-dot" id="engine-status">检测引擎中…</span>
             <a class="link" href="https://github.com/Martin-MQtech/open-matrix-publisher" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
             <a class="link" href="https://www.emuqi.com" target="_blank"><i class="fa-solid fa-flask"></i> 木齐科技</a>
@@ -684,12 +755,13 @@
                     <div class="step-head">
                         <span class="step-num">3</span> 选择平台
                         <span class="step-hint"><span id="sel-count">已选 0 个</span> · <span id="login-count">已登录 -/<span id="login-total"></span></span></span>
-                        <span class="step-hint" style="cursor:pointer; margin-left:10px; color:var(--accent); font-weight:600;" onclick="openCdpPullModal()" title="Agent 拉起一个独立 Chrome 窗口，你在里面扫码/账号登录后 Agent 自动拿走 cookie。比手动导入/扫码省事"><i class="fa-solid fa-robot"></i> Agent 拉取</span>
-                        <span class="step-hint" style="cursor:pointer; margin-left:10px;" onclick="openImportCookieModal()" title="从客服/运营电脑导入 Cookie，免去逐个扫码"><i class="fa-solid fa-file-import"></i> 导入 Cookie</span>
+                        <div style="margin-left:auto; display:flex; gap:6px;">
+                            <button class="btn text" style="font-size:11.5px; padding:3px 8px; color:var(--accent-2); border:1px solid rgba(243,178,90,0.3); background:rgba(243,178,90,0.08); border-radius:6px;" onclick="openAuthConciergeModal()"><i class="fa-solid fa-sliders"></i> 账号授权中心</button>
+                        </div>
                     </div>
 
-                    <!-- 🚀 品牌主橙色核心发布 CTA 区域（提升至顶部焦点位置，选完即发无须滚屏） -->
-                    <div class="publish-box" style="margin-top:0; margin-bottom:16px;">
+                    <!-- 🚀 品牌主橙色核心发布 CTA 区域（选完即发） -->
+                    <div class="publish-box" style="margin-top:0; margin-bottom:12px;">
                         <button class="btn primary block" id="btn-publish" style="padding:13px 20px; font-size:15px; font-weight:700; letter-spacing:0.02em; box-shadow:0 4px 20px rgba(232, 137, 46, 0.35);">
                             <i class="fa-solid fa-paper-plane" style="font-size:16px;"></i> <span id="btn-publish-text">一键静默分发</span>
                         </button>
@@ -699,37 +771,25 @@
                         </div>
                     </div>
 
-                    <!-- 控制工具栏：语义明确划分为【账号维护】与【快速勾选】组合 -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; background:var(--surface-2); padding:6px 10px; border-radius:10px; border:1px solid var(--line-2);">
-                        <!-- 左组：凭证补录与维护 -->
-                        <div>
-                            <button class="btn text" onclick="openBatchAuthModal()" style="font-size:12px; padding:5px 10px; color:var(--accent-2); border:1px solid rgba(243, 178, 90, 0.25); background:rgba(243, 178, 90, 0.08); border-radius:7px;" title="集中补录或修复凭证失效的账号">
-                                <i class="fa-solid fa-key" style="color:var(--accent-2);"></i> 补录受损账号 <span id="need-auth-badge" style="display:none; font-size:10px; background:var(--warn); color:#000; padding:1px 5px; border-radius:10px; font-weight:700; margin-left:2px;"></span>
-                            </button>
-                        </div>
-
-                        <!-- 右组：分段式快捷勾选组 -->
-                        <div style="display:flex; gap:4px; background:var(--surface); padding:2px; border-radius:7px; border:1px solid var(--line);">
-                            <button class="btn text" onclick="selectAllReadyPlatforms()" style="font-size:12px; padding:4px 9px; color:var(--ink-2);" title="一键勾选所有已登录就绪的账号">
-                                <i class="fa-solid fa-check-double" style="color:var(--success);"></i> 全选就绪
-                            </button>
-                            <button class="btn text" onclick="clearAllSelections()" style="font-size:12px; padding:4px 9px; color:var(--muted);" title="取消当前所有平台的勾选">
-                                <i class="fa-solid fa-xmark"></i> 清空
-                            </button>
-                        </div>
+                    <!-- 场景快捷预设条（一键打透受众场景） -->
+                    <div class="preset-bar">
+                        <span style="font-size:11px; color:var(--muted); margin-right:2px;"><i class="fa-solid fa-wand-magic"></i> 预设:</span>
+                        <button class="preset-chip" onclick="applyPreset('ready')"><i class="fa-solid fa-check-double" style="color:var(--success);"></i> 全部就绪</button>
+                        <button class="preset-chip" onclick="applyPreset('cn')"><i class="fa-solid fa-flag" style="color:var(--accent);"></i> 🇨🇳 国内全家桶 (10)</button>
+                        <button class="preset-chip" onclick="applyPreset('global')"><i class="fa-solid fa-globe" style="color:var(--accent-2);"></i> 🌐 跨境出海 (10)</button>
+                        <button class="preset-chip" onclick="applyPreset('all')"><i class="fa-solid fa-network-wired"></i> 全量 20 平台</button>
+                        <button class="preset-chip" onclick="clearAllSelections()" style="color:var(--muted);"><i class="fa-solid fa-xmark"></i> 清空</button>
                     </div>
 
                     <div class="platform-group">
-                        <span><i class="fa-solid fa-flag" style="color:var(--accent-2);"></i> 国内 · <span id="cn-count"></span></span>
-                        <span class="toggle" onclick="toggleCategory('cn')">全选 / 清空</span>
-                        <span class="toggle" onclick="openBatchLoginModal('cn')" title="批量打开扫码窗口，一次性把要登录的平台都扫一遍"><i class="fa-solid fa-qrcode"></i> 批量扫码</span>
+                        <span><i class="fa-solid fa-flag" style="color:var(--accent-2);"></i> 国内主流 (10) · <span id="cn-count"></span></span>
+                        <span class="toggle" onclick="toggleCategory('cn')">全选 / 反选</span>
                     </div>
                     <div class="platform-grid" id="cn-grid"></div>
 
                     <div class="platform-group">
-                        <span><i class="fa-solid fa-globe" style="color:var(--accent-2);"></i> 海外 · <span id="global-count"></span></span>
-                        <span class="toggle" onclick="toggleCategory('global')">全选 / 清空</span>
-                        <span class="toggle" onclick="openBatchLoginModal('global')" title="批量打开扫码窗口"><i class="fa-solid fa-qrcode"></i> 批量扫码</span>
+                        <span><i class="fa-solid fa-globe" style="color:var(--accent-2);"></i> 海外平台 (10) · <span id="global-count"></span></span>
+                        <span class="toggle" onclick="toggleCategory('global')">全选 / 反选</span>
                     </div>
                     <div class="platform-grid" id="global-grid"></div>
                 </section>
@@ -763,9 +823,15 @@
                 <div style="font-size:13px; color:var(--muted);">准备分发到 <strong id="confirm-count" style="color:var(--accent);">0</strong> 个平台</div>
             </div>
 
+            <!-- 未就绪平台友好容错提示横幅 -->
+            <div id="preflight-warning-banner" style="display:none; padding:10px 12px; border-radius:8px; background:rgba(232,137,46,0.1); border:1px solid rgba(232,137,46,0.3); margin-bottom:12px; font-size:12.5px; color:var(--ink-2);">
+                <div style="font-weight:700; color:var(--accent-2); margin-bottom:3px;"><i class="fa-solid fa-triangle-exclamation"></i> 部分勾选平台尚未就绪</div>
+                <div id="preflight-warning-text">建议跳过未就绪平台直接发布，或先去授权。</div>
+            </div>
+
             <div style="font-size:13px; font-weight:600; margin-bottom:8px; color:var(--accent-light); display:flex; justify-content:space-between; align-items:center;">
-                <span><i class="fa-solid fa-shield-halved"></i> 账号 Session 预检状态：</span>
-                <span style="font-size:12px; color:var(--muted); font-weight:normal;">发布前已自动检测凭证</span>
+                <span><i class="fa-solid fa-shield-halved"></i> 账号 Session 预检清单：</span>
+                <span style="font-size:12px; color:var(--muted); font-weight:normal;">发布前实时检测</span>
             </div>
             <div id="preflight-list" style="max-height:220px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; margin-bottom:14px; background:rgba(0,0,0,0.2);"></div>
 
@@ -870,97 +936,132 @@
         </div>
     </div>
 
-    <!-- Agent 拉取 Cookie 弹窗（独立 Chrome 窗口 + CDP 拉取） -->
-    <div class="overlay" id="cdp-pull-overlay" style="display:none; align-items:center; justify-content:center;">
-        <div class="modal" style="max-width:580px; width:92vw; text-align:left;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <h3 style="margin:0; font-size:16px; color:var(--accent);"><i class="fa-solid fa-robot"></i> Agent 拉取 Cookie</h3>
-                <button class="btn text" onclick="hideCdpPullModal()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭</button>
+    <!-- 统一账号管理中心（Auth Concierge 2.0） -->
+    <div class="overlay" id="auth-concierge-overlay" style="display:none; align-items:center; justify-content:center;">
+        <div class="modal" style="max-width:880px; width:94vw; text-align:left; max-height:90vh; display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-shrink:0;">
+                <h3 style="margin:0; font-size:17px; color:var(--accent);">
+                    <i class="fa-solid fa-user-shield"></i> 账号管理中心 · 矩阵授权中心
+                </h3>
+                <button class="btn text" onclick="hideAuthConciergeModal()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭返回</button>
             </div>
 
-            <div id="cdp-pull-status" style="padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:13px; background:rgba(0,0,0,0.25); border:1px solid var(--line-2); color:var(--muted);">
-                <i class="fa-solid fa-circle-info"></i> Agent 会拉起一个<strong>独立的 Chrome 窗口</strong>（不影响你当前在用的 Chrome）。在该窗口里手动登录你要授权的平台（扫码/账号密码均可），登录完点下方『我登录好了，Agent 来拿』按钮。
+            <!-- Tab 导航栏 -->
+            <div class="auth-tab-bar" style="flex-shrink:0;">
+                <button class="auth-tab-btn active" id="auth-tab-btn-kanban" onclick="switchAuthTab('kanban')">
+                    <i class="fa-solid fa-table-columns"></i> 📊 账号全景看板 (<span id="tab-ready-num">-</span>/20)
+                </button>
+                <button class="auth-tab-btn" id="auth-tab-btn-cdp" onclick="switchAuthTab('cdp')">
+                    <i class="fa-solid fa-robot"></i> 🌐 海外一键收割 (Agent CDP)
+                </button>
+                <button class="auth-tab-btn" id="auth-tab-btn-batch" onclick="switchAuthTab('batch')">
+                    <i class="fa-solid fa-qrcode"></i> 🇨🇳 国内批量扫码
+                </button>
+                <button class="auth-tab-btn" id="auth-tab-btn-import" onclick="switchAuthTab('import')">
+                    <i class="fa-solid fa-file-import"></i> 📥 Cookie 文件导入
+                </button>
             </div>
 
-            <div style="background:rgba(7,193,96,0.06); border:1px solid rgba(7,193,96,0.25); border-radius:6px; padding:10px 12px; margin-bottom:12px; font-size:12px; line-height:1.7;">
-                <strong style="color:#9cc08f;"><i class="fa-solid fa-check"></i> 适合哪些平台？</strong><br>
-                ✅ 国际平台：<strong>X / YouTube / LinkedIn / Facebook / Instagram / TikTok / Pinterest / Telegram</strong>（你的 Chrome 已登录，Agent 直接拿）<br>
-                ✅ 国内平台：<strong>微博 / 知乎 / B站 / 小红书 / 头条 / 好看视频 / 百家号</strong><br>
-                ⚠️ 需要下载/扫描二维码的平台也能用（你在那个独立窗口里手动登录）
-            </div>
+            <!-- Tab 内容区 -->
+            <div style="overflow-y:auto; flex:1; padding-right:4px;">
+                <!-- Tab 1: 看板与矩阵健康 -->
+                <div id="auth-tab-kanban" class="auth-tab-content">
+                    <p style="font-size:12px; color:var(--muted); margin-bottom:12px; line-height:1.5;">
+                        直观掌控所有 20 平台账号凭证健康度。已就绪平台将在分发时 <strong>100% 纯无头静默运行</strong>。
+                    </p>
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:14px;">
+                        <div style="background:var(--surface-2); padding:10px 12px; border-radius:8px; border:1px solid rgba(7, 193, 96, 0.3);">
+                            <div style="font-size:11px; color:var(--muted);">🟢 凭证就绪 (可静默分发)</div>
+                            <div style="font-size:18px; font-weight:700; color:var(--success);" id="kanban-ready-count">0</div>
+                        </div>
+                        <div style="background:var(--surface-2); padding:10px 12px; border-radius:8px; border:1px solid rgba(232, 137, 46, 0.3);">
+                            <div style="font-size:11px; color:var(--muted);">🟡 需补录/已失效</div>
+                            <div style="font-size:18px; font-weight:700; color:var(--warn);" id="kanban-need-count">0</div>
+                        </div>
+                        <div style="background:var(--surface-2); padding:10px 12px; border-radius:8px; border:1px solid var(--line);">
+                            <div style="font-size:11px; color:var(--muted);">⚪️ API/拓展平台</div>
+                            <div style="font-size:18px; font-weight:700; color:var(--muted);" id="kanban-opt-count">0</div>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px;">
+                        <div style="background:rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:8px; padding:10px;">
+                            <div style="font-weight:600; font-size:12.5px; margin-bottom:8px; color:var(--success);">🟢 凭证有效</div>
+                            <div id="kanban-col-ready" style="display:flex; flex-direction:column; gap:6px;"></div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:8px; padding:10px;">
+                            <div style="font-weight:600; font-size:12.5px; margin-bottom:8px; color:var(--warn);">🟡 待扫码/失效</div>
+                            <div id="kanban-col-need" style="display:flex; flex-direction:column; gap:6px;"></div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:8px; padding:10px;">
+                            <div style="font-weight:600; font-size:12.5px; margin-bottom:8px; color:var(--muted);">⚪️ API/扩展平台</div>
+                            <div id="kanban-col-opt" style="display:flex; flex-direction:column; gap:6px;"></div>
+                        </div>
+                    </div>
+                </div>
 
-            <div id="cdp-pull-result" style="display:none; margin-bottom:12px; padding:10px 12px; border-radius:6px; font-size:12.5px;"></div>
+                <!-- Tab 2: Agent CDP 海外收割 -->
+                <div id="auth-tab-cdp" class="auth-tab-content" style="display:none;">
+                    <div id="cdp-pull-status" style="padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; background:rgba(0,0,0,0.25); border:1px solid var(--line-2); color:var(--muted);">
+                        <i class="fa-solid fa-circle-info"></i> Agent 会拉起一个<strong>独立调试 Chrome 窗口</strong>（不影响你现有的 Chrome 窗口与标签）。在弹出的窗口中登录你要授权的平台，登录完点下方『我登录好了，Agent 来拿』。
+                    </div>
+                    <div style="background:rgba(7,193,96,0.06); border:1px solid rgba(7,193,96,0.25); border-radius:6px; padding:10px 12px; margin-bottom:14px; font-size:12px; line-height:1.7;">
+                        <strong style="color:#9cc08f;"><i class="fa-solid fa-check"></i> 最适合哪些平台？</strong><br>
+                        ✅ 国际平台：<strong>X / YouTube / LinkedIn / Facebook / Instagram / TikTok / Pinterest / Telegram</strong><br>
+                        ✅ 国内平台：<strong>微博 / 知乎 / B站 / 小红书 / 头条 / 好看视频 / 百家号</strong>
+                    </div>
+                    <div id="cdp-pull-result" style="display:none; margin-bottom:12px; padding:10px 12px; border-radius:6px; font-size:12.5px;"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; padding-top:10px; border-top:1px solid var(--line-2);">
+                        <span style="font-size:11.5px; color:var(--faint);">独立 Chrome 调试端口 9223 · 凭证自动 AES-GCM 加密存储</span>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn" id="cdp-pull-stop" onclick="stopCdpSession()" style="display:none;"><i class="fa-solid fa-xmark"></i> 关闭调试窗口</button>
+                            <button class="btn" id="cdp-pull-start" onclick="startCdpSession()"><i class="fa-solid fa-play"></i> 拉起调试窗口</button>
+                            <button class="btn primary" id="cdp-pull-go" onclick="doCdpPull()" style="display:none;"><i class="fa-solid fa-download"></i> 我登录好了，Agent 来拿</button>
+                        </div>
+                    </div>
+                </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-                <span style="font-size:11.5px; color:var(--faint);">独立 Chrome 调试端口 9223，cookie 自动加密落盘</span>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn" id="cdp-pull-stop" onclick="stopCdpSession()" style="display:none;"><i class="fa-solid fa-xmark"></i> 关闭调试窗口</button>
-                    <button class="btn" id="cdp-pull-start" onclick="startCdpSession()"><i class="fa-solid fa-play"></i> 拉起调试窗口</button>
-                    <button class="btn primary" id="cdp-pull-go" onclick="doCdpPull()" style="display:none;"><i class="fa-solid fa-download"></i> 我登录好了，Agent 来拿</button>
+                <!-- Tab 3: 国内批量扫码 -->
+                <div id="auth-tab-batch" class="auth-tab-content" style="display:none;">
+                    <div style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">
+                        勾选国内待登录平台，点击开始后将<strong>按顺序轮流打开扫码窗口</strong>，扫码成功后自动进入下一个平台。
+                    </div>
+                    <div id="batch-login-list" style="max-height:300px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:12px; background:rgba(0,0,0,0.2);"></div>
+                    <div id="batch-login-progress" style="display:none; margin-bottom:12px; font-size:12.5px;"></div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; padding-top:8px; border-top:1px solid var(--line-2);">
+                        <button class="btn primary" id="batch-login-start" onclick="startBatchLogin()"><i class="fa-solid fa-play"></i> 开始批量扫码</button>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Cookie 文件导入 -->
+                <div id="auth-tab-import" class="auth-tab-content" style="display:none;">
+                    <div style="font-size:12.5px; color:var(--muted); margin-bottom:12px; line-height:1.6;">
+                        支持直接导入由 Cookie Editor 或其他浏览器导出的 JSON 文件，免去逐个扫码。
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:14px;">
+                        <div>
+                            <label style="display:block; font-size:12px; color:var(--ink-2); margin-bottom:4px;">目标平台：</label>
+                            <select id="import-platform-select" style="width:100%; padding:8px 10px; background:var(--surface-3); border:1px solid var(--line-2); border-radius:6px; color:var(--ink); font-size:13px;"></select>
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:12px; color:var(--ink-2); margin-bottom:4px;">选择 Cookie 文件（.json 或 .json.enc）：</label>
+                            <input type="file" id="import-file-input" accept=".json,.enc" style="width:100%; padding:6px; background:var(--surface-3); border:1px solid var(--line-2); border-radius:6px; color:var(--ink); font-size:12px;">
+                        </div>
+                    </div>
+                    <div id="import-cookie-result" style="display:none; padding:10px; border-radius:6px; font-size:12.5px; margin-bottom:12px;"></div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; padding-top:8px; border-top:1px solid var(--line-2);">
+                        <button class="btn primary" id="import-cookie-btn" onclick="submitImportCookie()"><i class="fa-solid fa-file-import"></i> 确认导入</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 批量扫码登录弹窗 -->
-    <div class="overlay" id="batch-login-overlay" style="display:none; align-items:center; justify-content:center;">
-        <div class="modal" style="max-width:560px; width:92vw; text-align:left;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <h3 style="margin:0; font-size:16px; color:var(--accent);"><i class="fa-solid fa-qrcode"></i> 批量扫码登录</h3>
-                <button class="btn text" onclick="hideBatchLoginModal()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭</button>
-            </div>
-            <div style="font-size:13px; color:var(--muted); margin-bottom:12px;">
-                勾选要登录的平台，点「开始批量扫码」会**逐个打开浏览器**，每个完成/超时后自动下一个。整体预计 5-15 分钟。
-            </div>
-            <div id="batch-login-list" style="max-height:340px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:12px; background:rgba(0,0,0,0.2);"></div>
-            <div id="batch-login-progress" style="display:none; margin-bottom:12px; font-size:12.5px;"></div>
-            <div style="display:flex; justify-content:flex-end; gap:8px;">
-                <button class="btn" onclick="hideBatchLoginModal()">取消</button>
-                <button class="btn primary" id="batch-login-start" onclick="startBatchLogin()"><i class="fa-solid fa-play"></i> 开始批量扫码</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 导入 Cookie 弹窗 -->
-    <div class="overlay" id="import-cookie-overlay" style="display:none; align-items:center; justify-content:center;">
-        <div class="modal" style="max-width:520px; width:92vw; text-align:left;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <h3 style="margin:0; font-size:16px; color:var(--accent);"><i class="fa-solid fa-file-import"></i> 导入他人 Cookie</h3>
-                <button class="btn text" onclick="hideImportCookieModal()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭</button>
-            </div>
-            <div style="font-size:12.5px; color:var(--muted); margin-bottom:12px; line-height:1.6;">
-                <strong style="color:var(--ink-2);">💡 适用场景：</strong> 让客服/运营从他们电脑导出 cookie 文件，丢给你直接用，<strong>免去逐个扫码</strong>。<br>
-                <strong style="color:var(--ink-2);">📦 支持格式：</strong> Playwright <code style="background:var(--surface-2); padding:1px 4px; border-radius:3px;">storage_state</code> JSON（含 <code style="background:var(--surface-2); padding:1px 4px; border-radius:3px;">cookies</code> 字段）或直接的 <code style="background:var(--surface-2); padding:1px 4px; border-radius:3px;">list[cookie]</code> 数组。
-            </div>
-            <div style="background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.25); border-radius:6px; padding:8px 10px; margin-bottom:12px; font-size:11.5px; line-height:1.6;">
-                <strong style="color:#fbbf24;"><i class="fa-brands fa-chrome"></i> 5 分钟一次，5 个国际平台全搞定</strong><br>
-                ① 装 <strong>Cookie Editor</strong> 浏览器扩展（免费，<a href="https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekmikcdjdjebamlimij" target="_blank" style="color:var(--accent-2); text-decoration:underline;">点这里装</a>）<br>
-                ② 依次打开已登录的平台：<strong>X → YouTube → LinkedIn → Facebook → Instagram</strong><br>
-                ③ 点浏览器右上角 🧁 Cookie Editor → <strong>Export → JSON</strong><br>
-                ④ 选平台、传这个文件 → 完事。全程不用拿出手机。<br>
-                <a href="https://github.com/Martin-MQtech/open-matrix-publisher/blob/main/docs/CHROME_COOKIE_HELPER.md" target="_blank" style="color:var(--accent-2); text-decoration:underline;">📖 3 种导出方法完整教程</a>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
-                <div>
-                    <label style="font-size:12px; color:var(--muted);">平台</label>
-                    <select id="import-cookie-platform" style="width:100%; padding:6px 8px; background:var(--surface-2); border:1px solid var(--line-2); border-radius:6px; color:var(--ink);"></select>
-                </div>
-                <div>
-                    <label style="font-size:12px; color:var(--muted);">账号名（默认 default）</label>
-                    <input id="import-cookie-name" value="default" style="width:100%; padding:6px 8px; background:var(--surface-2); border:1px solid var(--line-2); border-radius:6px; color:var(--ink);">
-                </div>
-            </div>
-            <div style="margin-bottom:12px;">
-                <label style="font-size:12px; color:var(--muted);">Cookie JSON 文件</label>
-                <input type="file" id="import-cookie-file" accept=".json,application/json" style="display:block; width:100%; padding:6px; background:var(--surface-2); border:1px solid var(--line-2); border-radius:6px; color:var(--ink); font-size:12px;">
-            </div>
-            <div id="import-cookie-result" style="display:none; margin-bottom:12px; padding:8px 10px; border-radius:6px; font-size:12.5px;"></div>
-            <div style="display:flex; justify-content:flex-end; gap:8px;">
-                <button class="btn" onclick="hideImportCookieModal()">取消</button>
-                <button class="btn primary" onclick="submitImportCookie()"><i class="fa-solid fa-upload"></i> 导入</button>
-            </div>
-        </div>
-    </div>
+    <!-- 兼容别名容器（隐藏式占位，确保老代码引用不报错） -->
+    <div id="cdp-pull-overlay" style="display:none;"></div>
+    <div id="batch-login-overlay" style="display:none;"></div>
+    <div id="import-cookie-overlay" style="display:none;"></div>
+    <div id="batch-auth-overlay" style="display:none;"></div>
+    <div id="kanban-overlay" style="display:none;"></div>
 
     <!-- 分发批次详情与矩阵看板弹窗 -->
     <div class="overlay" id="history-detail-overlay">
@@ -987,90 +1088,6 @@
                 <button class="btn text" onclick="refillHistoryCopy()" style="font-size:12.5px; color:var(--accent-2); padding:0;"><i class="fa-solid fa-arrow-up-from-bracket"></i> 一键回填此批次文案到上方</button>
                 <div style="display:flex; gap:8px;">
                     <button class="btn primary" onclick="hideHistoryDetailModal()"><i class="fa-solid fa-check"></i> 完成查看</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 集中授权/补录受损账号弹窗 -->
-    <div class="overlay" id="batch-auth-overlay">
-        <div class="modal" style="max-width:540px; text-align:left;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <h3 style="margin:0;"><i class="fa-solid fa-user-shield" style="color:var(--accent-2);"></i> 集中授权与 Cookie 补录中心</h3>
-                <button class="btn text" onclick="hideBatchAuthModal()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭返回</button>
-            </div>
-            <p style="font-size:12.5px; color:var(--muted); margin-bottom:14px; line-height:1.5;">
-                集中在此完成各平台的扫码或 API Key 填报。授权保存后，发布时将 <strong>100% 纯无头静默运行</strong>，绝不干扰您的正常办公。
-            </p>
-            <div id="batch-auth-list" style="max-height:300px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:14px; background:rgba(0,0,0,0.2);"></div>
-            <div class="actions" style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn primary" onclick="hideBatchAuthModal()"><i class="fa-solid fa-check"></i> 完成补录并返回</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 矩阵账号健康度看板弹窗 -->
-    <div class="overlay" id="kanban-overlay">
-        <div class="modal" style="max-width:860px; width:92vw; text-align:left;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                <h3 style="margin:0;"><i class="fa-solid fa-table-columns" style="color:var(--accent-2);"></i> 矩阵账号凭证健康看板</h3>
-                <button class="btn text" onclick="hideKanbanModal()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭返回</button>
-            </div>
-            
-            <p style="font-size:12.5px; color:var(--muted); margin-bottom:14px; line-height:1.5;">
-                直观掌控所有矩阵账号凭证状态。您可以给予自己完全选择的权利：<strong>已就绪直接发</strong>，<strong>受损账号可选择性【扫码补录】或点击【忽略跳过】（不补不发）</strong>。
-            </p>
-
-            <!-- 统计 Counter Bar -->
-            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:16px;">
-                <div style="background:var(--surface-2); padding:10px 14px; border-radius:8px; border:1px solid rgba(7, 193, 96, 0.3);">
-                    <div style="font-size:11px; color:var(--muted);">🟢 凭证就绪 (无需弹窗·纯无头)</div>
-                    <div style="font-size:20px; font-weight:700; color:var(--success);" id="kanban-ready-count">0</div>
-                </div>
-                <div style="background:var(--surface-2); padding:10px 14px; border-radius:8px; border:1px solid rgba(232, 137, 46, 0.3);">
-                    <div style="font-size:11px; color:var(--muted);">🟡 需补录/已失效 (可选择补或忽略)</div>
-                    <div style="font-size:20px; font-weight:700; color:var(--warn);" id="kanban-need-count">0</div>
-                </div>
-                <div style="background:var(--surface-2); padding:10px 14px; border-radius:8px; border:1px solid var(--line);">
-                    <div style="font-size:11px; color:var(--muted);">⚪️ 选项/API拓展平台</div>
-                    <div style="font-size:20px; font-weight:700; color:var(--muted);" id="kanban-opt-count">0</div>
-                </div>
-            </div>
-
-            <!-- 三栏 Kanban Columns -->
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:14px; max-height:380px; overflow-y:auto; padding-right:4px;">
-                <!-- 栏1: 就绪账号 -->
-                <div style="background:rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:10px; padding:12px;">
-                    <div style="font-weight:600; font-size:13px; margin-bottom:10px; color:var(--success);">
-                        🟢 凭证有效 (静默无头发)
-                    </div>
-                    <div id="kanban-col-ready" style="display:flex; flex-direction:column; gap:8px;"></div>
-                </div>
-
-                <!-- 栏2: 受损/需补录账号 (给予自由抉择) -->
-                <div style="background:rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:10px; padding:12px;">
-                    <div style="font-weight:600; font-size:13px; margin-bottom:10px; color:var(--warn); display:flex; justify-content:space-between; align-items:center;">
-                        <span>🟡 凭证失效 (选择补录/跳过)</span>
-                    </div>
-                    <div id="kanban-col-need" style="display:flex; flex-direction:column; gap:8px;"></div>
-                </div>
-
-                <!-- 栏3: 扩展与API账号 -->
-                <div style="background:rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:10px; padding:12px;">
-                    <div style="font-weight:600; font-size:13px; margin-bottom:10px; color:var(--muted);">
-                        ⚪️ API/拓展平台
-                    </div>
-                    <div id="kanban-col-opt" style="display:flex; flex-direction:column; gap:8px;"></div>
-                </div>
-            </div>
-
-            <div class="actions" style="margin-top:16px; display:flex; justify-content:space-between; align-items:center;">
-                <div style="font-size:12px; color:var(--muted);">
-                    提示：在此给不打算使用的失效平台点【忽略跳过】，可隐藏干扰并同步主界面。
-                </div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn" onclick="hideKanbanModal()">关闭</button>
-                    <button class="btn primary" onclick="applyKanbanPlan()"><i class="fa-solid fa-check-double"></i> 将此看板配置同步至控制台</button>
                 </div>
             </div>
         </div>
@@ -1245,27 +1262,110 @@
             el('btn-publish-text').textContent = n > 0 ? ('发布到 ' + n + ' 个平台') : '发布';
         }
 
-        function selectAllReadyPlatforms() {
-            fetch(API + '/api/status').then(r => r.json()).then(data => {
-                const sessions = data.session_status || data.sessions || {};
-                let count = 0;
+        /* ── 场景预设与快速筛选 ── */
+        let _activePreset = 'ready';
+
+        async function applyPreset(type) {
+            _activePreset = type;
+            document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+            
+            // 清空现有选择
+            PLATFORMS.forEach(p => {
+                const card = el('card-' + p.id);
+                if (card) card.classList.remove('selected');
+            });
+
+            if (type === 'all') {
                 PLATFORMS.forEach(p => {
-                    const card = el('card-' + p.id);
-                    if (!card) return;
-                    const s = sessions[p.id] || {};
-                    if (s.logged_in) {
-                        card.classList.add('selected');
-                        count++;
-                    } else {
-                        card.classList.remove('selected');
+                    if (!p.disabled) {
+                        const card = el('card-' + p.id);
+                        if (card) card.classList.add('selected');
                     }
                 });
-                updateCount();
-                if (count === 0) {
-                    showToastNotice('目前尚无登录就绪的账号，请先点击平台卡片【扫码登录】。', 'warn');
+            } else if (type === 'cn') {
+                PLATFORMS.filter(p => p.cat === 'cn' && !p.disabled).forEach(p => {
+                    const card = el('card-' + p.id);
+                    if (card) card.classList.add('selected');
+                });
+            } else if (type === 'global') {
+                PLATFORMS.filter(p => p.cat === 'global' && !p.disabled).forEach(p => {
+                    const card = el('card-' + p.id);
+                    if (card) card.classList.add('selected');
+                });
+            } else if (type === 'ready') {
+                try {
+                    const res = await fetch(API + '/api/status');
+                    const data = await res.json();
+                    const sessions = data.session_status || data.sessions || {};
+                    PLATFORMS.forEach(p => {
+                        const s = sessions[p.id] || {};
+                        if (s.logged_in && !p.disabled) {
+                            const card = el('card-' + p.id);
+                            if (card) card.classList.add('selected');
+                        }
+                    });
+                } catch (e) {
+                    PLATFORMS.forEach(p => {
+                        if (p.loggedIn && !p.disabled) {
+                            const card = el('card-' + p.id);
+                            if (card) card.classList.add('selected');
+                        }
+                    });
                 }
-            }).catch(() => showToastNotice('无法获取账号登录状态，请确认 start_ui.sh 已运行。', 'error'));
+            }
+            updateCount();
         }
+
+        /* ── 统一账号管理中心 (Auth Concierge 2.0) ── */
+        function openAuthConciergeModal(tab = 'kanban') {
+            const overlay = el('auth-concierge-overlay');
+            if (!overlay) return;
+            overlay.classList.add('show');
+            switchAuthTab(tab);
+        }
+
+        function hideAuthConciergeModal() {
+            const overlay = el('auth-concierge-overlay');
+            if (overlay) overlay.classList.remove('show');
+        }
+
+        function switchAuthTab(tab) {
+            // 更新 Tab 按钮激活态
+            ['kanban', 'cdp', 'batch', 'import'].forEach(t => {
+                const btn = el(`tab-btn-${t}`);
+                const pane = el(`tab-pane-${t}`);
+                if (btn) {
+                    if (t === tab) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+                if (pane) {
+                    pane.style.display = (t === tab) ? 'block' : 'none';
+                }
+            });
+
+            // 触发对应子模块数据加载
+            if (tab === 'kanban') {
+                renderKanbanBoard();
+            } else if (tab === 'batch') {
+                renderBatchLoginList('cn');
+            } else if (tab === 'import') {
+                initImportPlatformSelect();
+            } else if (tab === 'cdp') {
+                refreshCdpStatus();
+            }
+        }
+
+        // 向下兼容别名，确保老按钮或逻辑调用无缝导向对应 Tab
+        function openKanbanModal() { openAuthConciergeModal('kanban'); }
+        function hideKanbanModal() { hideAuthConciergeModal(); }
+        function openBatchAuthModal() { openAuthConciergeModal('kanban'); }
+        function hideBatchAuthModal() { hideAuthConciergeModal(); }
+        function openBatchLoginModal(cat = 'cn') { openAuthConciergeModal('batch'); }
+        function hideBatchLoginModal() { hideAuthConciergeModal(); }
+        function openCdpPullModal() { openAuthConciergeModal('cdp'); }
+        function hideCdpPullModal() { hideAuthConciergeModal(); }
+        function openImportCookieModal() { openAuthConciergeModal('import'); }
+        function hideImportCookieModal() { hideAuthConciergeModal(); }
 
         function toggleCategory(category) {
             const isCn = category === 'cn';
@@ -2806,6 +2906,28 @@
             }
         }
 
+        async function retryFailedPlatforms() {
+            const failedPids = Array.from(currentDispatchState.failed);
+            if (failedPids.length === 0) {
+                showToastNotice('暂无失败平台需要重试', 'info');
+                return;
+            }
+            // 自动将主界面勾选项设为仅失败的这几个平台
+            PLATFORMS.forEach(p => {
+                const card = el('card-' + p.id);
+                if (card) {
+                    if (failedPids.includes(p.id)) card.classList.add('selected');
+                    else card.classList.remove('selected');
+                }
+            });
+            updateCounts();
+            hideProgress(true);
+            showToastNotice(`已自动勾选 ${failedPids.length} 个失败平台，准备重新分发…`, 'info');
+            setTimeout(() => {
+                startDispatch();
+            }, 600);
+        }
+
         async function showProgressModal(e) {
             if (e) e.stopPropagation();
             el('progress-overlay').classList.add('show');
@@ -2869,16 +2991,53 @@
                 el('btn-confirm-start').innerHTML = '<i class="fa-solid fa-paper-plane"></i> 确认并开始发布 (状态未知)';
                 return;
             }
-            let hasUnlogged = false;
+            let unloggedNames = [];
             sel.forEach(p => {
                 const info = state[p.id] || { logged_in: false, status_text: '未授权' };
-                if (!info.logged_in) hasUnlogged = true;
+                if (!info.logged_in) {
+                    unloggedNames.push(p.name);
+                }
                 const row = document.createElement('div');
                 row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:6px 10px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px;';
-                row.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">${platformIcon(p, 16)} <strong>${p.name}</strong></div><div style="display:flex; align-items:center; gap:10px;">${info.logged_in ? '<span style="color:var(--success);">就绪</span>' : '<button class="btn accent" style="padding:2px 8px; font-size:12px;" onclick="preflightLogin(\''+p.id+'\', event)"><i class="fa-solid fa-qrcode"></i> 扫码登录</button>'}</div>`;
+                row.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">${platformIcon(p, 16)} <strong>${p.name}</strong></div><div style="display:flex; align-items:center; gap:10px;">${info.logged_in ? '<span style="color:var(--success); font-weight:600;"><i class="fa-solid fa-circle-check"></i> 就绪</span>' : '<button class="btn accent" style="padding:2px 8px; font-size:12px;" onclick="preflightLogin(\''+p.id+'\', event)"><i class="fa-solid fa-qrcode"></i> 扫码授权</button>'}</div>`;
                 list.appendChild(row);
             });
-            el('btn-confirm-start').innerHTML = hasUnlogged ? '<i class="fa-solid fa-paper-plane"></i> 仍尝试发布 (含待登录)' : '<i class="fa-solid fa-paper-plane"></i> 确认并开始发布';
+
+            const banner = el('preflight-warning-banner');
+            const bannerText = el('preflight-warning-text');
+            if (unloggedNames.length > 0) {
+                if (banner) banner.style.display = 'block';
+                if (bannerText) bannerText.innerHTML = `已选平台中包含 <strong>${unloggedNames.length}</strong> 个未就绪平台（如：${unloggedNames.slice(0, 3).join('、')}）。建议点击左下方按钮过滤，或直接尝试发布。`;
+                el('btn-confirm-start').innerHTML = `<i class="fa-solid fa-paper-plane"></i> 确认发布 (${sel.length} 平台，含未就绪)`;
+            } else {
+                if (banner) banner.style.display = 'none';
+                el('btn-confirm-start').innerHTML = `<i class="fa-solid fa-paper-plane"></i> 全部就绪 · 开始发布 (${sel.length})`;
+            }
+        }
+
+        async function selectOnlyLoggedOnConfirm() {
+            let state = {};
+            try {
+                const res = await fetch(API + '/api/status');
+                const data = await res.json();
+                state = data.session_status || {};
+            } catch (e) {}
+
+            PLATFORMS.forEach(p => {
+                const card = el('card-' + p.id);
+                if (card) {
+                    if (state[p.id]?.logged_in) {
+                        card.classList.add('selected');
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                }
+            });
+            updateCounts();
+            const sel = getSelected();
+            el('confirm-count').textContent = sel.length;
+            await renderPreflightList();
+            showToastNotice(`已自动剔除未就绪平台，当前选中 ${sel.length} 个已就绪平台`, 'success');
         }
 
         async function preflightLogin(platformId, event) {
