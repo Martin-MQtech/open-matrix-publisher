@@ -10,9 +10,13 @@ PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, PROJECT_DIR)
 
 def start_backend():
-    """Start local Flask bridge server."""
+    """Start local Flask bridge server via waitress (prod)."""
     from local_bridge_server import app
-    app.run(host="127.0.0.1", port=5001, debug=False)
+    try:
+        from waitress import serve
+        serve(app, host="127.0.0.1", port=5001, threads=4, ident="omp")
+    except ImportError:
+        app.run(host="127.0.0.1", port=5001, debug=False)
 
 def selftest():
     """打包产物自检模式（--selftest）：启动内嵌后端 → 轮询 /api/health →

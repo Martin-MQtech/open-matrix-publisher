@@ -29,6 +29,14 @@ try:
 except ImportError:
     set_init_script = None
 
+# 本地 Cookie 加密层：OMP LOCAL_COOKIES_DIR 走密文 .enc，SAU 上游目录仍写明文（保持兼容）。
+try:
+    from cookie_crypto import best_cookie_path, encrypt_cookie_file, is_encrypted
+except ImportError:
+    best_cookie_path = None
+    encrypt_cookie_file = None
+    is_encrypted = None
+
 COOKIES_DIR = SAU_ROOT / "cookies"
 LOCAL_COOKIES_DIR = PROJECT_ROOT / "cookies"
 
@@ -63,12 +71,30 @@ SESSION_COOKIES: dict[str, list[str]] = {
 
 
 def account_file(platform: str, name: str = "default") -> Path:
-    """返回该平台的 cookie 存储文件路径，优先返回已有非空 cookie 的路径，否则默认返回 COOKIES_DIR。"""
+    """返回该平台的 cookie 存储文件路径，优先返回已有非空 cookie 的路径，否则默认返回 COOKIES_DIR。
+
+    加密层集成：
+    - SAU_DIR 永远明文（上游项目自管，不动）。
+    - LOCAL_COOKIES_DIR 优先 .enc，存在则解密到 .json 后返回 .json。
+    - 老的明文 .json 仍可读（向后兼容），首次新登录会自动落 .enc。
+    """
     sau_p = COOKIES_DIR / f"{platform}_{name}.json"
     local_p = LOCAL_COOKIES_DIR / f"{platform}_{name}.json"
     if sau_p.exists() and sau_p.stat().st_size >= 50:
         return sau_p
+    # 本地：先看 .enc（密文优先）
+    local_enc = LOCAL_COOKIES_DIR / f"{platform}_{name}.json.enc"
+    if best_cookie_path and local_enc.exists():
+        decrypted = best_cookie_path(local_p)
+        if decrypted and decrypted.exists() and decrypted.stat().st_size >= 50:
+            return decrypted
     if local_p.exists() and local_p.stat().st_size >= 50:
+        # 兼容老明文；同时后台异步升级为 .enc
+        if encrypt_cookie_file and not is_encrypted(local_p):
+            try:
+                encrypt_cookie_file(local_p)
+            except Exception:
+                pass
         return local_p
 
     # 别名检测 (如 tiktok / tk, x / twitter)
@@ -78,12 +104,22 @@ def account_file(platform: str, name: str = "default") -> Path:
                 alt_p = d / f"{alt}_{name}.json"
                 if alt_p.exists() and alt_p.stat().st_size >= 50:
                     return alt_p
+                alt_enc = d / f"{alt}_{name}.json.enc"
+                if best_cookie_path and alt_enc.exists():
+                    dec = best_cookie_path(alt_p)
+                    if dec and dec.exists() and dec.stat().st_size >= 50:
+                        return dec
     elif platform in ("x", "twitter"):
         for alt in ("x", "twitter"):
             for d in (COOKIES_DIR, LOCAL_COOKIES_DIR):
                 alt_p = d / f"{alt}_{name}.json"
                 if alt_p.exists() and alt_p.stat().st_size >= 50:
                     return alt_p
+                alt_enc = d / f"{alt}_{name}.json.enc"
+                if best_cookie_path and alt_enc.exists():
+                    dec = best_cookie_path(alt_p)
+                    if dec and dec.exists() and dec.stat().st_size >= 50:
+                        return dec
 
     sau_p.parent.mkdir(parents=True, exist_ok=True)
     return sau_p
@@ -128,17 +164,54 @@ def _has_session(cookies: list[dict], platform: str) -> bool:
 async def save_cookies(context, cookie_path: Path) -> None:
     state = await context.storage_state()
     content = json.dumps(state, ensure_ascii=False, indent=2)
-    # 保存到 SAU_DIR 和 LOCAL_DIR 两个目录
-    for d in (COOKIES_DIR, LOCAL_COOKIES_DIR):
+    # SAU_DIR 永远写明文（上游项目自管）。
+    for d in (COOKIES_DIR,):
         d.mkdir(parents=True, exist_ok=True)
         (d / cookie_path.name).write_text(content, encoding="utf-8")
-        # 兼容性多存一份别名
         if "tiktok" in cookie_path.name:
             alt_name = cookie_path.name.replace("tiktok", "tk")
             (d / alt_name).write_text(content, encoding="utf-8")
         elif "tk_" in cookie_path.name:
             alt_name = cookie_path.name.replace("tk_", "tiktok_")
             (d / alt_name).write_text(content, encoding="utf-8")
+    # LOCAL_COOKIES_DIR 走加密层：先写临时明文给加密函数读，再写 .enc，最后删明文。
+    if encrypt_cookie_file:
+        LOCAL_COOKIES_DIR.mkdir(parents=True, exist_ok=True)
+        tmp_plain = LOCAL_COOKIES_DIR / cookie_path.name
+        tmp_plain.write_text(content, encoding="utf-8")
+        try:
+            encrypt_cookie_file(tmp_plain)
+        except Exception:
+            # 加密失败时保留明文，至少不丢账号
+            pass
+        # 别名（tiktok / tk）也加密
+        if "tiktok" in cookie_path.name:
+            alt_name = cookie_path.name.replace("tiktok", "tk")
+            alt_plain = LOCAL_COOKIES_DIR / alt_name
+            alt_plain.write_text(content, encoding="utf-8")
+            try:
+                encrypt_cookie_file(alt_plain)
+            except Exception:
+                pass
+        elif "tk_" in cookie_path.name:
+            alt_name = cookie_path.name.replace("tk_", "tiktok_")
+            alt_plain = LOCAL_COOKIES_DIR / alt_name
+            alt_plain.write_text(content, encoding="utf-8")
+            try:
+                encrypt_cookie_file(alt_plain)
+            except Exception:
+                pass
+    else:
+        # 加密模块未就绪（理论上不会发生），退回老路径
+        for d in (LOCAL_COOKIES_DIR,):
+            d.mkdir(parents=True, exist_ok=True)
+            (d / cookie_path.name).write_text(content, encoding="utf-8")
+            if "tiktok" in cookie_path.name:
+                alt_name = cookie_path.name.replace("tiktok", "tk")
+                (d / alt_name).write_text(content, encoding="utf-8")
+            elif "tk_" in cookie_path.name:
+                alt_name = cookie_path.name.replace("tk_", "tiktok_")
+                (d / alt_name).write_text(content, encoding="utf-8")
 
 
 async def login_flow(

@@ -373,6 +373,30 @@
         .chip a { color: inherit; }
         .history-empty { color: var(--faint); font-size: 12.5px; text-align: center; padding: 14px 0; }
 
+        /* 历史面板：失败分类徽章 + 平台指标 */
+        .chip.fail-login_failed { color:#f87171; border-color:rgba(248,113,113,0.3); background:rgba(248,113,113,0.08); }
+        .chip.fail-video_format_unsupported { color:#fbbf24; border-color:rgba(251,191,36,0.3); background:rgba(251,191,36,0.08); }
+        .chip.fail-network_timeout { color:#60a5fa; border-color:rgba(96,165,250,0.3); background:rgba(96,165,250,0.08); }
+        .chip.fail-platform_error { color:#f87171; border-color:rgba(248,113,113,0.3); background:rgba(248,113,113,0.08); }
+        .chip.fail-file_error { color:#fbbf24; border-color:rgba(251,191,36,0.3); background:rgba(251,191,36,0.08); }
+        .chip.fail-unknown { color:var(--muted); border-color:var(--line-2); background:var(--surface-2); }
+        .metrics-block { margin-top:6px; padding:6px 8px; background:rgba(232,137,46,0.06); border:1px solid rgba(232,137,46,0.15); border-radius:6px; font-size:11.5px; color:var(--ink-2); display:flex; flex-wrap:wrap; gap:10px; }
+        .metrics-block i { color:var(--accent); margin-right:3px; }
+
+        /* Bootstrap Wizard 检查项 */
+        .bs-check { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:8px; border:1px solid var(--line-2); background:var(--surface-2); }
+        .bs-check.ok { border-color:rgba(156,192,143,0.3); background:rgba(156,192,143,0.06); }
+        .bs-check.warn { border-color:rgba(251,191,36,0.3); background:rgba(251,191,36,0.06); }
+        .bs-check.fail { border-color:rgba(248,113,113,0.3); background:rgba(248,113,113,0.06); }
+        .bs-check-icon { font-size:18px; flex:none; width:22px; text-align:center; }
+        .bs-check.ok .bs-check-icon { color:#9cc08f; }
+        .bs-check.warn .bs-check-icon { color:#fbbf24; }
+        .bs-check.fail .bs-check-icon { color:#f87171; }
+        .bs-check-body { flex:1; min-width:0; }
+        .bs-check-label { font-weight:600; font-size:13px; margin-bottom:2px; }
+        .bs-check-detail { font-size:11.5px; color:var(--muted); word-break:break-all; margin-bottom:3px; }
+        .bs-check-fix { font-size:11.5px; color:var(--accent-2); background:rgba(0,0,0,0.25); padding:5px 8px; border-radius:4px; margin-top:4px; font-family:ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
+
         /* ── 弹窗 ── */
         .overlay {
             position: fixed; inset: 0;
@@ -711,7 +735,12 @@
         <section class="panel" id="history-panel" style="margin-top:20px;">
             <div class="step-head">
                 <span class="step-num"><i class="fa-solid fa-clock-rotate-left"></i></span> 分发记录 <span style="font-size:12px; color:var(--muted); font-weight:normal; margin-left:6px;">(保留最近 10 条看板)</span>
-                <span class="step-hint" style="cursor:pointer;" onclick="loadHistory()"><i class="fa-solid fa-rotate"></i> 刷新</span>
+                <div style="display:flex; align-items:center; gap:14px; margin-left:auto;">
+                    <span class="step-hint" style="cursor:pointer;" onclick="showBootstrap(); renderBootstrap(_bsCurrentData || {summary:{},checks:[]});" title="打开环境检测引导（首次启动 / 排查问题时用）"><i class="fa-solid fa-bullseye"></i> 环境检测</span>
+                    <span class="step-hint" style="cursor:pointer;" onclick="exportHistoryJson()" title="导出完整 JSON 报表"><i class="fa-solid fa-file-code"></i> 导出 JSON</span>
+                    <span class="step-hint" style="cursor:pointer;" onclick="exportHistoryCsv()" title="导出 CSV 报表（Excel/Numbers 可直接打开）"><i class="fa-solid fa-file-csv"></i> 导出 CSV</span>
+                    <span class="step-hint" style="cursor:pointer;" onclick="loadHistory()" title="刷新历史记录"><i class="fa-solid fa-rotate"></i> 刷新</span>
+                </div>
             </div>
             <div class="history-list" id="history-list">
                 <div class="history-empty">加载中…</div>
@@ -816,6 +845,27 @@
         </div>
         <div class="capsule-desc" id="capsule-curr-stage">正在分发各平台…</div>
         <div class="capsule-bar"><div class="capsule-fill" id="capsule-fill" style="width:0%;"></div></div>
+    </div>
+
+    <!-- 首次启动 Bootstrap Wizard（环境不健康时自动弹起，可跳过） -->
+    <div class="overlay" id="bootstrap-overlay" style="display:none; align-items:center; justify-content:center;">
+        <div class="modal" style="max-width:680px; width:92vw; text-align:left; max-height:88vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h3 style="margin:0; font-size:17px; color:var(--accent);">
+                    <i class="fa-solid fa-rocket"></i> Open Matrix Publisher · 首次启动引导
+                </h3>
+                <button class="btn text" onclick="skipBootstrap()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 跳过</button>
+            </div>
+            <div id="bootstrap-summary" style="padding:10px 12px; border-radius:8px; margin-bottom:14px; font-size:13px;"></div>
+            <div id="bootstrap-checks" style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;"></div>
+            <div id="bootstrap-actions" style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid var(--line-2);">
+                <span style="font-size:11.5px; color:var(--faint);">首次检测到的不健康项：必须先修复才能稳定发布</span>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn" onclick="recheckBootstrap()"><i class="fa-solid fa-rotate"></i> 重新检测</button>
+                    <button class="btn primary" onclick="skipBootstrap()">我已知晓，开始使用</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- 分发批次详情与矩阵看板弹窗 -->
@@ -1515,6 +1565,168 @@
             return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
         }
 
+        // 失败分类 → 中文标签（与后端 _classify_failure 对齐）
+        const _FAILURE_CATEGORY_LABELS = {
+            'login_failed': '登录失效',
+            'video_format_unsupported': '视频格式不受限',
+            'network_timeout': '网络超时',
+            'platform_error': '平台侧错误',
+            'file_error': '文件读取失败',
+            'unknown': '未分类'
+        };
+        function _failureCategoryLabel(cat) {
+            return _FAILURE_CATEGORY_LABELS[cat] || (_FAILURE_CATEGORY_LABELS['unknown']);
+        }
+
+        // 平台指标键名 → 中文标签
+        const _METRIC_LABELS = {
+            'views': '播放量',
+            'likes': '点赞',
+            'comments': '评论',
+            'shares': '分享',
+            'favorites': '收藏',
+            'danmaku': '弹幕',
+            'coins': '投币',
+            'followers': '粉丝',
+            'pub_id': '平台作品 ID',
+            'note': '备注'
+        };
+        function _metricLabel(key) {
+            return _METRIC_LABELS[key] || key;
+        }
+
+        // 触发浏览器下载（用于 JSON / CSV 导出）
+        function _triggerBrowserDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+        }
+
+        async function exportHistoryJson() {
+            try {
+                showToastNotice('正在生成 JSON 报表…', 'info');
+                const res = await fetch(API + '/api/history/export/json');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                _triggerBrowserDownload(
+                    new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
+                    `omp-history-${ts}.json`
+                );
+                showToastNotice('JSON 报表已下载（含完整指标与失败原因）', 'success');
+            } catch (e) {
+                showToastNotice('JSON 导出失败：' + (e.message || e), 'error');
+            }
+        }
+
+        async function exportHistoryCsv() {
+            try {
+                showToastNotice('正在生成 CSV 报表…', 'info');
+                const res = await fetch(API + '/api/history/export/csv');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const csv = await res.text();
+                const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                _triggerBrowserDownload(
+                    new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }),
+                    `omp-history-${ts}.csv`
+                );
+                showToastNotice('CSV 报表已下载（Excel/Numbers 可直接打开）', 'success');
+            } catch (e) {
+                showToastNotice('CSV 导出失败：' + (e.message || e), 'error');
+            }
+        }
+
+
+        /* ── 首次启动 Bootstrap Wizard ── */
+        const _BS_ICONS = { ok: 'fa-circle-check', warn: 'fa-triangle-exclamation', fail: 'fa-circle-xmark' };
+        const _BS_LABELS = { ok: '已就绪', warn: '需注意', fail: '必须修复' };
+        const _BS_DISMISSED_KEY = 'omp_bootstrap_dismissed_v1';
+        let _bsCurrentData = null;
+
+        async function runBootstrapCheck({ auto = false } = {}) {
+            try {
+                const res = await fetch(API + '/api/bootstrap-status');
+                const data = await res.json();
+                _bsCurrentData = data;
+                renderBootstrap(data);
+                // 触发条件：任一 fail 自动弹；或未关过引导且有 warn 自动弹；首次启动（即便是 ok）也弹一次让用户知道入口
+                const dismissed = localStorage.getItem(_BS_DISMISSED_KEY) === '1';
+                const hasFail = (data.summary.fail || 0) > 0;
+                const hasWarn = (data.summary.warn || 0) > 0;
+                if (hasFail || (!dismissed && hasWarn) || !dismissed) {
+                    if (auto) showBootstrap();
+                }
+            } catch (e) {
+                if (auto) console.warn('bootstrap check failed:', e);
+            }
+        }
+
+        function dismissedHasRunBefore() {
+            return localStorage.getItem(_BS_DISMISSED_KEY) === '1';
+        }
+
+        function renderBootstrap(data) {
+            const sumEl = el('bootstrap-summary');
+            const sum = data.summary || {};
+            const ready = data.ready;
+            const headline = ready
+                ? `✅ 环境已就绪（${sum.ok || 0} 项通过${sum.warn ? `，${sum.warn} 项提醒` : ''}）`
+                : `⚠️ ${sum.fail || 0} 项必须修复${sum.warn ? `，${sum.warn} 项提醒` : ''}`;
+            const headlineColor = ready ? 'var(--success)' : (sum.fail ? 'var(--danger)' : 'var(--accent)');
+            sumEl.style.cssText = `padding:10px 12px; border-radius:8px; margin-bottom:14px; font-size:13px; color:${headlineColor}; background:rgba(0,0,0,0.25); border:1px solid ${headlineColor === 'var(--danger)' ? 'rgba(248,113,113,0.3)' : 'rgba(232,137,46,0.3)'};`;
+            sumEl.innerHTML = headline;
+
+            const list = el('bootstrap-checks');
+            const checks = data.checks || [];
+            list.innerHTML = checks.map(c => {
+                const st = c.status || 'unknown';
+                const icon = _BS_ICONS[st] || 'fa-circle-question';
+                const label = _BS_LABELS[st] || st;
+                const fix = c.fix_hint
+                    ? `<div class="bs-check-fix"><i class="fa-solid fa-lightbulb"></i> ${escapeHtml(c.fix_hint)}</div>`
+                    : '';
+                return `<div class="bs-check ${st}">
+                    <div class="bs-check-icon"><i class="fa-solid ${icon}"></i></div>
+                    <div class="bs-check-body">
+                        <div class="bs-check-label">${escapeHtml(c.label || c.id)} <span style="font-size:10.5px; color:var(--muted); font-weight:normal; margin-left:6px;">[${label}]</span></div>
+                        <div class="bs-check-detail">${escapeHtml(c.detail || '')}</div>
+                        ${fix}
+                    </div>
+                </div>`;
+            }).join('') || '<div style="text-align:center; color:var(--muted); padding:20px;">暂无检查项</div>';
+        }
+
+        function showBootstrap() {
+            el('bootstrap-overlay').style.display = 'flex';
+            el('bootstrap-overlay').classList.add('show');
+        }
+
+        function hideBootstrap() {
+            el('bootstrap-overlay').classList.remove('show');
+            el('bootstrap-overlay').style.display = 'none';
+        }
+
+        function skipBootstrap() {
+            localStorage.setItem(_BS_DISMISSED_KEY, '1');
+            hideBootstrap();
+            showToastNotice('已跳过引导；之后可点右上角 🎯 重新检测', 'info');
+        }
+
+        async function recheckBootstrap() {
+            el('bootstrap-checks').innerHTML = '<div style="text-align:center; color:var(--muted); padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> 重新检测中…</div>';
+            await runBootstrapCheck({ auto: false });
+            const fail = (_bsCurrentData?.summary?.fail || 0);
+            if (fail === 0) {
+                showToastNotice('🎉 全部检查通过！', 'success');
+            } else {
+                showToastNotice(`仍有 ${fail} 项必须修复`, 'warn');
+            }
+        }
+
         let loadedHistoryRecords = [];
         let currentViewHistoryRecord = null;
 
@@ -1569,7 +1781,10 @@
                             const ok = info.status === 'success' && info.real;
                             if (ok) succCount++;
                             const link = (ok && info.link) ? ` <a href="${escapeHtml(info.link)}" target="_blank" onclick="event.stopPropagation()"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : '';
-                            return `<span class="chip ${ok ? 'ok' : ''}">${name}${link}</span>`;
+                            if (ok) return `<span class="chip ok">${name}${link}</span>`;
+                            const cat = info.failure_category || 'unknown';
+                            const catLabel = _failureCategoryLabel(cat);
+                            return `<span class="chip fail-${escapeHtml(cat)}" title="${escapeHtml(info.failure_reason || '未提供原因')}">${name} · ${catLabel}</span>`;
                         }).join('')
                         : '<span class="chip">待发布</span>';
 
@@ -1638,10 +1853,15 @@
                     const isOk = info.status === 'success' && info.real;
                     const card = document.createElement('div');
                     card.style.cssText = 'background:var(--surface-2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between; gap:6px;';
-                    
+
+                    const cat = info.failure_category || '';
+                    const catLabel = cat ? _failureCategoryLabel(cat) : '';
                     const badge = isOk
                         ? `<span style="color:var(--success); font-weight:600; font-size:12px;"><i class="fa-solid fa-circle-check"></i> 发布成功</span>`
-                        : `<span style="color:var(--danger); font-weight:600; font-size:12px;"><i class="fa-solid fa-circle-xmark"></i> ${escapeHtml(info.note || info.error || '发布未成功')}</span>`;
+                        : `<span style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+                             <span style="color:var(--danger); font-weight:600; font-size:12px;"><i class="fa-solid fa-circle-xmark"></i> 失败 · ${escapeHtml(catLabel)}</span>
+                             <span style="font-size:10.5px; color:var(--muted); text-align:right; max-width:200px; word-break:break-all;" title="${escapeHtml(info.failure_reason || '')}">${escapeHtml((info.failure_reason || '').slice(0, 80))}</span>
+                           </span>`;
 
                     const linkBtn = (isOk && info.link)
                         ? `<a href="${escapeHtml(info.link)}" target="_blank" class="btn text" style="padding:2px 6px; font-size:11.5px; color:var(--accent);"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看作品</a>`
@@ -1650,6 +1870,25 @@
                     const retryBtn = (!isOk)
                         ? `<button class="btn accent" style="padding:2px 8px; font-size:11px;" onclick="retryFromHistory('${pid}')"><i class="fa-solid fa-rotate-right"></i> 重试</button>`
                         : '';
+                    const clearCookieBtn = (!isOk)
+                        ? `<button class="btn text" style="padding:2px 8px; font-size:11px; color:var(--danger); border:1px solid rgba(248,113,113,0.3);" onclick="clearPlatformCookieFromHistory('${pid}', '${escapeHtml(pObj.name)}')" title="删除本平台 Cookie（SAU_DIR 明文 + OMP 本地 .enc）"><i class="fa-solid fa-key"></i> 清 Cookie 重扫</button>`
+                        : '';
+                    const copyLogBtn = (!isOk)
+                        ? `<button class="btn text" style="padding:2px 8px; font-size:11px; color:var(--muted); border:1px solid var(--line-2);" onclick="copyFailureReport('${pid}', '${escapeHtml(info.failure_reason || '')}', '${escapeHtml(info.failure_category || '')}')" title="复制失败摘要 + 平台到剪贴板，方便贴到工单/群里问"><i class="fa-solid fa-clipboard"></i> 复制日志</button>`
+                        : '';
+
+                    // 平台指标（仅成功且有数据时展示）
+                    const metrics = info.platform_metrics || {};
+                    const metricKeys = Object.keys(metrics).filter(k => metrics[k] !== null && metrics[k] !== undefined && metrics[k] !== '');
+                    const metricsBlock = (isOk && metricKeys.length)
+                        ? `<div class="metrics-block">${metricKeys.map(k => `<span><i class="fa-solid fa-chart-line"></i>${escapeHtml(_metricLabel(k))}：${escapeHtml(metrics[k])}</span>`).join('')}</div>`
+                        : (!isOk && cat === 'login_failed'
+                            ? `<div class="metrics-block" style="background:rgba(248,113,113,0.06); border-color:rgba(248,113,113,0.15);"><span style="color:#f87171;"><i class="fa-solid fa-key"></i>建议：重新扫码登录或导入 Cookie</span></div>`
+                            : (!isOk && cat === 'video_format_unsupported'
+                                ? `<div class="metrics-block" style="background:rgba(251,191,36,0.06); border-color:rgba(251,191,36,0.15);"><span style="color:#fbbf24;"><i class="fa-solid fa-file-video"></i>建议：用 HandBrake 转 H.264 + AAC + MP4 容器</span></div>`
+                                : (!isOk && cat === 'network_timeout'
+                                    ? `<div class="metrics-block" style="background:rgba(96,165,250,0.06); border-color:rgba(96,165,250,0.15);"><span style="color:#60a5fa;"><i class="fa-solid fa-wifi"></i>建议：检查代理 / 网络 / 视频大小（&gt;500MB 易超时）</span></div>`
+                                    : '')));
 
                     card.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1660,8 +1899,9 @@
                         </div>
                         <div style="font-size:11px; color:var(--muted); display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
                             <span>${escapeHtml(info.finish_time || r.timestamp || '')}</span>
-                            <div style="display:flex; gap:4px;">${linkBtn}${retryBtn}</div>
+                            <div style="display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end;">${linkBtn}${retryBtn}${clearCookieBtn}${copyLogBtn}</div>
                         </div>
+                        ${metricsBlock}
                     `;
                     container.appendChild(card);
                 });
@@ -1703,6 +1943,58 @@
             });
             updateCounts();
             publish();
+        }
+
+        async function clearPlatformCookieFromHistory(platformId, platformName) {
+            if (!confirm(`确认要删除「${platformName}」的所有本地 Cookie 吗？\n\n包含：\n• SAU 上游目录明文 cookie\n• OMP 本地目录明文 + 加密 .enc\n\n删除后下次发布需重新扫码登录。`)) return;
+            try {
+                const res = await fetch(API + '/api/clear-cookie', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ platform_id: platformId })
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'cleared') {
+                    showToastNotice(`已清除「${platformName}」的 ${data.removed.length} 个 Cookie 文件`, 'success');
+                    if (data.removed.length === 0) {
+                        showToastNotice('提示：该平台目前没有可清除的 Cookie', 'info');
+                    }
+                } else {
+                    showToastNotice('清除失败：' + (data.error || res.status), 'error');
+                }
+            } catch (e) {
+                showToastNotice('清除请求失败：' + (e.message || e), 'error');
+            }
+        }
+
+        async function copyFailureReport(platformId, reason, category) {
+            const report = [
+                '【Open Matrix Publisher 失败摘要】',
+                `平台：${platformId}`,
+                `分类：${_failureCategoryLabel(category) || '未分类'}`,
+                `原始分类：${category || 'unknown'}`,
+                `原因：${reason || '(无)'}`,
+                `时间：${new Date().toLocaleString('zh-CN')}`,
+                `版本：${document.getElementById('app-version')?.textContent || ''}`
+            ].join('\n');
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(report);
+                } else {
+                    // 降级：临时 textarea
+                    const ta = document.createElement('textarea');
+                    ta.value = report;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                }
+                showToastNotice('失败摘要已复制到剪贴板', 'success');
+            } catch (e) {
+                showToastNotice('复制失败：' + (e.message || e), 'error');
+            }
         }
 
         /* ── 视频 ── */
@@ -2337,6 +2629,8 @@
         renderPlatforms();
         loadHistory();
         checkEngine();
+        // Bootstrap Wizard：首次启动 / 不健康时弹引导
+        runBootstrapCheck({ auto: true });
         
         // 视频上传事件绑定
         const dropzone = el('dropzone');

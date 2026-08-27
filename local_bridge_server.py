@@ -1,5 +1,6 @@
 import os, sys, json, time, subprocess, threading, asyncio
-from flask import Flask, request, jsonify
+from pathlib import Path
+from flask import Flask, request, jsonify, make_response
 from werkzeug.utils import secure_filename
 from real_uploader_engine import load_credentials, save_credentials, check_profile_logged_in, RealPlatformUploader, SAU_ROOT, cancel_running_task
 from omp_paths import sau_cli, data_dir
@@ -116,8 +117,10 @@ def save_history(history_data):
             json.dump(history_data, f, indent=2, ensure_ascii=False)
         os.replace(tmp, HISTORY_FILE)
 
-def record_history_result(dispatch_id, platform_id, title, video_file, success, pub_id="", link="", finish_time=""):
+def record_history_result(dispatch_id, platform_id, title, video_file, success, pub_id="", link="", finish_time="", platform_metrics=None, failure_category="", failure_reason=""):
     """Thread-safe: load -> update (find-or-create session record) -> save (keep latest 10)."""
+    if platform_metrics is None:
+        platform_metrics = {}
     with HISTORY_FILE_LOCK:
         hist = load_history()  # re-read under lock to get fresh state
         matching = None
@@ -138,6 +141,15 @@ def record_history_result(dispatch_id, platform_id, title, video_file, success, 
             matching["platforms"][platform_id] = {
                 "status": "success", "real": True,
                 "pub_id": pub_id, "link": link, "finish_time": finish_time,
+                "platform_metrics": platform_metrics
+            }
+        else:
+            # For failed uploads, store failure information
+            matching["platforms"][platform_id] = {
+                "status": "fail", "real": False,
+                "failure_category": failure_category,
+                "failure_reason": failure_reason,
+                "finish_time": finish_time
             }
         matching["last_updated"] = finish_time
         
@@ -199,6 +211,220 @@ def health():
         "sau_root": SAU_ROOT,
         "cookie_count": cookie_count,
     })
+
+
+@app.route("/api/bootstrap-status", methods=["GET"])
+def bootstrap_status():
+    """首次启动引导检查：聚合 6 项健康度给 wizard 用。
+
+    返回结构：
+    {
+      "ready": bool,                # 全部绿才算 ready
+      "checks": [
+        {"id": "...", "label": "...", "status": "ok|warn|fail|unknown",
+         "detail": "...", "fix_hint": "..."},
+        ...
+      ],
+      "summary": {"ok": n, "warn": n, "fail": n}
+    }
+    """
+    import platform as _platform
+    from omp_paths import data_dir
+
+    checks = []
+
+    # 1. SAU 可执行
+    sau_cli = None
+    try:
+        from omp_paths import sau_cli as _sau_cli
+        sau_cli = _sau_cli()
+    except Exception:
+        pass
+    sau_ok = bool(sau_cli and os.path.exists(sau_cli))
+    checks.append({
+        "id": "sau_cli",
+        "label": "social-auto-upload 可执行入口",
+        "status": "ok" if sau_ok else "fail",
+        "detail": sau_cli or "未配置 SAU_ROOT 或文件缺失",
+        "fix_hint": "克隆 social-auto-upload 仓库：git clone https://github.com/dreamlin0317/social-auto-upload ~/social-auto-upload"
+                    if not sau_ok else ""
+    })
+
+    # 2. Cookie 目录可写
+    local_cookies = os.path.join(data_dir(), "cookies")
+    cookies_writable = False
+    try:
+        os.makedirs(local_cookies, exist_ok=True)
+        test_file = os.path.join(local_cookies, ".omp_write_test")
+        with open(test_file, "w", encoding="utf-8") as f:
+            f.write("ok")
+        os.remove(test_file)
+        cookies_writable = True
+    except Exception as e:
+        cookies_writable = False
+    checks.append({
+        "id": "cookies_dir",
+        "label": "本地 Cookie 目录可写",
+        "status": "ok" if cookies_writable else "fail",
+        "detail": local_cookies,
+        "fix_hint": "检查目录权限或运行 mkdir -p " + local_cookies if not cookies_writable else ""
+    })
+
+    # 3. 代理（HTTP_PROXY 之类）+ 国际平台连通性
+    proxy_url = (os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy")
+                 or os.environ.get("ALL_PROXY") or os.environ.get("all_proxy") or "")
+    intl_targets = [("twitter.com", 443), ("youtube.com", 443), ("tiktok.com", 443)]
+    intl_results = []
+    import socket as _socket
+    for host, port in intl_targets:
+        try:
+            with _socket.create_connection((host, port), timeout=2.5):
+                intl_results.append((host, True))
+        except Exception:
+            intl_results.append((host, False))
+    intl_ok = all(ok for _, ok in intl_results)
+    intl_status = "ok" if intl_ok else ("warn" if proxy_url else "fail")
+    intl_detail = "、".join(f"{h}{'✅' if ok else '❌'}" for h, ok in intl_results)
+    if proxy_url:
+        intl_detail += f"（当前代理：{proxy_url}）"
+    fix = ""
+    if intl_status != "ok":
+        fix = ("国际平台需要代理：export HTTP_PROXY=http://127.0.0.1:7890；"
+               "或在右上角 ⚙️ 设置中填入代理地址") if not proxy_url else \
+              ("代理已配置但连不通——检查代理软件是否在运行、端口是否正确" if not intl_ok else "")
+    checks.append({
+        "id": "intl_connectivity",
+        "label": "国际平台连通性（X / YouTube / TikTok）",
+        "status": intl_status,
+        "detail": intl_detail,
+        "fix_hint": fix
+    })
+
+    # 4. Playwright / patchright 浏览器已安装
+    browser_ok = False
+    browser_detail = ""
+    home = Path.home()
+    candidates = [
+        home / "Library" / "Caches" / "ms-playwright",  # macOS
+        home / ".cache" / "ms-playwright",              # Linux
+        Path(os.environ.get("LOCALAPPDATA", str(home))) / "ms-playwright" if _platform.system() == "Windows" else None,
+    ]
+    candidates = [c for c in candidates if c]
+    for c in candidates:
+        if c.exists():
+            chromium_dirs = [d for d in c.iterdir() if d.name.startswith(("chromium-", "chromium_headless_shell-"))]
+            if chromium_dirs:
+                browser_ok = True
+                browser_detail = f"已找到 {len(chromium_dirs)} 个 Chromium 版本：{c}"
+                break
+    if not browser_ok:
+        browser_detail = "未找到已安装的 Chromium（patchright/playwright 依赖）"
+    checks.append({
+        "id": "playwright_browser",
+        "label": "Playwright 浏览器已安装",
+        "status": "ok" if browser_ok else "fail",
+        "detail": browser_detail,
+        "fix_hint": "运行 python3 -m patchright install chromium" if not browser_ok else ""
+    })
+
+    # 5. 钥匙串可用（Cookie 加密依赖）
+    keyring_ok = False
+    keyring_detail = ""
+    try:
+        import keyring
+        kr = keyring.get_keyring()
+        keyring_detail = f"后端：{type(kr).__name__}"
+        # 试着写一个测试值（用一次性 key），写完立刻删
+        test_key = "__omp_bootstrap_test__"
+        keyring.set_password(_KEYRING_SERVICE, test_key, "ok")
+        v = keyring.get_password(_KEYRING_SERVICE, test_key)
+        try:
+            keyring.delete_password(_KEYRING_SERVICE, test_key)
+        except Exception:
+            pass
+        keyring_ok = (v == "ok")
+    except Exception as e:
+        keyring_detail = f"不可用：{e}"
+    checks.append({
+        "id": "keyring",
+        "label": "系统钥匙串可用（Cookie 加密）",
+        "status": "ok" if keyring_ok else "warn",
+        "detail": keyring_detail,
+        "fix_hint": "钥匙串不可用时，Cookie 会降级用机器指纹派生密钥（仍加密，但换机器需重登录）" if not keyring_ok else ""
+    })
+
+    # 6. 国内/国际平台已登录覆盖率
+    sau_cookies_dir = os.path.join(SAU_ROOT, "cookies")
+    platform_login = {}
+    if os.path.isdir(sau_cookies_dir):
+        for fname in os.listdir(sau_cookies_dir):
+            if not fname.endswith(".json"):
+                continue
+            p = fname[:-5]
+            if "_" in p:
+                plat, _, name = p.partition("_")
+                if not name:
+                    name = "default"
+                try:
+                    size = os.path.getsize(os.path.join(sau_cookies_dir, fname))
+                    if size >= 50:
+                        platform_login.setdefault(plat, []).append(name)
+                except Exception:
+                    pass
+    # 仅提示，不阻塞 ready
+    logged_domestic = sum(1 for k in platform_login if k in {"douyin", "tencent", "bilibili", "kuaishou", "xhs", "weibo", "toutiao", "zhihu", "baijiahao", "fanqie"})
+    logged_intl = sum(1 for k in platform_login if k in {"x", "twitter", "linkedin", "instagram", "facebook", "tk", "tiktok"})
+    checks.append({
+        "id": "platform_coverage",
+        "label": "平台登录覆盖度",
+        "status": "ok" if (logged_domestic + logged_intl) > 0 else "warn",
+        "detail": f"国内 {logged_domestic}/10 已登录，国际 {logged_intl}/10 已登录（建议优先登录要发的平台）",
+        "fix_hint": "在控制台网格里点对应平台的「🔑 登录」按钮扫码"
+    })
+
+    summary = {"ok": 0, "warn": 0, "fail": 0}
+    for c in checks:
+        summary[c["status"]] = summary.get(c["status"], 0) + 1
+    ready = summary.get("fail", 0) == 0 and summary.get("warn", 0) <= 1
+    return jsonify({
+        "ready": ready,
+        "checks": checks,
+        "summary": summary,
+        "version": APP_VERSION
+    })
+
+
+# ── HTTP 安全头 ──
+# 系统钥匙串服务名（与 cookie_crypto.py 保持一致）
+_KEYRING_SERVICE = "open-matrix-publisher"
+# 单页应用 + 本地工具，注入面有限。CSP 主要起到「用户输入混入 desc 时即被阻止」的最后防线。
+# 桌面打包态所有资源都在本地，所以 self 已经涵盖 app.html / 内联 style；script 我们用 'unsafe-inline'
+# 因为 app.html 当前是单文件大块内联（之后切 ES modules 时收紧）。
+_CSP_POLICY = (
+    "default-src 'self'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com data:; "
+    "script-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data: blob:; "
+    "media-src 'self' blob:; "
+    "connect-src 'self'; "
+    "frame-ancestors 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self'"
+)
+
+
+@app.after_request
+def _set_security_headers(resp):
+    """给所有响应加上 4 个最关键的安全头：CSP / X-Content-Type-Options / X-Frame-Options / Referrer-Policy。"""
+    # /api/history/export/* 这类下载端点用 attachment，Content-Type 是 application/json 等。
+    # CSP 走 default-src 'self' 即可，不需要放宽。
+    resp.headers.setdefault("Content-Security-Policy", _CSP_POLICY)
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("Referrer-Policy", "no-referrer")
+    resp.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+    return resp
 
 @app.route("/api/download-video", methods=["POST"])
 def download_video():
@@ -376,7 +602,7 @@ def launch_login():
         return jsonify({
             "status": "unsupported",
             "platform_id": platform_id,
-            "msg": f"⚠️ 【{platform_id}】暂不支持一键扫码登录。请在官网浏览器登录后，把 Cookie 文件放入 cookies/ 目录（参考执行手册 §3.3）。"
+            "msg": f'⚠️ 【{platform_id}】暂不支持一键扫码登录。请手动在浏览器登录该平台（打开官网登录页），登录成功后，点击控制台的「批量授权」按钮（或在账号健康看板中点击「补录受损账号」）以保存登录状态。详见 internal/执行手册.md §3.3。'
         }), 400
     if plat_info.get("api_key"):
         # API-key 平台不走浏览器：前端弹出「配置 Key」表单
@@ -492,6 +718,9 @@ def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags,
         success=result.get("success", False),
         pub_id=result.get("pub_id", ""), link=result.get("link", ""),
         finish_time=finish_time,
+        platform_metrics=result.get("platform_metrics", {}),
+        failure_category=result.get("failure_category", ""),
+        failure_reason=result.get("failure_reason", "")
     )
 
 @app.route("/api/upload-video", methods=["POST"])
@@ -629,6 +858,72 @@ def get_history():
     hist["_active_tasks"] = active
     return jsonify(hist)
 
+@app.route("/api/history/export/json", methods=["GET"])
+def export_history_json():
+    """Export full history as JSON download."""
+    hist = load_history()
+    response = jsonify(hist)
+    response.headers["Content-Disposition"] = "attachment; filename=open_matrix_publisher_history.json"
+    return response
+
+@app.route("/api/history/export/csv", methods=["GET"])
+def export_history_csv():
+    """Export history as CSV download."""
+    import csv
+    import io
+    
+    hist = load_history()
+    records = hist.get("records", [])
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    header = ["dispatch_id", "timestamp", "video_file", "title", "platform_id", "platform_status", 
+              "platform_real", "pub_id", "link", "finish_time", "platform_metrics", 
+              "failure_category", "failure_reason", "last_updated"]
+    writer.writerow(header)
+    
+    # Write data rows
+    for record in records:
+        dispatch_id = record.get("dispatch_id", "")
+        timestamp = record.get("timestamp", "")
+        video_file = record.get("video_file", "")
+        title = record.get("title", "")
+        last_updated = record.get("last_updated", "")
+        
+        platforms = record.get("platforms", {})
+        if not platforms:
+            # Write a row for the dispatch even if no platforms
+            writer.writerow([dispatch_id, timestamp, video_file, title, "", "", "", "", "", "", "", "", "", last_updated])
+        else:
+                for platform_id, platform_info in platforms.items():
+                    metrics = platform_info.get("platform_metrics", "")
+                    metrics_str = json.dumps(metrics, ensure_ascii=False) if isinstance(metrics, (dict, list)) else str(metrics)
+                    writer.writerow([
+                        dispatch_id,
+                        timestamp,
+                        video_file,
+                        title,
+                        platform_id,
+                        platform_info.get("status", ""),
+                        platform_info.get("real", ""),
+                        platform_info.get("pub_id", ""),
+                        platform_info.get("link", ""),
+                        platform_info.get("finish_time", ""),
+                        metrics_str,
+                        platform_info.get("failure_category", ""),
+                        platform_info.get("failure_reason", ""),
+                        last_updated
+                    ])
+    
+    output.seek(0)
+    response = make_response(output.getvalue())
+    response.headers["Content-Type"] = "text/csv"
+    response.headers["Content-Disposition"] = "attachment; filename=open_matrix_publisher_history.csv"
+    return response
+
 @app.route("/api/mark-failed-done", methods=["POST"])
 def mark_failed_as_done():
     """Force-mark a video+platform as published (when SAU reports success but history write missed)."""
@@ -653,6 +948,40 @@ def mark_failed_as_done():
                 os.replace(tmp, HISTORY_FILE)
                 return jsonify({"status": "marked"})
     return jsonify({"error": "video not found"}), 404
+
+@app.route("/api/clear-cookie", methods=["POST"])
+def api_clear_cookie():
+    """删除指定平台的本地 cookie（含 SAU 目录明文 + 本地目录明文 + 密文 .enc）。
+
+    用途：失败闭环 CTA「🗑️ 清除本平台 Cookie」—— 让用户能立刻重扫码而不是翻文件夹。
+    """
+    data = request.json or {}
+    platform_id = (data.get("platform_id") or "").strip()
+    if not platform_id or not _re.match(r"^[a-z0-9_]+$", platform_id):
+        return jsonify({"error": "invalid platform_id"}), 400
+
+    from omp_paths import data_dir
+    sau_cookies = os.path.join(SAU_ROOT, "cookies")
+    local_cookies = os.path.join(data_dir(), "cookies")
+    removed = []
+    for d in (sau_cookies, local_cookies):
+        for fname in os.listdir(d) if os.path.isdir(d) else []:
+            # 匹配规则：<platform>_*.json 或 .json.enc；tk/tiktok 别名也算
+            base = fname
+            if base.endswith(".json.enc"):
+                base = base[:-len(".enc")]
+            if not base.startswith(platform_id + "_") and \
+               not (platform_id in ("tiktok", "tk") and base.startswith(("tk_", "tiktok_"))) and \
+               not (platform_id in ("x", "twitter") and base.startswith(("x_", "twitter_"))):
+                continue
+            full = os.path.join(d, fname)
+            try:
+                os.remove(full)
+                removed.append(fname)
+            except Exception as e:
+                return jsonify({"error": f"删除 {fname} 失败: {e}"}), 500
+    return jsonify({"status": "cleared", "removed": removed, "platform_id": platform_id})
+
 
 @app.route("/api/generate-free-ai", methods=["POST"])
 def api_generate_free_ai():
@@ -735,4 +1064,12 @@ if __name__ == "__main__":
     host = os.environ.get("OMP_HOST", "127.0.0.1")
     port = int(os.environ.get("OMP_PORT", "5001"))
     print(f"🚀 启动 Open Matrix Publisher Web 控制台: http://localhost:{port}")
-    app.run(host=host, port=port, debug=False)
+    # 生产用 waitress：Werkzeug dev server 单线程，长任务会卡住整个控制台。
+    # 桌面打包态 waitress 也会被打进 hiddenimports。
+    try:
+        from waitress import serve
+        threads = int(os.environ.get("OMP_THREADS", "4"))
+        serve(app, host=host, port=port, threads=threads, ident="omp")
+    except ImportError:
+        # 兜底：未装 waitress 时退回开发服务器（仅本地/桌面会触发）
+        app.run(host=host, port=port, debug=False)
