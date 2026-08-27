@@ -711,15 +711,6 @@ def configure_key():
             print(f"configure-key write error {t}: {e}")
     return jsonify({"status": "ok", "platform_id": platform_id, "msg": f"✅ {platform_id} 凭据已保存"})
 
-@app.route("/api/login-platforms", methods=["GET"])
-def api_login_platforms():
-    """返回当前支持一键扫码的平台 ID 集合（前端批量扫码 UI 用）。"""
-    return jsonify({
-        "supported": list(LOGIN_PLATFORMS.keys()),
-        "api_key": [k for k, v in LOGIN_PLATFORMS.items() if v.get("api_key")]
-    })
-
-
 @app.route("/api/launch-login", methods=["POST"])
 def launch_login():
     data = request.json or {}
@@ -794,17 +785,15 @@ def launch_batch_login():
             item["started_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
             state["current"] = pid
             try:
-                # 在子线程里跑同步的 launch login；每个 login 内部已自带 600s 超时
+                # 同步调用：_run_interactive_login_thread 内部 subprocess.run 会阻塞到
+                # 登录脚本退出（用户完成扫码或超时），天然保证逐个串行。
                 _run_interactive_login_thread(pid)
-                # 等到 login 流程结束：粗暴 sleep 1s + 等 ACTIVE_LOGINS 清空
-                # 由于 _run_interactive_login_thread 是 fire-and-forget，我们用 30s 软等待
-                time.sleep(30)
                 item["status"] = "done"
             except Exception as e:
                 item["status"] = "error"
                 item["note"] = str(e)
             item["finished_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
-            time.sleep(3)  # 浏览器关闭 + cleanup 缓冲
+            time.sleep(2)  # 浏览器进程退出缓冲
         state["current"] = None
         state["finished_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
 

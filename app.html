@@ -1141,6 +1141,7 @@
         }
 
         /* ── 引擎连接状态 ── */
+        let _engineRetryTimer = null;
         async function checkEngine() {
             const dot = el('engine-status');
             try {
@@ -1157,13 +1158,18 @@
                     } else if (warn) {
                         warn.style.display = 'none';
                     }
+                    if (_engineRetryTimer) { clearTimeout(_engineRetryTimer); _engineRetryTimer = null; }
                     refreshSessionStatus();
                     loadHistory();
                     return;
                 }
             } catch (e) { /* fallthrough */ }
             dot.className = 'engine-dot off';
-            dot.textContent = '引擎未连接 · 请本地运行 start_ui.sh';
+            dot.textContent = '引擎连接中…';
+            // 偶发失败自动重试（5s 间隔），连上即止；不弹打扰性提示
+            if (!_engineRetryTimer) {
+                _engineRetryTimer = setTimeout(() => { _engineRetryTimer = null; checkEngine(); }, 5000);
+            }
         }
 
         /* ── 平台 ── */
@@ -1274,18 +1280,37 @@
         }
 
         async function renderKanbanBoard() {
-            let state = {};
-            try {
-                const res = await fetch(API + '/api/status');
-                const data = await res.json();
-                state = data.session_status || {};
-            } catch (e) { /* 忽略 */ }
+            let state = null;
+            // 失败自动重试 2 次；仍失败则显式报错，不把未知状态当"需处理"
+            for (let i = 0; i < 3; i++) {
+                try {
+                    const res = await fetch(API + '/api/status');
+                    const data = await res.json();
+                    state = data.session_status || {};
+                    break;
+                } catch (e) {
+                    if (i < 2) await new Promise(r => setTimeout(r, 1200));
+                }
+            }
 
             const colReady = el('kanban-col-ready');
             const colNeed = el('kanban-col-need');
             const colOpt = el('kanban-col-opt');
             if (!colReady || !colNeed || !colOpt) return;
-            
+
+            if (state === null) {
+                const errHtml = `
+                    <div style="padding:16px 12px; text-align:center; background:rgba(248,113,113,0.08); border-radius:8px; border:1px solid rgba(248,113,113,0.25);">
+                        <div style="font-size:13px; font-weight:600; color:#f87171; margin-bottom:4px;"><i class="fa-solid fa-plug-circle-xmark"></i> 无法读取账号状态</div>
+                        <div style="font-size:11.5px; color:var(--muted); margin-bottom:8px;">本地引擎无响应——这<b>不代表</b>账号异常，稍后重试即可。</div>
+                        <button class="btn primary" style="font-size:11.5px; padding:4px 12px;" onclick="renderKanbanBoard()"><i class="fa-solid fa-rotate"></i> 重新查询</button>
+                    </div>`;
+                colReady.innerHTML = errHtml;
+                colNeed.innerHTML = '';
+                colOpt.innerHTML = '';
+                return;
+            }
+
             colReady.innerHTML = '';
             colNeed.innerHTML = '';
             colOpt.innerHTML = '';
@@ -1391,13 +1416,33 @@
         async function renderBatchAuthList(showAll = false) {
             const list = el('batch-auth-list');
             list.innerHTML = '<div style="padding:12px; color:var(--muted); text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> 正在排查待补录凭证…</div>';
-            
-            let state = {};
-            try {
-                const res = await fetch(API + '/api/status');
-                const data = await res.json();
-                state = data.session_status || data.sessions || {};
-            } catch (e) { /* 忽略 */ }
+
+            let state = null;
+            let lastErr = null;
+            // 失败自动重试 2 次（偶发闪断不再导致误报"全部待补录"）
+            for (let i = 0; i < 3; i++) {
+                try {
+                    const res = await fetch(API + '/api/status');
+                    const data = await res.json();
+                    state = data.session_status || data.sessions || {};
+                    break;
+                } catch (e) {
+                    lastErr = e;
+                    if (i < 2) await new Promise(r => setTimeout(r, 1200));
+                }
+            }
+
+            if (state === null) {
+                // 关键区分：请求失败 ≠ 未登录。显式报错并给重试入口，绝不把未知状态列为"待补录"。
+                list.innerHTML = `
+                    <div style="padding:20px 16px; text-align:center; background:rgba(248,113,113,0.08); border-radius:8px; border:1px solid rgba(248,113,113,0.25);">
+                        <i class="fa-solid fa-plug-circle-xmark" style="font-size:30px; color:#f87171; margin-bottom:8px; display:block;"></i>
+                        <div style="font-size:13.5px; font-weight:700; color:var(--ink); margin-bottom:4px;">无法读取账号状态（本地引擎无响应）</div>
+                        <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">这<b>不代表</b>账号需要补录——只是状态查询失败。请确认本地服务在运行后重试。</div>
+                        <button class="btn primary" style="font-size:12px; padding:5px 14px;" onclick="renderBatchAuthList()"><i class="fa-solid fa-rotate"></i> 重新查询</button>
+                    </div>`;
+                return;
+            }
 
             list.innerHTML = '';
             
@@ -2151,34 +2196,24 @@
         let _batchLoginId = null;
         let _batchPollTimer = null;
         let _batchCategory = 'cn';
-        let _supportedLoginPlatforms = null;  // 启动时从 /api/login-platforms 拉一次
-
-        async function _loadSupportedLoginPlatforms() {
-            try {
-                const res = await fetch(API + '/api/login-platforms');
-                const data = await res.json();
-                _supportedLoginPlatforms = new Set(data.supported || []);
-            } catch (e) {
-                _supportedLoginPlatforms = new Set();
-            }
-        }
 
         async function openBatchLoginModal(category) {
             _batchCategory = category;
-            // 防御：支持列表若还没加载完，先同步拉一次，避免所有复选框被禁用
-            if (_supportedLoginPlatforms === null) {
-                await _loadSupportedLoginPlatforms();
-            }
             const list = el('batch-login-list');
             const plats = PLATFORMS.filter(p => (category === 'cn' ? p.cat === 'cn' : p.cat === 'global'));
-            // 默认只勾选「未登录 + 一键扫码可支持」的平台（LOGIN_PLATFORMS 收录的）
+            // 本地判定，不依赖远程接口（接口失败曾导致全部复选框被禁用）：
+            // - API-key 平台（p.api）→ 禁用，标注去主界面配置
+            // - p.disabled（LinkedIn 等暂不支持）→ 禁用
+            // - 其余全部默认勾选、可勾；后端对不支持的平台会自动 skip
             list.innerHTML = plats.map(p => {
-                const supported = _supportedLoginPlatforms && _supportedLoginPlatforms.has(p.id);
-                const checked = (supported && !p.loggedIn) ? 'checked' : '';
-                const disabled = supported ? '' : 'disabled';
-                const note = !supported ? '需手动 / API Key' : (p.loggedIn ? '已登录 ✓' : '未登录');
-                return `<label style="display:flex; align-items:center; gap:8px; padding:6px 8px; cursor:pointer; border-radius:4px;" onmouseover="this.style.background='rgba(232,137,46,0.06)'" onmouseout="this.style.background=''">
-                    <input type="checkbox" data-pid="${p.id}" ${checked} ${disabled}>
+                const isApi = p.api === true;
+                const isDisabled = p.disabled === true;
+                const dis = (isApi || isDisabled) ? 'disabled' : '';
+                const checked = (isApi || isDisabled) ? '' : 'checked';
+                const note = isApi ? 'API Key · 去主界面配置' : (isDisabled ? '暂不支持' : '扫码登录');
+                const style = isDisabled ? 'opacity:0.5;' : '';
+                return `<label style="display:flex; align-items:center; gap:8px; padding:6px 8px; cursor:pointer; border-radius:4px; ${style}" onmouseover="this.style.background='rgba(232,137,46,0.06)'" onmouseout="this.style.background=''">
+                    <input type="checkbox" data-pid="${p.id}" ${checked} ${dis}>
                     <span style="flex:1;">${platformIcon(p, 14)} ${escapeHtml(p.name)}</span>
                     <span style="font-size:10.5px; color:var(--muted);">${note}</span>
                 </label>`;
@@ -2242,8 +2277,9 @@
                     el('batch-login-start').disabled = false;
                     el('batch-login-start').innerHTML = '<i class="fa-solid fa-rotate"></i> 再来一批';
                     showToastNotice(`批量扫码完成：${done} 成功 / ${skip} 跳过`, done > 0 ? 'success' : 'info');
-                    // 刷新平台登录态
-                    setTimeout(() => location.reload(), 1500);
+                    // 只刷新登录状态与历史，不整页 reload（避免清掉用户正在编辑的文案）
+                    refreshSessionStatus();
+                    loadHistory();
                 }
             } catch (e) { /* 容忍单次失败 */ }
         }
@@ -2707,10 +2743,24 @@
 
         async function renderPreflightList() {
             const list = el('preflight-list');
-            let state = {};
-            try { const res = await fetch(API + '/api/status'); const data = await res.json(); state = data.session_status || {}; } catch (e) {}
+            let state = null;
+            for (let i = 0; i < 3; i++) {
+                try { const res = await fetch(API + '/api/status'); const data = await res.json(); state = data.session_status || {}; break; } catch (e) { if (i < 2) await new Promise(r => setTimeout(r, 1200)); }
+            }
             const sel = getSelected();
             if (list) list.innerHTML = '';
+            if (state === null) {
+                // 查询失败 ≠ 未登录：显式提示 + 重试，不把已选平台误标为"待扫码"
+                if (list) {
+                    list.innerHTML = `<div style="padding:12px; text-align:center; background:rgba(248,113,113,0.08); border-radius:8px; border:1px solid rgba(248,113,113,0.25);">
+                        <div style="font-size:12.5px; font-weight:600; color:#f87171; margin-bottom:4px;"><i class="fa-solid fa-plug-circle-xmark"></i> 账号状态查询失败</div>
+                        <div style="font-size:11.5px; color:var(--muted); margin-bottom:8px;">无法确认登录状态（本地引擎无响应）。你仍可继续发布，或重试查询。</div>
+                        <button class="btn primary" style="font-size:11.5px; padding:4px 12px;" onclick="renderPreflightList()"><i class="fa-solid fa-rotate"></i> 重新查询</button>
+                    </div>`;
+                }
+                el('btn-confirm-start').innerHTML = '<i class="fa-solid fa-paper-plane"></i> 确认并开始发布 (状态未知)';
+                return;
+            }
             let hasUnlogged = false;
             sel.forEach(p => {
                 const info = state[p.id] || { logged_in: false, status_text: '未授权' };
@@ -3027,8 +3077,6 @@
         renderPlatforms();
         loadHistory();
         checkEngine();
-        // 异步加载支持的扫码平台（给批量扫码 UI 用）
-        _loadSupportedLoginPlatforms();
         // Bootstrap Wizard：首次启动 / 不健康时弹引导
         runBootstrapCheck({ auto: true });
         
