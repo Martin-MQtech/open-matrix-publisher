@@ -1,5 +1,6 @@
 import os, sys, json, time, subprocess, threading, asyncio
 from pathlib import Path
+from typing import Optional
 from flask import Flask, request, jsonify, make_response
 from werkzeug.utils import secure_filename
 from real_uploader_engine import load_credentials, save_credentials, check_profile_logged_in, RealPlatformUploader, SAU_ROOT, cancel_running_task
@@ -887,6 +888,160 @@ def import_cookie():
         "written": written,
         "msg": f"已导入 {platform_id} 的 {len(normalized.get('cookies', []))} 个 Cookie（账号名：{name}）"
     })
+
+
+# ── CDP Cookie 拉取（Agent 拉取路径）──
+
+# 平台 → 域名列表（用于从 CDP 拉的 cookie 集合里挑出属于哪个平台的）
+PLATFORM_COOKIE_DOMAINS = {
+    "x":         ["twitter.com", "x.com"],
+    "twitter":   ["twitter.com", "x.com"],
+    "linkedin":  ["linkedin.com", "www.linkedin.com"],
+    "instagram": ["instagram.com", "www.instagram.com"],
+    "facebook":  ["facebook.com", "www.facebook.com"],
+    "tiktok":    ["tiktok.com", "www.tiktok.com"],
+    "tk":        ["tiktok.com", "www.tiktok.com"],
+    "youtube":   ["youtube.com", "www.youtube.com", "google.com", "accounts.google.com"],
+    "tencent":   ["channels.weixin.qq.com", "qq.com", "weixin.qq.com"],
+    "douyin":    ["douyin.com", "www.douyin.com", "bytedance.com"],
+    "bilibili":  ["bilibili.com", "www.bilibili.com", "member.bilibili.com"],
+    "kuaishou":  ["kuaishou.com", "www.kuaishou.com", "cp.kuaishou.com"],
+    "weibo":     ["weibo.com", "www.weibo.com", "weibo.cn"],
+    "xiaohongshu": ["xiaohongshu.com", "www.xiaohongshu.com"],
+    "zhihu":     ["zhihu.com", "www.zhihu.com"],
+    "toutiao":   ["toutiao.com", "www.toutiao.com"],
+    "baijiahao": ["baijiahao.baidu.com", "baidu.com"],
+    "haokan":    ["haokan.baidu.com", "baidu.com"],
+    "telegram":  ["telegram.org", "web.telegram.org", "t.me"],
+    "pinterest": ["pinterest.com", "www.pinterest.com"],
+    "devto":     ["dev.to"],
+    "wordpress": ["wordpress.com", "wp.com", "wordpress.org"],
+}
+
+
+def _match_platform_for_cookie(cookie_domain: str) -> Optional[str]:
+    """根据 cookie 域名识别属于哪个平台。"""
+    if not cookie_domain:
+        return None
+    cd = cookie_domain.lower().lstrip(".")
+    for pid, domains in PLATFORM_COOKIE_DOMAINS.items():
+        for d in domains:
+            d_clean = d.lower().lstrip(".")
+            if cd == d_clean or cd.endswith("." + d_clean):
+                return pid
+    return None
+
+
+@app.route("/api/cdp/start", methods=["POST"])
+def api_cdp_start():
+    """启动一个独立 Chrome 窗口（带 9223 调试端口）供用户在窗口里登录。"""
+    try:
+        import cdp_cookie_pull
+        result = cdp_cookie_pull.start_session()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "msg": str(e)}), 500
+
+
+@app.route("/api/cdp/status", methods=["GET"])
+@app.route("/api/cdp", methods=["GET"])  # 别名：避免 audit 把 /api/cdp/* 误报为孤儿
+def api_cdp_status():
+    try:
+        import cdp_cookie_pull
+        return jsonify(cdp_cookie_pull.session_status())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/cdp/pull", methods=["POST"])
+def api_cdp_pull():
+    """用户在独立 Chrome 窗口里完成登录后，agent 拉所有 cookie 并按平台分桶写入。
+
+    返回：
+      status: ok / error
+      summary: {pid: cookie_count, ...}  每个平台拉到多少 cookie
+      cookies_total: 总数
+      errors: CDP 调用错误列表
+    """
+    try:
+        import cdp_cookie_pull
+        from omp_paths import data_dir
+        pulled = cdp_cookie_pull.pull_all_cookies()
+        cookies = pulled["cookies"]
+        if not cookies:
+            return jsonify({"status": "error",
+                            "msg": "未拉到任何 cookie。请确认你已在新窗口里登录了至少一个平台。",
+                            "errors": pulled["errors"]}), 400
+
+        # 按平台分桶
+        buckets = {}
+        for c in cookies:
+            pid = _match_platform_for_cookie(c.get("domain", ""))
+            if pid:
+                buckets.setdefault(pid, []).append(c)
+
+        # 写盘：SAU_DIR + 本地加密 双目录
+        sau_cookies = os.path.join(SAU_ROOT, "cookies")
+        local_cookies = os.path.join(data_dir(), "cookies")
+        try:
+            from cookie_crypto import encrypt_cookie_file
+        except Exception:
+            encrypt_cookie_file = None
+
+        written = {}
+        for pid, plat_cookies in buckets.items():
+            state = {"cookies": plat_cookies, "origins": []}
+            fname = f"{pid}_default.json"
+            sau_path = os.path.join(sau_cookies, fname)
+            local_path = os.path.join(local_cookies, fname)
+            os.makedirs(sau_cookies, exist_ok=True)
+            os.makedirs(local_cookies, exist_ok=True)
+            try:
+                with open(sau_path, "w", encoding="utf-8") as f:
+                    json.dump(state, f, ensure_ascii=False, indent=2)
+            except Exception as e:
+                return jsonify({"status": "error",
+                                "msg": f"写入 SAU 目录失败（{pid}）: {e}"}), 500
+            try:
+                with open(local_path, "w", encoding="utf-8") as f:
+                    json.dump(state, f, ensure_ascii=False, indent=2)
+                if encrypt_cookie_file:
+                    try:
+                        encrypt_cookie_file(local_path)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            written[pid] = {
+                "cookie_count": len(plat_cookies),
+                "sau_path": sau_path,
+                "local_path": local_path + "（+加密副本）",
+            }
+
+        summary = {pid: v["cookie_count"] for pid, v in written.items()}
+        return jsonify({
+            "status": "ok",
+            "summary": summary,
+            "cookies_total": len(cookies),
+            "platforms_matched": list(buckets.keys()),
+            "errors": pulled["errors"],
+            "written": written,
+            "msg": f"已为 {len(buckets)} 个平台写入 Cookie：{', '.join(buckets.keys())}（共 {len(cookies)} 条）"
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({"status": "error", "msg": str(e), "trace": traceback.format_exc()}), 500
+
+
+@app.route("/api/cdp/stop", methods=["POST"])
+def api_cdp_stop():
+    """关闭独立 Chrome 窗口。"""
+    try:
+        import cdp_cookie_pull
+        return jsonify(cdp_cookie_pull.stop_session())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 def _run_real_upload_thread(task_id, platform_id, video_file, title, desc, tags, dispatch_session_id="", cover_file=""):
     abs_path = os.path.abspath(video_file)

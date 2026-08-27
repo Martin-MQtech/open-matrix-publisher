@@ -684,6 +684,7 @@
                     <div class="step-head">
                         <span class="step-num">3</span> 选择平台
                         <span class="step-hint"><span id="sel-count">已选 0 个</span> · <span id="login-count">已登录 -/<span id="login-total"></span></span></span>
+                        <span class="step-hint" style="cursor:pointer; margin-left:10px; color:var(--accent); font-weight:600;" onclick="openCdpPullModal()" title="Agent 拉起一个独立 Chrome 窗口，你在里面扫码/账号登录后 Agent 自动拿走 cookie。比手动导入/扫码省事"><i class="fa-solid fa-robot"></i> Agent 拉取</span>
                         <span class="step-hint" style="cursor:pointer; margin-left:10px;" onclick="openImportCookieModal()" title="从客服/运营电脑导入 Cookie，免去逐个扫码"><i class="fa-solid fa-file-import"></i> 导入 Cookie</span>
                     </div>
 
@@ -866,6 +867,38 @@
                 <div style="display:flex; gap:8px;">
                     <button class="btn" onclick="recheckBootstrap()"><i class="fa-solid fa-rotate"></i> 重新检测</button>
                     <button class="btn primary" onclick="skipBootstrap()">我已知晓，开始使用</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent 拉取 Cookie 弹窗（独立 Chrome 窗口 + CDP 拉取） -->
+    <div class="overlay" id="cdp-pull-overlay" style="display:none; align-items:center; justify-content:center;">
+        <div class="modal" style="max-width:580px; width:92vw; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="margin:0; font-size:16px; color:var(--accent);"><i class="fa-solid fa-robot"></i> Agent 拉取 Cookie</h3>
+                <button class="btn text" onclick="hideCdpPullModal()" style="font-size:12px; padding:4px 10px; color:var(--muted); border:1px solid var(--line-2); background:var(--surface-2);"><i class="fa-solid fa-xmark"></i> 关闭</button>
+            </div>
+
+            <div id="cdp-pull-status" style="padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:13px; background:rgba(0,0,0,0.25); border:1px solid var(--line-2); color:var(--muted);">
+                <i class="fa-solid fa-circle-info"></i> Agent 会拉起一个<strong>独立的 Chrome 窗口</strong>（不影响你当前在用的 Chrome）。在该窗口里手动登录你要授权的平台（扫码/账号密码均可），登录完点下方『我登录好了，Agent 来拿』按钮。
+            </div>
+
+            <div style="background:rgba(7,193,96,0.06); border:1px solid rgba(7,193,96,0.25); border-radius:6px; padding:10px 12px; margin-bottom:12px; font-size:12px; line-height:1.7;">
+                <strong style="color:#9cc08f;"><i class="fa-solid fa-check"></i> 适合哪些平台？</strong><br>
+                ✅ 国际平台：<strong>X / YouTube / LinkedIn / Facebook / Instagram / TikTok / Pinterest / Telegram</strong>（你的 Chrome 已登录，Agent 直接拿）<br>
+                ✅ 国内平台：<strong>微博 / 知乎 / B站 / 小红书 / 头条 / 好看视频 / 百家号</strong><br>
+                ⚠️ 需要下载/扫描二维码的平台也能用（你在那个独立窗口里手动登录）
+            </div>
+
+            <div id="cdp-pull-result" style="display:none; margin-bottom:12px; padding:10px 12px; border-radius:6px; font-size:12.5px;"></div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="font-size:11.5px; color:var(--faint);">独立 Chrome 调试端口 9223，cookie 自动加密落盘</span>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn" id="cdp-pull-stop" onclick="stopCdpSession()" style="display:none;"><i class="fa-solid fa-xmark"></i> 关闭调试窗口</button>
+                    <button class="btn" id="cdp-pull-start" onclick="startCdpSession()"><i class="fa-solid fa-play"></i> 拉起调试窗口</button>
+                    <button class="btn primary" id="cdp-pull-go" onclick="doCdpPull()" style="display:none;"><i class="fa-solid fa-download"></i> 我登录好了，Agent 来拿</button>
                 </div>
             </div>
         </div>
@@ -2312,6 +2345,86 @@
         }
 
         /* ── 导入 Cookie ── */
+        /* ── Agent 拉取 Cookie（独立 Chrome 窗口 + CDP）── */
+        function openCdpPullModal() {
+            el('cdp-pull-result').style.display = 'none';
+            el('cdp-pull-result').innerHTML = '';
+            el('cdp-pull-status').innerHTML = '<i class="fa-solid fa-circle-info"></i> Agent 会拉起一个<strong>独立的 Chrome 窗口</strong>（不影响你当前在用的 Chrome）。在该窗口里手动登录你要授权的平台（扫码/账号密码均可），登录完点下方『我登录好了，Agent 来拿』按钮。';
+            el('cdp-pull-start').style.display = 'inline-flex';
+            el('cdp-pull-stop').style.display = 'none';
+            el('cdp-pull-go').style.display = 'none';
+            el('cdp-pull-overlay').style.display = 'flex';
+            el('cdp-pull-overlay').classList.add('show');
+        }
+        function hideCdpPullModal() {
+            el('cdp-pull-overlay').classList.remove('show');
+            el('cdp-pull-overlay').style.display = 'none';
+        }
+        async function startCdpSession() {
+            el('cdp-pull-status').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Agent 正在拉起独立 Chrome 窗口…';
+            try {
+                const res = await fetch(API + '/api/cdp/start', { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'started' || data.status === 'running') {
+                    el('cdp-pull-status').innerHTML = '<i class="fa-solid fa-check" style="color:#9cc08f;"></i> 独立 Chrome 窗口已弹出！请在该窗口里登录你要授权的平台（X / YouTube / LinkedIn / Facebook / Instagram / TikTok 等），登录完点下方按钮。';
+                    el('cdp-pull-start').style.display = 'none';
+                    el('cdp-pull-stop').style.display = 'inline-flex';
+                    el('cdp-pull-go').style.display = 'inline-flex';
+                    showToastNotice(data.msg || '已拉起独立 Chrome 窗口', 'info');
+                } else {
+                    el('cdp-pull-status').innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:#fbbf24;"></i> 启动失败：${escapeHtml(data.msg || JSON.stringify(data))}`;
+                    showToastNotice('启动失败：' + (data.msg || res.status), 'error');
+                }
+            } catch (e) {
+                el('cdp-pull-status').innerHTML = `<i class="fa-solid fa-circle-xmark" style="color:#f87171;"></i> 请求失败：${escapeHtml(e.message || e)}`;
+                showToastNotice('请求失败：' + (e.message || e), 'error');
+            }
+        }
+        async function stopCdpSession() {
+            try {
+                await fetch(API + '/api/cdp/stop', { method: 'POST' });
+                el('cdp-pull-status').innerHTML = '<i class="fa-solid fa-circle-info"></i> 调试窗口已关闭。';
+                el('cdp-pull-start').style.display = 'inline-flex';
+                el('cdp-pull-stop').style.display = 'none';
+                el('cdp-pull-go').style.display = 'none';
+                showToastNotice('调试窗口已关闭', 'info');
+            } catch (e) {
+                showToastNotice('关闭失败：' + (e.message || e), 'error');
+            }
+        }
+        async function doCdpPull() {
+            const result = el('cdp-pull-result');
+            result.style.display = 'block';
+            result.style.cssText = 'background:rgba(232,137,46,0.08); border:1px solid rgba(232,137,46,0.25); color:var(--ink); font-size:12.5px;';
+            result.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Agent 正在通过 CDP 从你的独立 Chrome 拉取所有 cookie…';
+            try {
+                const res = await fetch(API + '/api/cdp/pull', { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    result.style.cssText = 'background:rgba(7,193,96,0.08); border:1px solid rgba(7,193,96,0.3); color:var(--ink); font-size:12.5px;';
+                    const summaryRows = Object.entries(data.summary || {})
+                        .map(([pid, cnt]) => `<tr><td style="padding:2px 8px;color:var(--ink-2);">${pid}</td><td style="text-align:right;color:var(--success);font-weight:600;">${cnt} 条</td></tr>`)
+                        .join('');
+                    result.innerHTML = `
+                        <div style="color:#9cc08f;font-weight:600;margin-bottom:6px;"><i class="fa-solid fa-circle-check"></i> ${escapeHtml(data.msg)}</div>
+                        <table style="width:100%;font-size:12px;border-collapse:collapse;">${summaryRows}</table>
+                        <div style="margin-top:8px;font-size:11.5px;color:var(--muted);">共 ${data.cookies_total} 条 cookie → 写入 SAU_DIR + 本地加密双目录。控制台状态会立即刷新。</div>
+                        ${data.errors && data.errors.length ? `<div style="margin-top:6px;font-size:11px;color:#fbbf24;">CDP 警告：${data.errors.join('；')}</div>` : ''}
+                    `;
+                    showToastNotice(`已为 ${data.platforms_matched.length} 个平台写入 cookie`, 'success');
+                    // 立即刷新登录状态与历史
+                    setTimeout(() => { refreshSessionStatus(); loadHistory(); }, 800);
+                } else {
+                    result.style.cssText = 'background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.3); color:#f87171; font-size:12.5px;';
+                    result.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> 拉取失败：${escapeHtml(data.msg || JSON.stringify(data))}`;
+                    showToastNotice('拉取失败：' + (data.msg || res.status), 'error');
+                }
+            } catch (e) {
+                result.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> 请求失败：${escapeHtml(e.message || e)}`;
+                showToastNotice('请求失败：' + (e.message || e), 'error');
+            }
+        }
+
         function openImportCookieModal() {
             const sel = el('import-cookie-platform');
             sel.innerHTML = PLATFORMS.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${p.id})</option>`).join('');
