@@ -2163,10 +2163,14 @@
             }
         }
 
-        function openBatchLoginModal(category) {
+        async function openBatchLoginModal(category) {
             _batchCategory = category;
+            // 防御：支持列表若还没加载完，先同步拉一次，避免所有复选框被禁用
+            if (_supportedLoginPlatforms === null) {
+                await _loadSupportedLoginPlatforms();
+            }
             const list = el('batch-login-list');
-            const plats = PLATFORMS.filter(p => (category === 'cn' ? p.type === 'cn' : p.type === 'global'));
+            const plats = PLATFORMS.filter(p => (category === 'cn' ? p.cat === 'cn' : p.cat === 'global'));
             // 默认只勾选「未登录 + 一键扫码可支持」的平台（LOGIN_PLATFORMS 收录的）
             list.innerHTML = plats.map(p => {
                 const supported = _supportedLoginPlatforms && _supportedLoginPlatforms.has(p.id);
@@ -2546,7 +2550,7 @@
                     <div class="progress-fill" id="fill-${p.id}" style="width:${pct}%; ${initialStatus === 'failed' ? 'background:var(--danger);' : ''}"></div>
                 </div>
                 <div class="matrix-card-actions" id="actions-${p.id}">
-                    <span style="font-size:11px; color:var(--faint);">${p.type === 'global' ? '🌐 海外域' : '🇨🇳 国内域'}</span>
+                    <span style="font-size:11px; color:var(--faint);">${p.cat === 'global' ? '🌐 海外域' : '🇨🇳 国内域'}</span>
                     <div>${actionHtml}</div>
                 </div>
             `;
@@ -2819,7 +2823,7 @@
                     if (fillEl) fillEl.style.background = 'var(--danger)';
                     if (badgeEl) badgeEl.innerHTML = `<span class="matrix-card-status" style="color:var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> 需处理</span>`;
                     if (actionsEl) {
-                        actionsEl.innerHTML = `<span style="font-size:11px; color:var(--faint);">${p.type === 'global' ? '🌐 海外域' : '🇨🇳 国内域'}</span><div><button class="btn" style="padding:2px 6px; font-size:11px;" onclick="retrySinglePlatform('${p.id}')"><i class="fa-solid fa-rotate-right"></i> 重试</button></div>`;
+                        actionsEl.innerHTML = `<span style="font-size:11px; color:var(--faint);">${p.cat === 'global' ? '🌐 海外域' : '🇨🇳 国内域'}</span><div><button class="btn" style="padding:2px 6px; font-size:11px;" onclick="retrySinglePlatform('${p.id}')"><i class="fa-solid fa-rotate-right"></i> 重试</button></div>`;
                     }
                     
                     currentDispatchState.failed.add(p.id);
@@ -2852,7 +2856,7 @@
                         clearInterval(timer);
                         if (card) card.className = 'matrix-card success';
                         if (badgeEl) badgeEl.innerHTML = `<span class="matrix-card-status" style="color:var(--success);"><i class="fa-solid fa-circle-check"></i> 发布成功</span>`;
-                        if (actionsEl) actionsEl.innerHTML = `<span style="font-size:11px; color:var(--faint);">${p.type === 'global' ? '🌐 海外域' : '🇨🇳 国内域'}</span><div><a href="${escapeHtml(info.link)}" target="_blank" class="btn text" style="padding:2px 6px; font-size:11.5px; color:var(--accent);"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看作品</a></div>`;
+                        if (actionsEl) actionsEl.innerHTML = `<span style="font-size:11px; color:var(--faint);">${p.cat === 'global' ? '🌐 海外域' : '🇨🇳 国内域'}</span><div><a href="${escapeHtml(info.link)}" target="_blank" class="btn text" style="padding:2px 6px; font-size:11.5px; color:var(--accent);"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看作品</a></div>`;
                         currentDispatchState.success.add(p.id);
                         dispatchFinishedCount++;
                         updateCapsuleProgress(`[${p.name}] 发布成功！`, 100);
@@ -2861,7 +2865,7 @@
                         clearInterval(timer);
                         if (card) card.className = 'matrix-card failed';
                         if (badgeEl) badgeEl.innerHTML = `<span class="matrix-card-status" style="color:var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> 需处理</span>`;
-                        if (actionsEl) actionsEl.innerHTML = `<span style="font-size:11px; color:var(--faint);">${p.type === 'global' ? '🌐 海外域' : '🇨🇳 国内域'}</span><div><button class="btn" style="padding:2px 6px; font-size:11px;" onclick="retrySinglePlatform('${p.id}')"><i class="fa-solid fa-rotate-right"></i> 重试</button></div>`;
+                        if (actionsEl) actionsEl.innerHTML = `<span style="font-size:11px; color:var(--faint);">${p.cat === 'global' ? '🌐 海外域' : '🇨🇳 国内域'}</span><div><button class="btn" style="padding:2px 6px; font-size:11px;" onclick="retrySinglePlatform('${p.id}')"><i class="fa-solid fa-rotate-right"></i> 重试</button></div>`;
                         currentDispatchState.failed.add(p.id);
                         dispatchFinishedCount++;
                         updateModalSummaryStats();
@@ -2961,7 +2965,7 @@
             if (stageEl) stageEl.textContent = '已取消';
             if (fillEl) fillEl.style.background = 'var(--warn)';
             if (actionsEl) {
-                actionsEl.innerHTML = `<span style="font-size:11px; color:var(--faint);">${PLATFORMS.find(p => p.id === platformId)?.type === 'global' ? '🌐 海外域' : '🇨🇳 国内域'}</span><div><button class="btn" style="padding:2px 6px; font-size:11px;" onclick="retrySinglePlatform('${platformId}')"><i class="fa-solid fa-rotate-right"></i> 重试</button></div>`;
+                actionsEl.innerHTML = `<span style="font-size:11px; color:var(--faint);">${PLATFORMS.find(p => p.id === platformId)?.cat === 'global' ? '🌐 海外域' : '🇨🇳 国内域'}</span><div><button class="btn" style="padding:2px 6px; font-size:11px;" onclick="retrySinglePlatform('${platformId}')"><i class="fa-solid fa-rotate-right"></i> 重试</button></div>`;
             }
             
             currentDispatchState.failed.add(platformId);
