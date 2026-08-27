@@ -40,7 +40,10 @@ PLATFORM_SESSION_COOKIES: dict[str, list[str]] = {
     "toutiao":     ["LOGIN_A", "sessionid_ss", "sessionid"],
     "zhihu":       ["z_c0"],
     "baijiahao":   ["BDUSS", "STOKEN"],
-    "haokan":      ["BDUSS", "STOKEN", "BDUSS_BFESS", "BAIDUID", "BAIDU_SAFETS"],
+    "haokan":      ["BDUSS", "STOKEN", "BDUSS_BFESS"],
+    # 百度系（好看视频 / 百家号）登录会话靠 BDUSS；BAIDUID 是匿名设备标识不可用。
+    # 在好看视频首页登录百度账号并不会发 BDUSS——必须点击「创作者中心」
+    # 进入创作后台才会真正写入 BDUSS/BDUSS_BFESS。
     # ── 国际 ──
     "youtube":     ["SID", "SAPISID", "__Secure-3PAPISID", "__Secure-1PAPISID"],
     "tiktok":      ["sessionid_ss", "sid_tt", "sessionid"],

@@ -741,8 +741,6 @@
                 <span class="step-num"><i class="fa-solid fa-clock-rotate-left"></i></span> 分发记录 <span style="font-size:12px; color:var(--muted); font-weight:normal; margin-left:6px;">(保留最近 10 条看板)</span>
                 <div style="display:flex; align-items:center; gap:14px; margin-left:auto;">
                     <span class="step-hint" style="cursor:pointer;" onclick="showBootstrap(); renderBootstrap(_bsCurrentData || {summary:{},checks:[]});" title="打开环境检测引导（首次启动 / 排查问题时用）"><i class="fa-solid fa-bullseye"></i> 环境检测</span>
-                    <span class="step-hint" style="cursor:pointer;" onclick="exportHistoryJson()" title="导出完整 JSON 报表"><i class="fa-solid fa-file-code"></i> 导出 JSON</span>
-                    <span class="step-hint" style="cursor:pointer;" onclick="exportHistoryCsv()" title="导出 CSV 报表（Excel/Numbers 可直接打开）"><i class="fa-solid fa-file-csv"></i> 导出 CSV</span>
                     <span class="step-hint" style="cursor:pointer;" onclick="loadHistory()" title="刷新历史记录"><i class="fa-solid fa-rotate"></i> 刷新</span>
                 </div>
             </div>
@@ -1873,41 +1871,6 @@
             setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
         }
 
-        async function exportHistoryJson() {
-            try {
-                showToastNotice('正在生成 JSON 报表…', 'info');
-                const res = await fetch(API + '/api/history/export/json');
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const data = await res.json();
-                const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                _triggerBrowserDownload(
-                    new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
-                    `omp-history-${ts}.json`
-                );
-                showToastNotice('JSON 报表已下载（含完整指标与失败原因）', 'success');
-            } catch (e) {
-                showToastNotice('JSON 导出失败：' + (e.message || e), 'error');
-            }
-        }
-
-        async function exportHistoryCsv() {
-            try {
-                showToastNotice('正在生成 CSV 报表…', 'info');
-                const res = await fetch(API + '/api/history/export/csv');
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const csv = await res.text();
-                const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                _triggerBrowserDownload(
-                    new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }),
-                    `omp-history-${ts}.csv`
-                );
-                showToastNotice('CSV 报表已下载（Excel/Numbers 可直接打开）', 'success');
-            } catch (e) {
-                showToastNotice('CSV 导出失败：' + (e.message || e), 'error');
-            }
-        }
-
-
         /* ── 首次启动 Bootstrap Wizard ── */
         const _BS_ICONS = { ok: 'fa-circle-check', warn: 'fa-triangle-exclamation', fail: 'fa-circle-xmark' };
         const _BS_LABELS = { ok: '已就绪', warn: '需注意', fail: '必须修复' };
@@ -2414,6 +2377,11 @@
                     showToastNotice(`已为 ${data.platforms_matched.length} 个平台写入 cookie`, 'success');
                     // 立即刷新登录状态与历史
                     setTimeout(() => { refreshSessionStatus(); loadHistory(); }, 800);
+                    // 成功后 2.5 秒自动关弹窗 + 关闭调试 Chrome 窗口（不停留）
+                    setTimeout(() => {
+                        hideCdpPullModal();
+                        stopCdpSession().catch(() => {});
+                    }, 2500);
                 } else {
                     result.style.cssText = 'background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.3); color:#f87171; font-size:12.5px;';
                     result.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> 拉取失败：${escapeHtml(data.msg || JSON.stringify(data))}`;
