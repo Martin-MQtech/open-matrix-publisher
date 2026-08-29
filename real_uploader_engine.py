@@ -395,7 +395,7 @@ class RealPlatformUploader:
 
         sau_platforms = ["douyin", "kuaishou", "xiaohongshu", "tencent", "bilibili", "youtube"]
         custom_platforms = ["x", "linkedin", "facebook", "tiktok", "instagram",
-                            "weibo", "zhihu", "toutiao", "baijiahao", "fanqie",
+                            "weibo", "zhihu", "toutiao", "baijiahao", "haokan",
                             "devto", "wordpress", "telegram", "pinterest"]
 
         # Creator dashboard links per platform
@@ -512,7 +512,7 @@ class RealPlatformUploader:
                 "zhihu":     "zhihu_uploader",
                 "toutiao":   "toutiao_uploader",
                 "baijiahao": "baijiahao_uploader",
-                "fanqie":    "fanqie_uploader",
+                "haokan":    "haokan_uploader",
                 "devto":     "devto_uploader",
                 "wordpress": "wordpress_uploader",
                 "telegram":  "telegram_uploader",
@@ -523,7 +523,7 @@ class RealPlatformUploader:
                 "zhihu":   "https://www.zhihu.com/creator/",
                 "toutiao": "https://mp.toutiao.com/profile_v4/",
                 "baijiahao": "https://baijiahao.baidu.com/",
-                "fanqie":  "https://pugc.yueduwuxian.com/fqvideo/home/publish-video",
+                "haokan":  "https://haokan.baidu.com/author/home",
                 "x":       "https://twitter.com/",
                 "linkedin":"https://www.linkedin.com/feed/",
                 "facebook":"https://www.facebook.com/",
