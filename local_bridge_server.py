@@ -107,6 +107,29 @@ def cleanup_task_progress(task_id):
     except Exception:
         pass
 
+
+def cleanup_stale_task_progress(max_age_days: int = 7):
+    """启动时清理超过 N 天的旧任务进度与日志（含 2MB 级 SAU log），防磁盘无限膨胀。"""
+    cutoff = time.time() - max_age_days * 86400
+    removed = 0
+    try:
+        for fname in os.listdir(TASK_PROGRESS_DIR):
+            fpath = os.path.join(TASK_PROGRESS_DIR, fname)
+            try:
+                if os.path.getmtime(fpath) < cutoff:
+                    os.remove(fpath)
+                    removed += 1
+            except Exception:
+                pass
+    except Exception:
+        pass
+    if removed:
+        print(f"🧹 已清理 {removed} 个超过 {max_age_days} 天的旧任务进度文件")
+
+
+# 服务启动即执行一次（模块加载时）
+cleanup_stale_task_progress()
+
 def load_history():
     if os.path.exists(HISTORY_FILE):
         try:
@@ -120,7 +143,7 @@ def save_history(history_data):
     """Atomic write with lock to prevent concurrent threads from clobbering. Limit to latest 10 records."""
     with HISTORY_FILE_LOCK:
         if isinstance(history_data.get("records"), list) and len(history_data["records"]) > 10:
-            history_data["records"] = history_data["records"][-10:]
+            history_data["records"] = history_data["records"][-50:]
         tmp = HISTORY_FILE + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(history_data, f, indent=2, ensure_ascii=False)
@@ -164,7 +187,7 @@ def record_history_result(dispatch_id, platform_id, title, video_file, success, 
         
         # 始终锁定保留最近 10 条记录
         if len(hist.get("records", [])) > 10:
-            hist["records"] = hist["records"][-10:]
+            hist["records"] = hist["records"][-50:]
 
         hist["last_dispatch"] = {
             "timestamp": finish_time,

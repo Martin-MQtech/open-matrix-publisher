@@ -798,7 +798,7 @@
 
         <section class="panel" id="history-panel" style="margin-top:20px;">
             <div class="step-head">
-                <span class="step-num"><i class="fa-solid fa-clock-rotate-left"></i></span> 分发记录 <span style="font-size:12px; color:var(--muted); font-weight:normal; margin-left:6px;">(保留最近 10 条看板)</span>
+                <span class="step-num"><i class="fa-solid fa-clock-rotate-left"></i></span> 分发记录 <span style="font-size:12px; color:var(--muted); font-weight:normal; margin-left:6px;">(保留最近 50 条看板)</span>
                 <div style="display:flex; align-items:center; gap:14px; margin-left:auto;">
                     <span class="step-hint" style="cursor:pointer;" onclick="showBootstrap(); renderBootstrap(_bsCurrentData || {summary:{},checks:[]});" title="打开环境检测引导（首次启动 / 排查问题时用）"><i class="fa-solid fa-bullseye"></i> 环境检测</span>
                     <span class="step-hint" style="cursor:pointer;" onclick="loadHistory()" title="刷新历史记录"><i class="fa-solid fa-rotate"></i> 刷新</span>
@@ -1330,10 +1330,10 @@
         }
 
         function switchAuthTab(tab) {
-            // 更新 Tab 按钮激活态
+            // 更新 Tab 按钮激活态与内容面板显隐（HTML ID：auth-tab-btn-* / auth-tab-*）
             ['kanban', 'cdp', 'batch', 'import'].forEach(t => {
-                const btn = el(`tab-btn-${t}`);
-                const pane = el(`tab-pane-${t}`);
+                const btn = el(`auth-tab-btn-${t}`);
+                const pane = el(`auth-tab-${t}`);
                 if (btn) {
                     if (t === tab) btn.classList.add('active');
                     else btn.classList.remove('active');
@@ -1550,101 +1550,58 @@
             refreshSessionStatus();
         }
 
-        async function renderBatchAuthList(showAll = false) {
-            const list = el('batch-auth-list');
-            list.innerHTML = '<div style="padding:12px; color:var(--muted); text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> 正在排查待补录凭证…</div>';
+        /* ── 统一账号中心：Tab 子模块渲染 ── */
 
-            let state = null;
-            let lastErr = null;
-            // 失败自动重试 2 次（偶发闪断不再导致误报"全部待补录"）
-            for (let i = 0; i < 3; i++) {
-                try {
-                    const res = await fetch(API + '/api/status');
-                    const data = await res.json();
-                    state = data.session_status || data.sessions || {};
-                    break;
-                } catch (e) {
-                    lastErr = e;
-                    if (i < 2) await new Promise(r => setTimeout(r, 1200));
-                }
-            }
-
-            if (state === null) {
-                // 关键区分：请求失败 ≠ 未登录。显式报错并给重试入口，绝不把未知状态列为"待补录"。
-                list.innerHTML = `
-                    <div style="padding:20px 16px; text-align:center; background:rgba(248,113,113,0.08); border-radius:8px; border:1px solid rgba(248,113,113,0.25);">
-                        <i class="fa-solid fa-plug-circle-xmark" style="font-size:30px; color:#f87171; margin-bottom:8px; display:block;"></i>
-                        <div style="font-size:13.5px; font-weight:700; color:var(--ink); margin-bottom:4px;">无法读取账号状态（本地引擎无响应）</div>
-                        <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">这<b>不代表</b>账号需要补录——只是状态查询失败。请确认本地服务在运行后重试。</div>
-                        <button class="btn primary" style="font-size:12px; padding:5px 14px;" onclick="renderBatchAuthList()"><i class="fa-solid fa-rotate"></i> 重新查询</button>
-                    </div>`;
-                return;
-            }
-
-            list.innerHTML = '';
-            
-            // 靶向筛选：仅过滤非 API、非禁用的受损未登录账号
-            const damagedPlatforms = PLATFORMS.filter(p => {
-                if (p.disabled || p.api) return false;
-                const s = state[p.id] || {};
-                return !s.logged_in;
-            });
-
-            const targetPlatforms = showAll ? PLATFORMS : damagedPlatforms;
-
-            if (!targetPlatforms.length) {
-                list.innerHTML = `
-                    <div style="padding:20px 16px; text-align:center; background:rgba(7, 193, 96, 0.08); border-radius:8px; border:1px solid rgba(7, 193, 96, 0.25);">
-                        <i class="fa-solid fa-circle-check" style="font-size:30px; color:var(--success); margin-bottom:8px; display:block;"></i>
-                        <div style="font-size:13.5px; font-weight:700; color:var(--ink); margin-bottom:4px;">无需补录，所有矩阵账号凭证均已就绪！</div>
-                        <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">所有平台凭证有效，发布时将 100% 纯无头后台运行。</div>
-                        <button class="btn" style="font-size:11.5px; padding:3px 10px;" onclick="renderBatchAuthList(true)"><i class="fa-solid fa-list"></i> 显示全量 20 平台凭证</button>
-                    </div>
-                `;
-                return;
-            }
-
-            if (!showAll) {
-                const hintHeader = document.createElement('div');
-                hintHeader.style.cssText = 'padding:6px 10px; margin-bottom:8px; font-size:12px; color:var(--accent-2); background:rgba(232, 137, 46, 0.1); border-radius:6px; display:flex; justify-content:space-between; align-items:center;';
-                hintHeader.innerHTML = `
-                    <span><i class="fa-solid fa-bullseye"></i> 靶向受损账号：列表精准仅展示待补录的 <strong>${targetPlatforms.length}</strong> 个账号</span>
-                    <button class="btn text" style="font-size:11px; padding:0; color:var(--muted);" onclick="renderBatchAuthList(true)">显示全量 20 平台</button>
-                `;
-                list.appendChild(hintHeader);
-            }
-
-            targetPlatforms.forEach(p => {
-                const info = state[p.id] || { logged_in: false, status_text: '未授权' };
-                const isOk = info.logged_in;
-                
-                const row = document.createElement('div');
-                row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px;';
-                
-                const badge = isOk 
-                    ? `<span style="color:var(--success); font-weight:600;"><i class="fa-solid fa-circle-check"></i> 凭证就绪</span>`
-                    : `<span style="color:var(--warn); font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> 需扫码补录</span>`;
-                
-                const actionBtn = isOk
-                    ? `<button class="btn" style="padding:3px 8px; font-size:11.5px;" onclick="batchAuthLogin('${p.id}')"><i class="fa-solid fa-arrows-rotate"></i> 重新扫码</button>`
-                    : `<button class="btn accent" style="padding:4px 10px; font-size:12px;" onclick="batchAuthLogin('${p.id}')"><i class="fa-solid fa-qrcode"></i> 立即扫码补录</button>`;
-                
-                row.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        ${platformIcon(p, 16)} <strong>${p.name}</strong>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        ${badge}
-                        ${actionBtn}
-                    </div>
-                `;
-                list.appendChild(row);
-            });
+        // Tab 3: 国内批量扫码列表（勾选平台 → 顺序扫码）
+        let _batchLoginListLoaded = false;
+        async function renderBatchLoginList(category = 'cn') {
+            const list = el('batch-login-list');
+            if (!list) return;
+            // 拉一次最新登录态，未登录的默认勾选
+            let state = {};
+            try {
+                const res = await fetch(API + '/api/status');
+                const data = await res.json();
+                state = data.session_status || {};
+            } catch (e) { /* 拉不到就全按未登录处理 */ }
+            const plats = PLATFORMS.filter(p => p.cat === category && !p.disabled && !p.api);
+            list.innerHTML = plats.map(p => {
+                const loggedIn = !!(state[p.id] || {}).logged_in;
+                return `<label style="display:flex; align-items:center; gap:8px; padding:6px 8px; cursor:pointer; border-radius:4px;" onmouseover="this.style.background='rgba(232,137,46,0.06)'" onmouseout="this.style.background=''">
+                    <input type="checkbox" data-pid="${p.id}" ${loggedIn ? '' : 'checked'}>
+                    <span style="flex:1;">${platformIcon(p, 14)} ${escapeHtml(p.name)}</span>
+                    <span style="font-size:10.5px; color:${loggedIn ? 'var(--success)' : 'var(--muted)'};">${loggedIn ? '已登录 ✓' : '未登录'}</span>
+                </label>`;
+            }).join('');
+            _batchLoginListLoaded = true;
         }
 
-        async function batchAuthLogin(platformId) {
-            await launchQrLogin(platformId);
-            setTimeout(renderBatchAuthList, 2500);
+        // Tab 4: 填充导入平台下拉框
+        function initImportPlatformSelect() {
+            const sel = el('import-platform-select');
+            if (!sel) return;
+            sel.innerHTML = PLATFORMS.filter(p => !p.disabled)
+                .map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${p.id})</option>`).join('');
+        }
+
+        // Tab 2: 刷新 CDP 调试会话状态
+        async function refreshCdpStatus() {
+            const statusEl = el('cdp-pull-status');
+            if (!statusEl) return;
+            try {
+                const res = await fetch(API + '/api/cdp/status');
+                const data = await res.json();
+                if (data.port_open) {
+                    statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#9cc08f;"></i> 调试 Chrome 窗口正在运行——请在窗口里完成登录，然后点『我登录好了，Agent 来拿』。';
+                    el('cdp-pull-start').style.display = 'none';
+                    el('cdp-pull-stop').style.display = 'inline-flex';
+                    el('cdp-pull-go').style.display = 'inline-flex';
+                } else {
+                    el('cdp-pull-start').style.display = 'inline-flex';
+                    el('cdp-pull-stop').style.display = 'none';
+                    el('cdp-pull-go').style.display = 'none';
+                }
+            } catch (e) { /* 引擎未连上时静默，保留默认提示文案 */ }
         }
 
         function trimTitleTo30() {
@@ -2096,7 +2053,7 @@
                 });
 
                 // 渲染历史批次卡片 (严格锁定展示最近 10 条)
-                loadedHistoryRecords = records.slice().reverse().slice(0, 10);
+                loadedHistoryRecords = records.slice().reverse().slice(0, 50);
                 loadedHistoryRecords.forEach((r, idx) => {
                     const item = document.createElement('div');
                     item.className = 'history-item';
@@ -2506,15 +2463,14 @@
             el('import-cookie-overlay').style.display = 'none';
         }
         async function submitImportCookie() {
-            const platformId = el('import-cookie-platform').value;
-            const name = el('import-cookie-name').value.trim() || 'default';
-            const fileInput = el('import-cookie-file');
+            const platformId = el('import-platform-select').value;
+            const fileInput = el('import-file-input');
             if (!fileInput.files || !fileInput.files[0]) {
                 showToastNotice('请选择 Cookie JSON 文件', 'warn'); return;
             }
             const fd = new FormData();
             fd.append('platform_id', platformId);
-            fd.append('name', name);
+            fd.append('name', 'default');
             fd.append('file', fileInput.files[0]);
             try {
                 const res = await fetch(API + '/api/import-cookie', { method: 'POST', body: fd });
